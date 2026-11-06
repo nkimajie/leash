@@ -50,22 +50,22 @@ docs/                       Documentation
 
 ## Outcomes (what happened to the money)
 
-| Outcome | Meaning | PayPal |
-|---|---|---|
-| `auto_approved` | Within every rule | authorized, then captured |
-| `held` | Needs your OK | authorized (money reserved) |
-| `approved` | You said yes | captured |
-| `denied` | You said no | authorization voided, never charged |
-| `blocked` | A hard rule said no | never called |
-| `refunded` | Money returned | refunded |
-| `failed` | PayPal error, e.g. card declined | voided; `debug_id` saved |
+| Outcome         | Meaning                          | PayPal                              |
+| --------------- | -------------------------------- | ----------------------------------- |
+| `auto_approved` | Within every rule                | authorized, then captured           |
+| `held`          | Needs your OK                    | authorized (money reserved)         |
+| `approved`      | You said yes                     | captured                            |
+| `denied`        | You said no                      | authorization voided, never charged |
+| `blocked`       | A hard rule said no              | never called                        |
+| `refunded`      | Money returned                   | refunded                            |
+| `failed`        | PayPal error, e.g. card declined | voided; `debug_id` saved            |
 
 ## Checks before every commit
 
 ```bash
 npm run check    # type check + lint + unit tests
 npm run build    # production build
-npm run smoke    # end-to-end demo story (needs `npm run dev` running)
+npm run smoke    # end-to-end demo story (needs `ANTHROPIC_API_KEY= npm run dev` running)
 ```
 
 Format with `npm run format`. Commit small, working steps with short, imperative messages ("Add pay-person tool").

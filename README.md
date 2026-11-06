@@ -9,13 +9,13 @@ every approve, deny and refund, like a digital twin.
 
 ## How the money moves
 
-| Your rules say | PayPal does | You see |
-|---|---|---|
-| Within every rule | authorize, then capture | Paid automatically |
-| Over your auto-approve limit, over budget, or a new person | authorize and **hold** | Waiting for you: approve or deny on your phone |
-| You deny | **void** the authorization | Denied, never charged. Your twin remembers. |
-| Blocked category, merchant, cap or hard limit | nothing; PayPal is never called | Blocked by rules |
-| You refund | refund the capture | Refunded. Your twin remembers. |
+| Your rules say                                             | PayPal does                     | You see                                        |
+| ---------------------------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| Within every rule                                          | authorize, then capture         | Paid automatically                             |
+| Over your auto-approve limit, over budget, or a new person | authorize and **hold**          | Waiting for you: approve or deny on your phone |
+| You deny                                                   | **void** the authorization      | Denied, never charged. Your twin remembers.    |
+| Blocked category, merchant, cap or hard limit              | nothing; PayPal is never called | Blocked by rules                               |
+| You refund                                                 | refund the capture              | Refunded. Your twin remembers.                 |
 
 ## What it can do
 
@@ -41,8 +41,12 @@ and which are mocked.
 
 ```bash
 npm run check   # type check, lint, unit tests
-npm run smoke   # end-to-end demo story against the running app
+npm run smoke   # end-to-end demo story (start the app with `ANTHROPIC_API_KEY= npm run dev` for this)
 ```
+
+With `ANTHROPIC_API_KEY` set, the assistant runs on Claude (Claude Haiku). Claude chooses the tools itself, but it can
+only act through them, so every purchase and payment still passes the spending rules. If Claude can't be reached,
+the built-in scripted assistant takes over.
 
 ## Project structure
 
@@ -65,9 +69,9 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
 
 ## Status
 
-Built for the PayPal "Build What's Next with PayPal and AI" hackathon. Done so far: rules, PayPal flow and
-assistant in mock mode, digital twin, people, control room, phone approvals. Next: PayPal sandbox with Vault,
-the Claude agent, Channel3 search, Supabase with live updates, and deployment on Render.
+Built for the PayPal "Build What's Next with PayPal and AI" hackathon. Done so far: rules, the Claude agent,
+PayPal flow in mock mode, digital twin, people, control room, phone approvals. Next: PayPal sandbox with Vault,
+Channel3 search, Supabase with live updates, and deployment on Render.
 
 ## License
 

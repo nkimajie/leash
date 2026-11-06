@@ -1,6 +1,7 @@
-// End-to-end check of the demo story against a running app (mock mode).
-// Usage: npm run dev   (in one terminal)
-//        npm run smoke (in another)   or   BASE_URL=https://your-app.onrender.com npm run smoke
+// End-to-end check of the demo story against a running app.
+// It expects the scripted assistant, whose choices are predictable, so start the app without Claude:
+// Usage: ANTHROPIC_API_KEY= npm run dev   (in one terminal)
+//        npm run smoke                    (in another)   or   BASE_URL=https://your-app.onrender.com npm run smoke
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 let failures = 0;
@@ -40,6 +41,10 @@ async function ask(prompt) {
 const status = await call("GET", "/api/status");
 check("status endpoint answers", status.status === 200, JSON.stringify(status.body));
 console.log(`  modes: ${JSON.stringify(status.body)}\n`);
+if (status.body?.assistant !== "mock") {
+  console.log("The assistant is running on Claude, whose choices vary. Restart with `ANTHROPIC_API_KEY= npm run dev`.");
+  process.exit(1);
+}
 
 // 1. Shopping: cheap item paid, expensive item held
 const coffee = await ask("Restock my coffee setup, under $60, fair-trade beans only");
