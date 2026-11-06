@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: #fafaf9; /* stone-50 */
+  color: #1c1917; /* stone-900 */
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-step {
+  animation: fade-in-up 0.25s ease-out both;
+}
+
+/* AG Grid: vertically centre every cell, including custom cell components */
+.ag-cell {
+  display: flex;
+  align-items: center;
+}
+.ag-cell.ag-right-aligned-cell {
+  justify-content: flex-end;
+}

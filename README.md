@@ -1,24 +1,33 @@
 # Leash
 
-**An AI shopping agent that can spend money, but only inside rules you set.**
+**A personal assistant that spends and sends money like you would, but only inside rules you set.**
 
-You give the agent a goal in plain English. It searches for products, checks each one
-against your spending rules, and pays with PayPal:
+Leash is an AI assistant with a PayPal wallet and a leash. Ask it to restock your coffee or pay a friend back,
+and it searches, decides, and pays. Every payment is checked against your spending rules first, and anything
+outside them is **reserved but not taken** until you approve it on your phone. It also learns your taste from
+every approve, deny and refund, like a digital twin.
 
-| Rules say | PayPal does | Result |
+## How the money moves
+
+| Your rules say | PayPal does | You see |
 |---|---|---|
-| Within every rule | authorize, then capture | bought automatically |
-| Over the auto-approve limit or goal budget | authorize and **hold** | you approve or deny on your phone |
-| You deny | **void** the authorization | money is never taken |
-| Blocked category, merchant, cap or max price | nothing | PayPal is never called |
+| Within every rule | authorize, then capture | Paid automatically |
+| Over your auto-approve limit, over budget, or a new person | authorize and **hold** | Waiting for you: approve or deny on your phone |
+| You deny | **void** the authorization | Denied, never charged. Your twin remembers. |
+| Blocked category, merchant, cap or hard limit | nothing; PayPal is never called | Blocked by rules |
+| You refund | refund the capture | Refunded. Your twin remembers. |
 
-Every decision, with the rule that applied and the AI's reasoning, appears live in an
-AG Grid control room.
+## What it can do
 
-> Work in progress for the PayPal "Build What's Next with PayPal and AI" hackathon.
-> Full documentation (architecture, PayPal Vault flow, deployment on Render) is coming.
+- **Shop like you.** Finds products, explains every pick, and avoids things you've said no to before.
+- **Pay people.** "Pay Sam $25 for dinner." Trusted people are paid within your limits; anyone new waits for you.
+- **Learn your taste.** The twin page shows everything it has learned, and you can teach it or make it forget.
+- **Show everything.** The AG Grid control room lists every decision live, with the rule that applied, the AI's
+  reasoning, the PayPal status and `debug_id`, and approve, deny and refund buttons.
 
 ## Run it locally (no keys needed)
+
+Requires Node.js 22+.
 
 ```bash
 npm install
@@ -26,18 +35,39 @@ cp .env.example .env.local   # optional: every service has a mock mode
 npm run dev
 ```
 
-Open http://localhost:3000 and try "Restock my coffee setup, under $60, fair-trade beans only".
-Badges in the header show which services are live and which are mocked.
+Open http://localhost:3000 and try **"Restock my coffee setup, under $60, fair-trade beans only"**. Then deny
+the grinder, ask again, and watch the assistant choose differently. The sidebar shows which services are live
+and which are mocked.
 
 ```bash
-npm test   # rule engine unit tests
+npm run check   # type check, lint, unit tests
+npm run smoke   # end-to-end demo story against the running app
 ```
 
-## Pages
+## Project structure
 
-- `/` – give the agent a goal and watch it work
-- `/control-room` – AG Grid dashboard of every decision, with approve / deny / refund
-- `/approve/[id]` – phone-sized approve or deny screen for a held purchase
+```
+src/
+  app/          Pages and API routes (thin)
+  components/   UI, grouped by screen
+  lib/          Browser helpers: API client, formatting, labels
+  schemas/      Every kind of data, defined once with zod
+  server/
+    agent/      The assistant and its tools
+    database/   One repository per table
+    payments/   PayPal: authorize, capture, void, refund
+    spending/   Rule engine and the money path
+    twin/       Learning your preferences
+supabase/migrations/   Database schema (SQL)
+```
+
+See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follows.
+
+## Status
+
+Built for the PayPal "Build What's Next with PayPal and AI" hackathon. Done so far: rules, PayPal flow and
+assistant in mock mode, digital twin, people, control room, phone approvals. Next: PayPal sandbox with Vault,
+the Claude agent, Channel3 search, Supabase with live updates, and deployment on Render.
 
 ## License
 
