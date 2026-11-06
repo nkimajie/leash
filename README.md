@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Leash
 
-## Getting Started
+**An AI shopping agent that can spend money, but only inside rules you set.**
 
-First, run the development server:
+You give the agent a goal in plain English. It searches for products, checks each one
+against your spending rules, and pays with PayPal:
+
+| Rules say | PayPal does | Result |
+|---|---|---|
+| Within every rule | authorize, then capture | bought automatically |
+| Over the auto-approve limit or goal budget | authorize and **hold** | you approve or deny on your phone |
+| You deny | **void** the authorization | money is never taken |
+| Blocked category, merchant, cap or max price | nothing | PayPal is never called |
+
+Every decision, with the rule that applied and the AI's reasoning, appears live in an
+AG Grid control room.
+
+> Work in progress for the PayPal "Build What's Next with PayPal and AI" hackathon.
+> Full documentation (architecture, PayPal Vault flow, deployment on Render) is coming.
+
+## Run it locally (no keys needed)
 
 ```bash
+npm install
+cp .env.example .env.local   # optional: every service has a mock mode
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 and try "Restock my coffee setup, under $60, fair-trade beans only".
+Badges in the header show which services are live and which are mocked.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test   # rule engine unit tests
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pages
 
-## Learn More
+- `/` – give the agent a goal and watch it work
+- `/control-room` – AG Grid dashboard of every decision, with approve / deny / refund
+- `/approve/[id]` – phone-sized approve or deny screen for a held purchase
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
