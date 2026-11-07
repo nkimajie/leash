@@ -1,10 +1,14 @@
 // Shapes of request bodies the API accepts. Routes validate every body with these.
 
 import { z } from "zod";
+import { YourReasonSchema } from "./preference";
 
 export const RunAssistantBody = z.object({
   prompt: z.string().trim().min(3, "Tell the assistant what you need.").max(500),
 });
+
+/** Deny and refund accept an optional reason; an empty body is fine too. */
+export const YourReasonBody = YourReasonSchema.optional().default({});
 
 export { NewPayeeSchema as CreatePayeeBody, PayeeChangesSchema as UpdatePayeeBody } from "./payee";
 export { NewPreferenceSchema as CreatePreferenceBody } from "./preference";

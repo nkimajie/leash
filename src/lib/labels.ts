@@ -1,6 +1,6 @@
 // Human-readable labels and colours for outcomes and rules.
 
-import type { Outcome, RuleName } from "@/schemas";
+import type { Outcome, QuickReason, RuleName } from "@/schemas";
 
 export const OUTCOME_STYLE: Record<Outcome, { label: string; tone: string; dot: string }> = {
   auto_approved: {
@@ -35,6 +35,13 @@ export const RULE_LABEL: Record<RuleName, string> = {
   payment_declined: "Card declined",
   payment_error: "PayPal error",
   paypal_not_connected: "PayPal not connected",
+};
+
+export const QUICK_REASON_LABEL: Record<QuickReason, string> = {
+  too_expensive: "Too expensive",
+  not_needed: "Didn't need it",
+  wrong_store: "Wrong store",
+  not_my_taste: "Not my taste",
 };
 
 export const TOOL_LABEL: Record<string, string> = {

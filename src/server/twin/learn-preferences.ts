@@ -1,18 +1,53 @@
 // The digital twin. Pure functions that turn your decisions into things the assistant
 // remembers, and check new products against what it remembers.
 
-import type { Decision, NewPreference, Preference, Product } from "@/schemas";
+import type { Decision, NewPreference, Preference, Product, YourReason } from "@/schemas";
 
-type YourAction = "approved" | "denied" | "refunded";
+export type YourAction = "approved" | "denied" | "refunded";
 
 /**
  * What the twin should learn when you approve, deny or refund something.
+ * If you said why ("too expensive", "wrong store"...), it learns that exact lesson.
  * Returns null when there is nothing useful to learn (e.g. payments to people).
  */
-export function lessonFromYourDecision(decision: Decision, action: YourAction): NewPreference | null {
+export function lessonFromYourDecision(
+  decision: Decision,
+  action: YourAction,
+  why: YourReason = {},
+): NewPreference | null {
   if (decision.kind !== "purchase" || !decision.product) return null;
   const price = formatMoney(decision.amount);
   const { title, category, merchant, id: productId } = decision.product;
+  const learned = { source: "learned" as const, learnedFromDecisionId: decision.id };
+  const inYourWords = why.note ? ` You said: "${why.note}"` : "";
+
+  if (action !== "approved" && why.reason) {
+    switch (why.reason) {
+      case "too_expensive":
+        return {
+          ...learned,
+          sentiment: "avoids",
+          statement: `"${title}" was too expensive at ${price}. Avoid ${category} at this price or higher.${inYourWords}`,
+          category,
+          priceAtLeast: decision.amount,
+        };
+      case "wrong_store":
+        return {
+          ...learned,
+          sentiment: "avoids",
+          statement: `Doesn't want to buy from ${merchant}.${inYourWords}`,
+          merchant,
+        };
+      case "not_needed":
+      case "not_my_taste":
+        return {
+          ...learned,
+          sentiment: "avoids",
+          statement: `${why.reason === "not_needed" ? "Didn't need" : "Didn't like"} "${title}". Don't buy it again.${inYourWords}`,
+          productId,
+        };
+    }
+  }
 
   switch (action) {
     case "denied":
@@ -64,6 +99,14 @@ function appliesTo(preference: Preference, product: Product): boolean {
   return true;
 }
 
-const sameText = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+/** "Coffee Grinders" and "coffee grinder" are the same thing: ignore case, spacing and plurals. */
+const sameText = (a: string, b: string) => normalize(a) === normalize(b);
+const normalize = (text: string) =>
+  text
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.replace(/s$/, ""))
+    .join(" ");
 const formatMoney = (amount: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);

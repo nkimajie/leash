@@ -15,6 +15,7 @@ import type {
   RestockChanges,
   ServiceModes,
   SpendingRules,
+  YourReason,
 } from "@/schemas";
 
 // ---------- decisions (purchases and payments) ----------
@@ -22,8 +23,10 @@ import type {
 export const fetchDecisions = () => getJson<Decision[]>("/api/decisions");
 export const fetchDecision = (id: string) => getJson<Decision>(`/api/decisions/${id}`);
 export const approveDecision = (id: string) => sendJson<Decision>("POST", `/api/decisions/${id}/approve`);
-export const denyDecision = (id: string) => sendJson<Decision>("POST", `/api/decisions/${id}/deny`);
-export const refundDecision = (id: string) => sendJson<Decision>("POST", `/api/decisions/${id}/refund`);
+export const denyDecision = (id: string, why: YourReason = {}) =>
+  sendJson<Decision>("POST", `/api/decisions/${id}/deny`, why);
+export const refundDecision = (id: string, why: YourReason = {}) =>
+  sendJson<Decision>("POST", `/api/decisions/${id}/refund`, why);
 
 // ---------- people ----------
 

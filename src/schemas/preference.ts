@@ -33,3 +33,16 @@ export const NewPreferenceSchema = z.object({
 });
 
 export type NewPreference = z.input<typeof NewPreferenceSchema>;
+
+/** Quick answers to "why not?" when you deny or refund something. Each one teaches the twin something different. */
+export const QUICK_REASONS = ["too_expensive", "not_needed", "wrong_store", "not_my_taste"] as const;
+export type QuickReason = (typeof QUICK_REASONS)[number];
+
+/** Why you said no, so your twin learns the right lesson. Both parts are optional. */
+export const YourReasonSchema = z.object({
+  reason: z.enum(QUICK_REASONS).optional(),
+  /** Your own words, e.g. "I only want hand grinders". Claude turns it into a preference. */
+  note: z.string().trim().max(240).optional(),
+});
+
+export type YourReason = z.infer<typeof YourReasonSchema>;

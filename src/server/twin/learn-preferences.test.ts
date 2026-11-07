@@ -68,6 +68,31 @@ describe("the twin learns from your decisions", () => {
     expect(lessonFromYourDecision({ ...decisionFor(grinder), kind: "payment", product: null }, "denied")).toBeNull();
   });
 
+  it("when you say 'wrong store', it avoids that store, whatever the product", () => {
+    const learned = asSaved(lessonFromYourDecision(decisionFor(grinder), "denied", { reason: "wrong_store" }));
+    expect(findReasonToAvoid({ ...grinder, id: "beans", price: 9, category: "coffee" }, [learned])).not.toBeNull();
+    expect(findReasonToAvoid({ ...grinder, merchant: "Roastery Row" }, [learned])).toBeNull();
+  });
+
+  it("when you say 'didn't need it', it avoids only that product", () => {
+    const learned = asSaved(lessonFromYourDecision(decisionFor(grinder), "denied", { reason: "not_needed" }));
+    expect(findReasonToAvoid(grinder, [learned])).not.toBeNull();
+    expect(findReasonToAvoid({ ...grinder, id: "other-grinder" }, [learned])).toBeNull();
+  });
+
+  it("keeps your own words in what it learned", () => {
+    const lesson = lessonFromYourDecision(decisionFor(grinder), "denied", {
+      reason: "too_expensive",
+      note: "I only want hand grinders",
+    });
+    expect(lesson?.statement).toContain("I only want hand grinders");
+  });
+
+  it("matches categories however the store writes them", () => {
+    const learned = asSaved(lessonFromYourDecision(decisionFor({ ...grinder, category: "Coffee Grinders" }), "denied"));
+    expect(findReasonToAvoid({ ...grinder, category: "coffee grinder" }, [learned])).not.toBeNull();
+  });
+
   it("ignores free-text preferences when matching products", () => {
     const freeText = asSaved({ sentiment: "avoids", statement: "Avoids single-use plastic" });
     expect(findReasonToAvoid(grinder, [freeText])).toBeNull();

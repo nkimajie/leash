@@ -9,11 +9,12 @@ import "server-only";
 //
 // Scheduled restocks run while you're away, so anything they buy is held for your OK.
 
-import type { AssistantRequest, Decision, NewDecision, Payee, Product, RuleCheck } from "@/schemas";
+import type { AssistantRequest, Decision, NewDecision, Payee, Product, RuleCheck, YourReason } from "@/schemas";
 import * as database from "@/server/database";
 import { ConflictError, NotFoundError } from "@/server/errors";
 import * as paypal from "@/server/payments/paypal";
-import { lessonFromYourDecision } from "@/server/twin/learn-preferences";
+import type { YourAction } from "@/server/twin/learn-preferences";
+import { lessonFromYourWords } from "@/server/twin/understand-your-reason";
 import { calculateSpendingSoFar, checkPayment, checkPurchase, holdForScheduledRestock } from "./check-spending-rules";
 
 // ---------- checking without paying ----------
@@ -104,26 +105,29 @@ export async function approveHeldDecision(decisionId: string): Promise<Decision>
   }
 }
 
-/** You said no: PayPal releases the reserved money. You are never charged. */
-export async function denyHeldDecision(decisionId: string): Promise<Decision> {
+/**
+ * You said no: PayPal releases the reserved money. You are never charged.
+ * If you said why, the twin learns that exact lesson.
+ */
+export async function denyHeldDecision(decisionId: string, why: YourReason = {}): Promise<Decision> {
   const decision = await findDecisionIn(decisionId, ["held"]);
   const result = await paypal.voidAuthorization(decision.paypal.authorizationId!);
   const denied = await database.decisions.updateDecision(decisionId, {
     outcome: "denied",
     paypal: { status: result.status },
   });
-  await rememberLesson(denied, "denied");
+  await rememberLesson(denied, "denied", why);
   return denied;
 }
 
-export async function refundDecision(decisionId: string): Promise<Decision> {
+export async function refundDecision(decisionId: string, why: YourReason = {}): Promise<Decision> {
   const decision = await findDecisionIn(decisionId, ["auto_approved", "approved"]);
   const result = await paypal.refundCapture(decision.paypal.captureId!);
   const refunded = await database.decisions.updateDecision(decisionId, {
     outcome: "refunded",
     paypal: { status: result.status },
   });
-  await rememberLesson(refunded, "refunded");
+  await rememberLesson(refunded, "refunded", why);
   return refunded;
 }
 
@@ -206,7 +210,7 @@ function paymentFailure(error: unknown) {
   return {
     ...failed,
     ruleHit: "payment_error" as const,
-    ruleExplanation: `PayPal said ${error.issue}: ${error.message} Nothing was charged.`,
+    ruleExplanation: `PayPal said ${error.issue}. ${error.plainEnglish} Nothing was charged.`,
   };
 }
 
@@ -227,7 +231,7 @@ async function findDecisionIn(decisionId: string, allowedOutcomes: Decision["out
   return decision;
 }
 
-async function rememberLesson(decision: Decision, action: "approved" | "denied" | "refunded") {
-  const lesson = lessonFromYourDecision(decision, action);
+async function rememberLesson(decision: Decision, action: YourAction, why: YourReason = {}) {
+  const lesson = await lessonFromYourWords(decision, action, why);
   if (lesson) await database.preferences.addPreference(lesson);
 }
