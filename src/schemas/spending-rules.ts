@@ -43,6 +43,27 @@ export const DEFAULT_SPENDING_RULES: SpendingRules = {
   newPeopleNeedApproval: true,
 };
 
+/**
+ * A change to the rules described in plain words ("ask me before anything over $30, no alcohol").
+ * Every field is optional so an AI model can fill in only what the sentence mentions.
+ */
+export const RuleChangesSchema = z.object({
+  autoApproveLimit: z.number().nullable(),
+  defaultRequestBudget: z.number().nullable(),
+  maxItemPrice: z.number().nullable(),
+  maxPaymentPerPerson: z.number().nullable(),
+  dailyCap: z.number().nullable(),
+  weeklyCap: z.number().nullable(),
+  blockCategories: z.array(z.string()),
+  unblockCategories: z.array(z.string()),
+  blockMerchants: z.array(z.string()),
+  newPeopleNeedApproval: z.boolean().nullable(),
+});
+export type RuleChanges = z.infer<typeof RuleChangesSchema>;
+
+/** What the rules would become, and each change in words, for you to confirm. */
+export type RuleSuggestion = { proposed: SpendingRules; changes: string[] };
+
 /** Every rule the engine can report, so the UI can label each one. */
 export const RULE_NAMES = [
   "within_rules",

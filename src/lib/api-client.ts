@@ -14,6 +14,7 @@ import type {
   Preference,
   Restock,
   RestockChanges,
+  RuleSuggestion,
   ServiceModes,
   SpendingRules,
   YourReason,
@@ -66,6 +67,9 @@ export const disconnectPayPal = () => sendJson<PayPalConnection>("DELETE", "/api
 
 export const fetchSpendingRules = () => getJson<SpendingRules>("/api/rules");
 export const saveSpendingRules = (rules: SpendingRules) => sendJson<SpendingRules>("PUT", "/api/rules", rules);
+/** "Ask me before anything over $30" -> suggested rules, shown to you before anything is saved. */
+export const suggestRuleChanges = (sentence: string) =>
+  sendJson<RuleSuggestion>("POST", "/api/rules/suggest", { sentence });
 export const fetchServiceModes = () => getJson<ServiceModes>("/api/status");
 
 // ---------- assistant ----------

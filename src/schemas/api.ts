@@ -7,6 +7,10 @@ export const RunAssistantBody = z.object({
   prompt: z.string().trim().min(3, "Tell the assistant what you need.").max(500),
 });
 
+export const SuggestRulesBody = z.object({
+  sentence: z.string().trim().min(5, "Describe the rule in a few words.").max(300),
+});
+
 /** Deny and refund accept an optional reason; an empty body is fine too. */
 export const YourReasonBody = YourReasonSchema.optional().default({});
 
