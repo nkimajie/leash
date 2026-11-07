@@ -31,9 +31,7 @@ const claude = new Anthropic();
 export async function* runClaudeAssistant(request: AssistantRequest): AsyncGenerator<AssistantEvent> {
   const context: ToolContext = { request };
   const tools = describeToolsForModel();
-  const messages: Anthropic.MessageParam[] = [
-    { role: "user", content: `${request.prompt}\n\n(Budget for this request: $${request.budget.toFixed(2)})` },
-  ];
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: describeRequest(request) }];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const response = await claude.messages.create({
@@ -74,6 +72,15 @@ export async function* runClaudeAssistant(request: AssistantRequest): AsyncGener
   }
 
   yield { type: "reply", text: "I stopped here because this request was taking too many steps." };
+}
+
+/** The request as Claude sees it: your words, the budget, and whether you're there to watch. */
+function describeRequest(request: AssistantRequest): string {
+  const notes = [`Budget for this request: $${request.budget.toFixed(2)}`];
+  if (request.source === "restock") {
+    notes.push("This is a scheduled restock: the user isn't watching, and anything you buy waits for their approval");
+  }
+  return `${request.prompt}\n\n(${notes.join(". ")}.)`;
 }
 
 /** Claude needs the ids and prices in `data`, not just the readable summary. */

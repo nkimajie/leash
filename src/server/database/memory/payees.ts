@@ -2,9 +2,7 @@ import "server-only";
 
 import type { NewPayee, Payee, PayeeChanges } from "@/schemas";
 import { NewPayeeSchema } from "@/schemas";
-import { memoryTables, newId, timestampNow } from "./memory-store";
-
-// TODO(step 6): Supabase `payees` table.
+import { memoryTables, newId, timestampNow } from "./store";
 
 export async function listPayees(): Promise<Payee[]> {
   return [...memoryTables.payees].sort((a, b) => a.name.localeCompare(b.name));

@@ -1,9 +1,7 @@
 import "server-only";
 
 import type { Decision, NewDecision } from "@/schemas";
-import { memoryTables, newId, timestampNow } from "./memory-store";
-
-// TODO(step 6): read and write the `decisions` table in Supabase when its keys are set.
+import { memoryTables, newId, timestampNow } from "./store";
 
 export async function listDecisions(): Promise<Decision[]> {
   return [...memoryTables.decisions].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -11,6 +9,15 @@ export async function listDecisions(): Promise<Decision[]> {
 
 export async function findDecisionById(id: string): Promise<Decision | null> {
   return memoryTables.decisions.find((decision) => decision.id === id) ?? null;
+}
+
+/** Finds the decision a PayPal webhook is about, by its authorization or capture id. */
+export async function findDecisionByPayPalId(paypalId: string): Promise<Decision | null> {
+  return (
+    memoryTables.decisions.find(
+      (d) => d.paypal.authorizationId === paypalId || d.paypal.captureId === paypalId || d.paypal.orderId === paypalId,
+    ) ?? null
+  );
 }
 
 export async function saveNewDecision(details: NewDecision): Promise<Decision> {

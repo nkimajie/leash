@@ -6,6 +6,7 @@ import { ArrowUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantEvent } from "@/schemas";
 import { askAssistant } from "@/lib/api-client";
+import { ConnectReminder } from "@/components/connect/connect-reminder";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { AssistantTimeline } from "./assistant-timeline";
@@ -49,6 +50,7 @@ export function AssistantPage() {
           title="What can I take care of?"
           description="I can buy things and pay people with your PayPal, the way you would. Anything outside your rules waits for your OK."
         />
+        <ConnectReminder />
 
         <form
           onSubmit={(event) => {

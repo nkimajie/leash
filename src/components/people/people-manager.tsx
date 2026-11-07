@@ -49,8 +49,12 @@ export function PeopleManager() {
                 <Avatar name={person.name} />
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{person.name}</div>
-                  <div className="truncate text-sm text-stone-500">
-                    {[person.note, person.email ?? "No PayPal email yet"].filter(Boolean).join(" · ")}
+                  <div className="flex flex-wrap items-center gap-x-1 text-sm text-stone-500">
+                    {person.note && <span>{person.note} ·</span>}
+                    <EmailEditor
+                      email={person.email}
+                      onSave={(email) => attempt(() => updatePayee(person.id, { email }))}
+                    />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-stone-600">
@@ -128,6 +132,50 @@ function AddPersonForm({
         </Button>
       </form>
     </Card>
+  );
+}
+
+/** Shows a person's PayPal email; click it to change it. */
+function EmailEditor({ email, onSave }: { email: string | null; onSave: (email: string | null) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(email ?? "");
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="truncate underline decoration-stone-300 underline-offset-2 hover:text-stone-800"
+        title="Change PayPal email"
+      >
+        {email ?? "Add PayPal email"}
+      </button>
+    );
+  }
+  return (
+    <form
+      className="flex items-center gap-2"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        await onSave(value.trim() || null);
+        setEditing(false);
+      }}
+    >
+      <TextInput
+        type="email"
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="h-8 w-56 text-sm"
+        placeholder="name@personal.example.com"
+      />
+      <Button type="submit" size="sm">
+        Save
+      </Button>
+      <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
+        Cancel
+      </Button>
+    </form>
   );
 }
 

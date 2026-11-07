@@ -12,6 +12,14 @@ export function formatWhen(isoDate: string) {
   return `${date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
 }
 
+/** "today", "in 4 days" or "3 days ago". */
+export function formatDaysAway(isoDate: string) {
+  const days = Math.round((new Date(isoDate).getTime() - Date.now()) / 86_400_000);
+  if (days === 0) return "today";
+  if (days > 0) return days === 1 ? "tomorrow" : `in ${days} days`;
+  return days === -1 ? "yesterday" : `${-days} days ago`;
+}
+
 /** Joins class names, skipping empty ones. */
 export function classNames(...names: (string | false | null | undefined)[]) {
   return names.filter(Boolean).join(" ");

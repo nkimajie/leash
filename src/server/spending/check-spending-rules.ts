@@ -169,3 +169,16 @@ function moneyFormatter(currency: string) {
   const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency });
   return (amount: number) => formatter.format(amount);
 }
+
+/**
+ * Scheduled restocks run while you're away, so even a purchase within every rule
+ * waits for your OK. Blocked stays blocked, and anything already held stays held.
+ */
+export function holdForScheduledRestock(check: RuleCheck): RuleCheck {
+  if (check.verdict !== "allowed") return check;
+  return {
+    verdict: "needs_approval",
+    ruleHit: "scheduled_restock",
+    explanation: "Scheduled restocks always wait for your OK, because you weren't there when it ran.",
+  };
+}

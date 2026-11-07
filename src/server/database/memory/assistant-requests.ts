@@ -1,12 +1,21 @@
 import "server-only";
 
 import type { AssistantRequest } from "@/schemas";
-import { memoryTables, newId, timestampNow } from "./memory-store";
+import { memoryTables, newId, timestampNow } from "./store";
 
-// TODO(step 6): Supabase `assistant_requests` table.
-
-export async function startAssistantRequest(prompt: string, budget: number): Promise<AssistantRequest> {
-  const request: AssistantRequest = { id: newId(), prompt, budget, status: "working", createdAt: timestampNow() };
+export async function startAssistantRequest(
+  prompt: string,
+  budget: number,
+  source: AssistantRequest["source"] = "you",
+): Promise<AssistantRequest> {
+  const request: AssistantRequest = {
+    id: newId(),
+    prompt,
+    budget,
+    status: "working",
+    source,
+    createdAt: timestampNow(),
+  };
   memoryTables.assistantRequests.unshift(request);
   return request;
 }

@@ -2,9 +2,7 @@ import "server-only";
 
 import type { NewPreference, Preference } from "@/schemas";
 import { NewPreferenceSchema } from "@/schemas";
-import { memoryTables, newId, timestampNow } from "./memory-store";
-
-// TODO(step 6): Supabase `preferences` table.
+import { memoryTables, newId, timestampNow } from "./store";
 
 export async function listPreferences(): Promise<Preference[]> {
   return [...memoryTables.preferences].sort((a, b) => b.createdAt.localeCompare(a.createdAt));

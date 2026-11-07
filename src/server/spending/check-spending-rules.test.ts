@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SPENDING_RULES, type SpendingRules } from "@/schemas";
-import { calculateSpendingSoFar, checkPayment, checkPurchase, type SpendingSoFar } from "./check-spending-rules";
+import {
+  calculateSpendingSoFar,
+  checkPayment,
+  checkPurchase,
+  holdForScheduledRestock,
+  type SpendingSoFar,
+} from "./check-spending-rules";
 
 const rules: SpendingRules = { ...DEFAULT_SPENDING_RULES, autoApproveLimit: 50 };
 const nothingSpent: SpendingSoFar = { requestBudget: 60, spentOnRequest: 0, spentToday: 0, spentThisWeek: 0 };
@@ -126,5 +132,17 @@ describe("calculateSpendingSoFar", () => {
       now,
     );
     expect(soFar).toEqual({ requestBudget: 60, spentOnRequest: 99, spentToday: 99, spentThisWeek: 119 });
+  });
+});
+
+describe("holdForScheduledRestock", () => {
+  it("holds a purchase that would otherwise be paid automatically", () => {
+    const check = holdForScheduledRestock({ verdict: "allowed", ruleHit: "within_rules", explanation: "" });
+    expect(check).toMatchObject({ verdict: "needs_approval", ruleHit: "scheduled_restock" });
+  });
+
+  it("keeps a blocked purchase blocked", () => {
+    const blocked = { verdict: "blocked", ruleHit: "blocked_category", explanation: "" } as const;
+    expect(holdForScheduledRestock(blocked)).toEqual(blocked);
   });
 });

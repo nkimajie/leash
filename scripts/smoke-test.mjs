@@ -125,5 +125,31 @@ check("invalid rules are rejected with 400", badRules.status === 400);
 const emptyPrompt = await call("POST", "/api/assistant", { prompt: "" });
 check("an empty request is rejected with 400", emptyPrompt.status === 400);
 
+// 6. Recurring restocks: anything a schedule buys waits for you
+const restock = await call("POST", "/api/restocks", { prompt: "Restock dog food", everyDays: 30 });
+check("a restock can be scheduled", restock.status === 201 && restock.body.everyDays === 30);
+const restockRun = await call("POST", `/api/restocks/${restock.body.id}/run`);
+const restockDecisions = restockRun.body?.decisions ?? [];
+check(
+  "a restock's purchases are held for approval, even within the rules",
+  restockDecisions.length > 0 &&
+    restockDecisions.every((d) => d.outcome === "held" || d.outcome === "blocked") &&
+    restockDecisions.some((d) => d.ruleHit === "scheduled_restock"),
+  JSON.stringify(restockDecisions.map((d) => [d.title, d.outcome, d.ruleHit])),
+);
+check(
+  "running a restock schedules the next one",
+  restockRun.body?.restock?.lastRunAt && new Date(restockRun.body.restock.nextRunAt) > new Date(),
+);
+
+// 7. PayPal connection and the daily job
+const paypalConnection = await call("GET", "/api/paypal/connection");
+check(
+  "the PayPal connection status answers",
+  paypalConnection.status === 200 && typeof paypalConnection.body.connected === "boolean",
+);
+const keepaliveWithoutSecret = await call("GET", "/api/keepalive");
+check("the daily job refuses callers without the cron secret", keepaliveWithoutSecret.status === 401);
+
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

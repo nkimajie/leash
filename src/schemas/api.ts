@@ -8,4 +8,5 @@ export const RunAssistantBody = z.object({
 
 export { NewPayeeSchema as CreatePayeeBody, PayeeChangesSchema as UpdatePayeeBody } from "./payee";
 export { NewPreferenceSchema as CreatePreferenceBody } from "./preference";
+export { NewRestockSchema as CreateRestockBody, RestockChangesSchema as UpdateRestockBody } from "./restock";
 export { SpendingRulesSchema as UpdateRulesBody } from "./spending-rules";

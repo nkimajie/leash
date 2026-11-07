@@ -6,5 +6,7 @@ export * from "./decision";
 export * from "./payee";
 export * from "./preference";
 export * from "./product";
+export * from "./restock";
 export * from "./spending-rules";
 export * from "./service-modes";
+export * from "./wallet";

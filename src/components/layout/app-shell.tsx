@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, MessageSquareText, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { CalendarClock, LayoutGrid, MessageSquareText, ShieldCheck, Sparkles, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -13,7 +13,9 @@ const NAVIGATION = [
   { href: "/control-room", label: "Control room", icon: LayoutGrid },
   { href: "/people", label: "People", icon: Users },
   { href: "/twin", label: "Your twin", icon: Sparkles },
+  { href: "/restocks", label: "Restocks", icon: CalendarClock },
   { href: "/rules", label: "Rules", icon: ShieldCheck },
+  { href: "/connect", label: "Connect PayPal", icon: Wallet },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

@@ -12,3 +12,8 @@ export class ConflictError extends Error {
 export class BadRequestError extends Error {
   readonly status = 400;
 }
+
+/** The caller didn't prove who it is, e.g. a wrong cron secret. Routes answer with 401. */
+export class UnauthorizedError extends Error {
+  readonly status = 401;
+}

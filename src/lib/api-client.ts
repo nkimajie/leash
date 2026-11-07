@@ -8,7 +8,11 @@ import type {
   NewPreference,
   Payee,
   PayeeChanges,
+  NewRestock,
+  PayPalConnection,
   Preference,
+  Restock,
+  RestockChanges,
   ServiceModes,
   SpendingRules,
 } from "@/schemas";
@@ -34,6 +38,23 @@ export const removePayee = (id: string) => sendJson<void>("DELETE", `/api/payees
 export const fetchPreferences = () => getJson<Preference[]>("/api/preferences");
 export const addPreference = (details: NewPreference) => sendJson<Preference>("POST", "/api/preferences", details);
 export const removePreference = (id: string) => sendJson<void>("DELETE", `/api/preferences/${id}`);
+
+// ---------- recurring restocks ----------
+
+export type RestockRun = { restock: Restock; decisions: Decision[]; reply: string };
+
+export const fetchRestocks = () => getJson<Restock[]>("/api/restocks");
+export const addRestock = (details: NewRestock) => sendJson<Restock>("POST", "/api/restocks", details);
+export const updateRestock = (id: string, changes: RestockChanges) =>
+  sendJson<Restock>("PATCH", `/api/restocks/${id}`, changes);
+export const removeRestock = (id: string) => sendJson<void>("DELETE", `/api/restocks/${id}`);
+export const runRestockNow = (id: string) => sendJson<RestockRun>("POST", `/api/restocks/${id}/run`);
+
+// ---------- your PayPal account ----------
+
+export const fetchPayPalConnection = () => getJson<PayPalConnection>("/api/paypal/connection");
+export const startConnectingPayPal = () => sendJson<{ approvalUrl: string }>("POST", "/api/paypal/connect");
+export const disconnectPayPal = () => sendJson<PayPalConnection>("DELETE", "/api/paypal/connection");
 
 // ---------- rules and status ----------
 

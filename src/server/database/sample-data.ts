@@ -2,7 +2,7 @@ import "server-only";
 
 // Sample history so every screen has something to show on first run.
 
-import type { Decision, Outcome, Payee, Preference, RuleName } from "@/schemas";
+import type { Decision, Outcome, Payee, Preference, Restock, RuleName } from "@/schemas";
 import { SAMPLE_CATALOG } from "@/server/products/sample-catalog";
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
@@ -197,4 +197,27 @@ export function sampleDecisions(): Decision[] {
       updatedAt: at,
     };
   });
+}
+
+export function sampleRestocks(): Restock[] {
+  return [
+    {
+      id: "restock-dog-food",
+      prompt: "Restock dog food",
+      everyDays: 30,
+      nextRunAt: hoursAgo(-24 * 4),
+      lastRunAt: hoursAgo(24 * 26),
+      active: true,
+      createdAt: hoursAgo(24 * 60),
+    },
+    {
+      id: "restock-coffee",
+      prompt: "Restock fair-trade coffee beans, under $20",
+      everyDays: 14,
+      nextRunAt: hoursAgo(2),
+      lastRunAt: hoursAgo(24 * 14 + 2),
+      active: true,
+      createdAt: hoursAgo(24 * 40),
+    },
+  ];
 }

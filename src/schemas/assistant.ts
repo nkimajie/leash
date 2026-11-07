@@ -7,6 +7,8 @@ export const AssistantRequestSchema = z.object({
   prompt: z.string(),
   budget: z.number(),
   status: z.enum(["working", "finished", "failed"]),
+  /** "you" typed it; "restock" means a schedule started it while you were away. */
+  source: z.enum(["you", "restock"]),
   createdAt: z.string(),
 });
 export type AssistantRequest = z.infer<typeof AssistantRequestSchema>;

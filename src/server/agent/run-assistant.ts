@@ -11,11 +11,19 @@ import { runClaudeAssistant } from "./claude-assistant";
 import { runMockAssistant } from "./mock-assistant";
 import { readBudget } from "./read-request";
 
-export async function* runAssistant(prompt: string): AsyncGenerator<AssistantEvent> {
+/**
+ * @param source "you" when you typed the request, "restock" when a schedule started it.
+ *               Anything a restock buys is held for your approval.
+ */
+export async function* runAssistant(
+  prompt: string,
+  source: AssistantRequest["source"] = "you",
+): AsyncGenerator<AssistantEvent> {
   const rules = await database.spendingRules.loadSpendingRules();
   const request = await database.assistantRequests.startAssistantRequest(
     prompt,
     readBudget(prompt) ?? rules.defaultRequestBudget,
+    source,
   );
   yield { type: "request_started", request };
 

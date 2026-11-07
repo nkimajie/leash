@@ -21,6 +21,7 @@ export const RULE_LABEL: Record<RuleName, string> = {
   auto_approve_limit: "Over auto-approve limit",
   request_budget: "Over request budget",
   new_person: "New person",
+  scheduled_restock: "Scheduled restock",
   max_item_price: "Over max item price",
   max_payment_per_person: "Over per-person limit",
   daily_cap: "Daily cap reached",
@@ -33,6 +34,7 @@ export const RULE_LABEL: Record<RuleName, string> = {
   invalid_amount: "Invalid amount",
   payment_declined: "Card declined",
   payment_error: "PayPal error",
+  paypal_not_connected: "PayPal not connected",
 };
 
 export const TOOL_LABEL: Record<string, string> = {

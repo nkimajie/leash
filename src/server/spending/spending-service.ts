@@ -6,19 +6,21 @@ import "server-only";
 //   rules say "blocked"         -> save as blocked; PayPal is never called
 //   rules say "needs_approval"  -> PayPal reserves the money -> held until you decide
 //   rules say "allowed"         -> PayPal reserves, then takes the money -> auto_approved
+//
+// Scheduled restocks run while you're away, so anything they buy is held for your OK.
 
 import type { AssistantRequest, Decision, NewDecision, Payee, Product, RuleCheck } from "@/schemas";
 import * as database from "@/server/database";
 import { ConflictError, NotFoundError } from "@/server/errors";
 import * as paypal from "@/server/payments/paypal";
 import { lessonFromYourDecision } from "@/server/twin/learn-preferences";
-import { calculateSpendingSoFar, checkPayment, checkPurchase } from "./check-spending-rules";
+import { calculateSpendingSoFar, checkPayment, checkPurchase, holdForScheduledRestock } from "./check-spending-rules";
 
 // ---------- checking without paying ----------
 
 export async function checkPurchaseRules(request: AssistantRequest, product: Product): Promise<RuleCheck> {
   const { rules, soFar } = await loadRulesAndSpending(request);
-  return checkPurchase(
+  const check = checkPurchase(
     {
       title: product.title,
       amount: product.price,
@@ -29,15 +31,17 @@ export async function checkPurchaseRules(request: AssistantRequest, product: Pro
     rules,
     soFar,
   );
+  return request.source === "restock" ? holdForScheduledRestock(check) : check;
 }
 
 export async function checkPaymentRules(request: AssistantRequest, payee: Payee, amount: number): Promise<RuleCheck> {
   const { rules, soFar } = await loadRulesAndSpending(request);
-  return checkPayment(
+  const check = checkPayment(
     { personName: payee.name, amount, currency: rules.currency, personIsTrusted: payee.trusted },
     rules,
     soFar,
   );
+  return request.source === "restock" ? holdForScheduledRestock(check) : check;
 }
 
 // ---------- the assistant spending money ----------
@@ -143,6 +147,7 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
       amount: details.amount,
       currency: details.currency,
       description: details.title,
+      paysPerson: details.kind === "payment",
       recipientEmail: details.payee?.email,
     });
   } catch (error) {
@@ -182,13 +187,26 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
 /** Turns a PayPal error into the fields saved on a failed decision. Re-throws anything else. */
 function paymentFailure(error: unknown) {
   if (!(error instanceof paypal.PayPalError)) throw error;
+  const failed = { outcome: "failed" as const, paypal: { status: error.issue, debugId: error.debugId || null } };
+  if (error.isDeclined) {
+    return {
+      ...failed,
+      ruleHit: "payment_declined" as const,
+      ruleExplanation: "PayPal declined the payment method (INSTRUMENT_DECLINED). Nothing was charged.",
+      paypal: { ...failed.paypal, status: "DECLINED" },
+    };
+  }
+  if (error.issue === "PAYPAL_NOT_CONNECTED") {
+    return {
+      ...failed,
+      ruleHit: "paypal_not_connected" as const,
+      ruleExplanation: "Your PayPal account isn't connected yet, so nothing was charged. Connect it first.",
+    };
+  }
   return {
-    outcome: "failed" as const,
-    ruleHit: error.isDeclined ? ("payment_declined" as const) : ("payment_error" as const),
-    ruleExplanation: error.isDeclined
-      ? "PayPal declined the payment method (INSTRUMENT_DECLINED). Nothing was charged."
-      : `PayPal returned ${error.issue}. Nothing was charged.`,
-    paypal: { status: error.isDeclined ? "DECLINED" : error.issue, debugId: error.debugId },
+    ...failed,
+    ruleHit: "payment_error" as const,
+    ruleExplanation: `PayPal said ${error.issue}: ${error.message} Nothing was charged.`,
   };
 }
 

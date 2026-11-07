@@ -5,7 +5,8 @@ import "server-only";
 
 import { unstable_rethrow as rethrowNextInternalErrors } from "next/navigation";
 import { z } from "zod";
-import { BadRequestError, ConflictError, NotFoundError } from "./errors";
+import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "./errors";
+import { PayPalError } from "./payments/paypal-error";
 
 /** Reads the JSON body and checks it against a schema. Throws a 400 error if it doesn't fit. */
 export async function readJsonBody<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
@@ -22,8 +23,17 @@ export function apiRoute<Args extends unknown[]>(handler: (...args: Args) => Pro
       return await handler(...args);
     } catch (error) {
       rethrowNextInternalErrors(error); // let Next.js handle its own signals (e.g. from connection())
-      if (error instanceof BadRequestError || error instanceof NotFoundError || error instanceof ConflictError) {
+      if (
+        error instanceof BadRequestError ||
+        error instanceof NotFoundError ||
+        error instanceof ConflictError ||
+        error instanceof UnauthorizedError
+      ) {
         return Response.json({ error: error.message }, { status: error.status });
+      }
+      if (error instanceof PayPalError) {
+        const debug = error.debugId ? ` (debug_id ${error.debugId})` : "";
+        return Response.json({ error: `PayPal: ${error.message}${debug}` }, { status: 502 });
       }
       console.error("Unexpected API error", error);
       return Response.json({ error: "Something went wrong on our side." }, { status: 500 });

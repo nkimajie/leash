@@ -49,6 +49,7 @@ export const RULE_NAMES = [
   "auto_approve_limit",
   "request_budget",
   "new_person",
+  "scheduled_restock",
   "max_item_price",
   "max_payment_per_person",
   "daily_cap",
@@ -61,6 +62,7 @@ export const RULE_NAMES = [
   "invalid_amount",
   "payment_declined",
   "payment_error",
+  "paypal_not_connected",
 ] as const;
 
 export type RuleName = (typeof RULE_NAMES)[number];

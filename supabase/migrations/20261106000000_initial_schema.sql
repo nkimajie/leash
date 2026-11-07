@@ -4,6 +4,8 @@
 
 create extension if not exists "pgcrypto";
 
+-- Ids are text (random UUIDs by default) so the app can seed readable sample rows.
+
 -- Your spending rules (the leash). One row per user.
 create table spending_rules (
   user_id     text primary key default 'demo',
@@ -13,7 +15,7 @@ create table spending_rules (
 
 -- Your saved PayPal payment method (PayPal Vault), so the assistant can pay without a popup.
 create table wallets (
-  id               uuid primary key default gen_random_uuid(),
+  id               text primary key default gen_random_uuid()::text,
   user_id          text not null default 'demo',
   paypal_vault_id  text not null,
   payer_email      text,
@@ -22,7 +24,7 @@ create table wallets (
 
 -- People the assistant may send money to.
 create table payees (
-  id          uuid primary key default gen_random_uuid(),
+  id          text primary key default gen_random_uuid()::text,
   user_id     text not null default 'demo',
   name        text not null,
   email       text,
@@ -33,7 +35,7 @@ create table payees (
 
 -- What your digital twin knows about you.
 create table preferences (
-  id                        uuid primary key default gen_random_uuid(),
+  id                        text primary key default gen_random_uuid()::text,
   user_id                   text not null default 'demo',
   sentiment                 text not null check (sentiment in ('likes', 'avoids')),
   statement                 text not null,
@@ -42,24 +44,37 @@ create table preferences (
   product_id                text,
   price_at_least            numeric(12, 2),
   source                    text not null check (source in ('you', 'learned')),
-  learned_from_decision_id  uuid,
+  learned_from_decision_id  text,
   created_at                timestamptz not null default now()
 );
 
 -- Each message you send the assistant.
 create table assistant_requests (
-  id          uuid primary key default gen_random_uuid(),
+  id          text primary key default gen_random_uuid()::text,
   user_id     text not null default 'demo',
   prompt      text not null,
   budget      numeric(12, 2) not null,
   status      text not null check (status in ('working', 'finished', 'failed')),
+  source      text not null default 'you' check (source in ('you', 'restock')),
   created_at  timestamptz not null default now()
+);
+
+-- Requests the assistant repeats on a schedule. Anything they buy waits for your OK.
+create table restocks (
+  id           text primary key default gen_random_uuid()::text,
+  user_id      text not null default 'demo',
+  prompt       text not null,
+  every_days   integer not null check (every_days between 1 and 365),
+  next_run_at  timestamptz not null,
+  last_run_at  timestamptz,
+  active       boolean not null default true,
+  created_at   timestamptz not null default now()
 );
 
 -- Every purchase or payment the assistant attempted, and what happened. The control room grid.
 create table decisions (
-  id                       uuid primary key default gen_random_uuid(),
-  request_id               uuid references assistant_requests (id),
+  id                       text primary key default gen_random_uuid()::text,
+  request_id               text not null,
   kind                     text not null check (kind in ('purchase', 'payment')),
   title                    text not null,
   counterparty             text not null,
@@ -92,10 +107,12 @@ alter table payees              enable row level security;
 alter table preferences         enable row level security;
 alter table assistant_requests  enable row level security;
 alter table decisions           enable row level security;
+alter table restocks            enable row level security;
 
 create policy "read decisions"    on decisions    for select to anon using (true);
 create policy "read payees"       on payees       for select to anon using (true);
 create policy "read preferences"  on preferences  for select to anon using (true);
+create policy "read restocks"     on restocks     for select to anon using (true);
 -- wallets, rules and requests are read by the server only.
 
 -- Live updates for the control room grid.
