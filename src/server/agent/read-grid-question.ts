@@ -4,7 +4,7 @@
 import type { GridView, Outcome } from "@/schemas";
 
 const OUTCOME_WORDS: [RegExp, Outcome[], string][] = [
-  [/\b(held|waiting|pending|reserved)\b/i, ["held"], "waiting for you"],
+  [/\b(held|waiting|pending|reserved)\b/i, ["held"], "held"],
   [/\bblocked\b/i, ["blocked"], "blocked"],
   [/\bdenied\b/i, ["denied"], "denied"],
   [/\brefund/i, ["refunded"], "refunded"],
@@ -59,9 +59,10 @@ function describeView(view: GridView, outcomeWord?: string): string {
     view.minAmount !== null && `over $${view.minAmount}`,
     view.maxAmount !== null && `under $${view.maxAmount}`,
     view.sinceDays === 1 ? "today" : view.sinceDays === 7 ? "this week" : null,
-    view.sortDirection === "desc" ? "biggest first" : view.sortDirection === "asc" ? "smallest first" : null,
   ];
-  return parts.filter(Boolean).join(" ");
+  const order =
+    view.sortDirection === "desc" ? ", biggest first" : view.sortDirection === "asc" ? ", smallest first" : "";
+  return parts.filter(Boolean).join(" ") + order;
 }
 
 const capitalise = (word: string) => word[0].toUpperCase() + word.slice(1);
