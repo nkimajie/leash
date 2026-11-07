@@ -7,6 +7,21 @@ and it searches, decides, and pays. Every payment is checked against your spendi
 outside them is **reserved but not taken** until you approve it on your phone. It also learns your taste from
 every approve, deny and refund, like a digital twin.
 
+## For judges: a 60-second test
+
+1. Open the live demo (link in the Devpost submission). PayPal is already connected to a sandbox account, so you
+   don't need to log in to anything.
+2. On **Assistant**, click **"Restock my coffee setup, under $60…"**. Watch Claude search, check the rules and pay.
+   The beans are paid; the $85 grinder is **held**: PayPal has reserved the money but not taken it.
+3. Scan the QR code (or click **Open approval screen**) and tap **Deny**. Say why, in your own words. PayPal voids the
+   reservation, and the screen shows what your twin learned. Ask for a grinder again: it picks differently.
+4. Click **Try to break the leash** and pick an attack. A scam "takes over" the assistant, and the rules stop the money
+   anyway.
+5. Open **Control room** and ask it a question in plain English, e.g. _"what did I spend on coffee this week?"_.
+   Click any row to see each PayPal step with its id.
+
+Everyone shares one demo account. **Reset demo** (bottom left) puts it back to the start, and it resets every night.
+
 ## How the money moves
 
 | Your rules say                                             | PayPal does                     | You see                                        |
@@ -20,6 +35,28 @@ every approve, deny and refund, like a digital twin.
 You connect your PayPal account once with **PayPal Vault**. After that the assistant pays with the saved account,
 so there is no PayPal popup for every purchase, and the authorize-then-capture flow is what makes "held" possible.
 
+## How it fits together
+
+```mermaid
+flowchart LR
+  you([You]) -->|"Restock my coffee, under $60"| claude[Claude Haiku<br/>tool-use agent]
+  claude -->|can only call tools| tools[search · check rules · buy · pay · remember]
+  tools --> channel3[(Channel3<br/>product search)]
+  tools --> rules{Spending rules<br/>pure code, unit tested}
+  rules -->|hard rule| blocked[Blocked<br/>PayPal never called]
+  rules -->|within every rule| paid[PayPal: authorize + capture]
+  rules -->|needs your OK| held[PayPal: authorize<br/>money reserved]
+  held --> phone[Your phone:<br/>approve or deny + why]
+  phone -->|approve| capture[PayPal: capture]
+  phone -->|deny| void[PayPal: void]
+  void --> twin[Digital twin<br/>Claude turns your reason into a preference]
+  twin -.->|next time| claude
+```
+
+Claude decides _what_ to buy. Code decides _whether money moves_: every purchase and payment goes through one
+function, `server/spending/spending-service.ts`, which applies the rules, calls PayPal, saves the decision and
+teaches the twin, in that order, every time.
+
 ## What it can do
 
 - **Shop like you.** Claude searches real products (Channel3), explains every pick, and avoids things you've said
@@ -29,8 +66,19 @@ so there is no PayPal popup for every purchase, and the authorize-then-capture f
   everything it has learned, and you can teach it or make it forget.
 - **Restock on a schedule.** "Restock dog food every 30 days." A daily job runs what's due. You aren't there to
   watch, so everything a restock buys waits for your OK.
+- **Approve from your phone.** Anything held shows a QR code. Scan it, approve or deny, and the desktop updates live.
+- **Ask why, and learn it.** When you deny, say why: "too expensive", "wrong store", or your own words like "I only
+  want hand grinders". Claude turns it into a precise preference, and the twin applies it next time.
+- **Survive a hijack.** "Try to break the leash" plays three scams against the assistant: $900 to a stranger, gift
+  cards from a poisoned product page, and draining the budget in small buys. They skip the AI entirely, so only the
+  rules stand in the way, and they hold.
 - **Show everything.** The AG Grid control room lists every decision live, with the rule that applied, the AI's
-  reasoning, the PayPal status and `debug_id`, and approve, deny and refund buttons.
+  reasoning, the PayPal status and `debug_id`, and approve, deny and refund buttons. Ask it questions in plain
+  English ("held payments over $20, biggest first"): Claude turns them into grid filters and sorting, and the totals
+  row adds up exactly what you see. Click a row to see each PayPal step with its id.
+- **Rules in your own words.** "Ask me before anything over $30, and no snacks." Claude suggests the change, you see
+  each difference, and nothing is saved until you confirm.
+- **Never leave money stuck.** A reservation nobody answers is released after 7 days by the daily job.
 
 ## Run it locally (no keys needed)
 
@@ -58,6 +106,7 @@ Each service switches from mock to real as soon as its keys are in `.env.local`.
 | **Channel3** (product search)  | `CHANNEL3_API_KEY`                                                                       | channel3.ai                                                                                                                                                                               |
 | **Supabase** (database + live) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Create a project, open the SQL editor and run `supabase/migrations/20261106000000_initial_schema.sql`. The app adds sample data on first start.                                           |
 | Daily job                      | `CRON_SECRET`                                                                            | Any long random text.                                                                                                                                                                     |
+| Public demo                    | `DEMO_MODE=true`                                                                         | For a shared demo: adds **Reset demo**, resets every night, hides **Disconnect**, and caps Claude use per visitor (the built-in assistant takes over past the cap).                       |
 
 To pay a person for real in the sandbox, set their PayPal email on the **People** page to a sandbox account's
 email (developer.paypal.com > Sandbox accounts).
@@ -114,10 +163,12 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
 
 - **PayPal**: Orders v2 (authorize, capture, void), Payments v2 (refund), Vault v3 (saved payment method),
   webhooks and negative testing, through `@paypal/paypal-server-sdk`
-- **Claude** (Anthropic): Claude Haiku with tool use, through `@anthropic-ai/sdk`
+- **Claude** (Anthropic): Claude Haiku, through `@anthropic-ai/sdk`. Tool use for the assistant, and structured
+  outputs (checked with zod) for the twin's lessons, control room questions and rules in your own words
 - **Channel3**: product search API
 - **Supabase**: Postgres and Realtime
-- **AG Grid Community**: the control room grid
+- **AG Grid Community**: the control room grid: external filters and sorting set by Claude, quick filter, a pinned
+  totals row for the rows shown, cell flashing on live updates, and row selection for the PayPal step-by-step view
 - **Render**: hosting and the daily cron job
 - Next.js 16, React 19, TypeScript, zod, Tailwind CSS, Vitest, lucide icons
 
