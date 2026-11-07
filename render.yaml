@@ -1,0 +1,59 @@
+# Render Blueprint: creates the Leash web app and its daily job in one step.
+# Render dashboard > New > Blueprint > pick this repository.
+# Values marked `sync: false` are asked for when you create the Blueprint; leave any blank to use mock mode.
+
+services:
+  # The app itself (pages + API)
+  - type: web
+    name: leash
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: CRON_SECRET
+        generateValue: true
+      - key: APP_URL # e.g. https://leash.onrender.com, so PayPal can send you back after connecting
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CHANNEL3_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DEMO_FORCE_DECLINE
+        value: "false"
+
+  # Once a day: keep the database awake and run recurring restocks that are due.
+  - type: cron
+    name: leash-daily
+    runtime: node
+    schedule: "0 7 * * *" # 07:00 UTC
+    buildCommand: echo "nothing to build"
+    startCommand: 'curl --fail --silent --show-error -H "Authorization: Bearer $CRON_SECRET" "https://$APP_HOST/api/keepalive"'
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          type: web
+          name: leash
+          envVarKey: CRON_SECRET
+      - key: APP_HOST
+        fromService:
+          type: web
+          name: leash
+          property: host

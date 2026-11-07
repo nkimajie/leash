@@ -7,21 +7,26 @@ How Leash is organised, and the rules every change follows. Read this before add
 ```
 src/
   app/                      Routes only. Pages and API endpoints stay thin.
-    (dashboard)/            Pages that share the sidebar: assistant, control room, people, twin, rules
+    (dashboard)/            Pages that share the sidebar: assistant, control room, people, twin, restocks,
+                            rules, connect PayPal
     approve/[id]/           Phone-sized approval screen (no sidebar)
     api/                    HTTP endpoints. Each one: validate input -> call a server function -> return JSON
   components/               React components, grouped by screen
     ui/                     Shared building blocks: Button, Card, form fields, badges
     layout/                 App shell, logo, service status
-    assistant/ control-room/ approvals/ people/ twin/ rules/
+    assistant/ control-room/ approvals/ people/ twin/ restocks/ rules/ connect/
   lib/                      Browser-safe helpers: API client, formatting, labels, hooks
   schemas/                  SCHEMA SECTION. Zod schemas + TypeScript types for every kind of data
   server/                   Server-only code (never imported by components)
     agent/                  AGENT SECTION. The assistant, its tools, and request parsing
       tools/                One file per tool the assistant can use
-    database/               DATABASE SECTION. One repository file per table
-    payments/               PayPal: authorize, capture, void, refund (+ mock)
+    database/               DATABASE SECTION. One file per table, in two versions with the same functions:
+      memory/               no setup, resets on restart (used when Supabase keys are missing)
+      supabase/             the real Postgres database; adds sample data to an empty database
+      index.ts              picks one; TypeScript checks both versions match
+    payments/               PayPal: authorize, capture, void, refund, connecting with Vault, webhooks (+ mock)
     products/               Product search: Channel3 (+ sample catalog)
+    restocks/               Recurring restocks and the daily job
     spending/               The rule engine and the money path
     twin/                   The digital twin: learning preferences from your decisions
     config/                 Environment variables and service modes
@@ -40,6 +45,7 @@ docs/                       Documentation
 6. **Routes stay thin.** A route reads input with `readJsonBody(request, Schema)`, calls one server function, and returns `Response.json(...)`. Wrap handlers in `apiRoute(...)` so errors become clear JSON. Throw `NotFoundError`, `ConflictError` or `BadRequestError` from `server/errors.ts` for expected failures.
 7. **GET routes that read changing data call `await connection()`** (from `next/server`), or Next.js may freeze the response at build time.
 8. **Components never call `fetch` directly.** Use the functions in `src/lib/api-client.ts`.
+9. **A new table gets both versions.** Add it to `database/memory/` and `database/supabase/` with the same functions, plus the SQL in `supabase/migrations/`. The build fails if the two versions don't match.
 
 ## Naming
 
