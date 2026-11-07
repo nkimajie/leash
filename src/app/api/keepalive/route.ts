@@ -1,7 +1,8 @@
 // GET /api/keepalive   (header: Authorization: Bearer <CRON_SECRET>)
-// Called once a day by a Render Cron Job. It does two things:
+// Called once a day by a Render Cron Job. It does three things:
 //   1. touches the database, so a free Supabase project never pauses for inactivity
 //   2. runs any recurring restocks that are due (anything they buy waits for your OK)
+//   3. releases reserved money you didn't answer within 7 days
 
 import { connection } from "next/server";
 import { apiRoute } from "@/server/http";

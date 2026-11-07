@@ -131,6 +131,34 @@ export async function refundDecision(decisionId: string, why: YourReason = {}): 
   return refunded;
 }
 
+/** How long a held purchase or payment waits for you before the reserved money is released. */
+export const DAYS_TO_ANSWER = 7;
+
+/**
+ * Releases reservations nobody answered in time, so money is never stuck "reserved".
+ * (PayPal keeps an authorization for 29 days; a week is plenty for a yes or no.)
+ * The twin learns nothing: you didn't say no, you just didn't answer.
+ */
+export async function releaseForgottenHolds(now = new Date()): Promise<Decision[]> {
+  const cutoff = now.getTime() - DAYS_TO_ANSWER * 24 * 60 * 60 * 1000;
+  const forgotten = (await database.decisions.listDecisions()).filter(
+    (d) => d.outcome === "held" && new Date(d.createdAt).getTime() < cutoff,
+  );
+
+  const released: Decision[] = [];
+  for (const decision of forgotten) {
+    const result = await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => null);
+    released.push(
+      await database.decisions.updateDecision(decision.id, {
+        outcome: "denied",
+        ruleExplanation: `Nobody answered for ${DAYS_TO_ANSWER} days, so the reserved money was released. Nothing was charged.`,
+        paypal: { status: result?.status ?? "VOIDED" },
+      }),
+    );
+  }
+  return released;
+}
+
 // ---------- internals ----------
 
 type DecisionDetails = Omit<NewDecision, "outcome" | "ruleHit" | "ruleExplanation" | "paypal">;
