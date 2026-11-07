@@ -4,7 +4,7 @@ import "server-only";
 // It keeps the database awake, runs restocks that are due, and releases reservations
 // nobody answered in time.
 
-import { cronSecret } from "@/server/config/environment";
+import { cronSecret, serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { UnauthorizedError } from "@/server/errors";
 import { releaseForgottenHolds } from "@/server/spending/spending-service";
@@ -15,6 +15,7 @@ export async function runDailyJob(authorizationHeader: string | null) {
   if (authorizationHeader !== `Bearer ${cronSecret}`) throw new UnauthorizedError("Wrong cron secret.");
 
   await database.spendingRules.loadSpendingRules(); // a small read keeps the database awake
+  if (serviceModes().demoMode) await database.demoData.resetToSampleData(); // a fresh demo every morning
   const runs = await runDueRestocks();
   const released = await releaseForgottenHolds();
   return {

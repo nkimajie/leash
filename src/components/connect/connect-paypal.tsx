@@ -86,9 +86,11 @@ export function ConnectPayPal() {
               title={`Connected${connection.payerEmail ? ` as ${connection.payerEmail}` : ""}`}
               detail={`Saved with PayPal Vault ${connection.connectedAt ? formatWhen(connection.connectedAt) : ""}.`}
             />
-            <Button variant="secondary" onClick={disconnect} disabled={busy}>
-              <Unlink className="h-4 w-4" /> Disconnect
-            </Button>
+            {connection.canDisconnect && (
+              <Button variant="secondary" onClick={disconnect} disabled={busy}>
+                <Unlink className="h-4 w-4" /> Disconnect
+              </Button>
+            )}
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-4">

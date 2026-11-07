@@ -38,6 +38,8 @@ services:
         sync: false
       - key: DEMO_FORCE_DECLINE
         value: "false"
+      - key: DEMO_MODE # public demo: reset button, nightly reset, Claude use capped per visitor
+        value: "true"
 
   # Once a day: keep the database awake and run recurring restocks that are due.
   - type: cron

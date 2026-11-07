@@ -2,9 +2,10 @@
 
 // Shows which services are live and which run in mock mode, so anyone testing the app knows.
 
+import { RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ServiceModes } from "@/schemas";
-import { fetchServiceModes } from "@/lib/api-client";
+import { fetchServiceModes, resetDemo } from "@/lib/api-client";
 import { classNames } from "@/lib/format";
 
 export function ServiceStatus() {
@@ -48,6 +49,28 @@ export function ServiceStatus() {
       {modes.forceDeclinedPayments && (
         <div className="mt-1 rounded-md bg-rose-50 px-2 py-1 text-rose-700">Decline test is on</div>
       )}
+      {modes.demoMode && <ResetDemoButton />}
     </div>
+  );
+}
+
+/** Demo mode: everyone shares one account, so anyone can start fresh. */
+function ResetDemoButton() {
+  const [isResetting, setIsResetting] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={isResetting}
+      onClick={async () => {
+        if (!window.confirm("Put everything back to the sample data? Your PayPal connection stays.")) return;
+        setIsResetting(true);
+        await resetDemo().catch(() => {});
+        window.location.reload();
+      }}
+      className="mt-2 flex items-center justify-center gap-1.5 rounded-md bg-stone-100 px-2 py-1.5 text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
+    >
+      <RotateCcw className="h-3 w-3" />
+      {isResetting ? "Resetting…" : "Reset demo"}
+    </button>
   );
 }

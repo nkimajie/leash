@@ -2,6 +2,7 @@
 
 export * as assistantRequests from "./assistant-requests";
 export * as decisions from "./decisions";
+export * as demoData from "./demo-data";
 export * as payees from "./payees";
 export * as preferences from "./preferences";
 export * as restocks from "./restocks";

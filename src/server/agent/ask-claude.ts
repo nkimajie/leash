@@ -9,6 +9,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import type { z } from "zod";
 import { serviceModes } from "@/server/config/environment";
+import { mayUseClaude } from "./claude-allowance";
 
 const MODEL = "claude-haiku-5-5";
 
@@ -19,7 +20,7 @@ export async function askClaudeFor<Schema extends z.ZodType>(
   instructions: string,
   question: string,
 ): Promise<z.infer<Schema> | null> {
-  if (serviceModes().assistant !== "claude") return null;
+  if (serviceModes().assistant !== "claude" || !mayUseClaude()) return null;
   claude ??= new Anthropic();
   try {
     const response = await claude.messages.parse({

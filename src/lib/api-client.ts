@@ -71,6 +71,8 @@ export const saveSpendingRules = (rules: SpendingRules) => sendJson<SpendingRule
 export const suggestRuleChanges = (sentence: string) =>
   sendJson<RuleSuggestion>("POST", "/api/rules/suggest", { sentence });
 export const fetchServiceModes = () => getJson<ServiceModes>("/api/status");
+/** Demo mode only: put everything back to the sample data. */
+export const resetDemo = () => sendJson<void>("POST", "/api/demo/reset");
 
 // ---------- assistant ----------
 

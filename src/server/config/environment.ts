@@ -38,5 +38,6 @@ export function serviceModes(): ServiceModes {
     productSearch: channel3ApiKey ? "channel3" : "mock",
     database: supabaseSettings.url && supabaseSettings.serviceRoleKey ? "supabase" : "memory",
     forceDeclinedPayments: env.DEMO_FORCE_DECLINE === "true",
+    demoMode: env.DEMO_MODE === "true",
   };
 }

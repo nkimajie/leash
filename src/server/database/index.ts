@@ -14,4 +14,5 @@ import * as supabase from "./supabase";
 
 const database: typeof memory = serviceModes().database === "supabase" ? supabase : memory;
 
-export const { assistantRequests, decisions, payees, preferences, restocks, spendingRules, wallets } = database;
+export const { assistantRequests, decisions, demoData, payees, preferences, restocks, spendingRules, wallets } =
+  database;

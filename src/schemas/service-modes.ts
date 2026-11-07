@@ -5,4 +5,6 @@ export type ServiceModes = {
   productSearch: "channel3" | "mock";
   database: "supabase" | "memory";
   forceDeclinedPayments: boolean;
+  /** A public demo for judges: a reset button, a nightly reset, Claude use capped per visitor. */
+  demoMode: boolean;
 };

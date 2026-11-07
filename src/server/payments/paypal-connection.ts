@@ -22,6 +22,7 @@ export async function getPayPalConnection(): Promise<PayPalConnection> {
     connected: mode === "mock" || wallet !== null,
     payerEmail: wallet?.payerEmail ?? null,
     connectedAt: wallet?.createdAt ?? null,
+    canDisconnect: !serviceModes().demoMode,
   };
 }
 
@@ -44,5 +45,8 @@ export async function finishConnectingPayPal(setupTokenId: string): Promise<void
 }
 
 export async function disconnectPayPal(): Promise<void> {
+  if (serviceModes().demoMode) {
+    throw new BadRequestError("Disconnecting is turned off in the demo, so the next person can still try it.");
+  }
   await database.wallets.disconnectWallet();
 }

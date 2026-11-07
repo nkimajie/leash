@@ -20,4 +20,6 @@ export type PayPalConnection = {
   connected: boolean;
   payerEmail: string | null;
   connectedAt: string | null;
+  /** False in demo mode, so one visitor can't break the demo for the next. */
+  canDisconnect: boolean;
 };

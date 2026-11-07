@@ -7,17 +7,20 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { AssistantEvent, AssistantRequest } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
+import { mayUseClaude } from "./claude-allowance";
 import { runClaudeAssistant } from "./claude-assistant";
 import { runMockAssistant } from "./mock-assistant";
 import { readBudget } from "./read-request";
 
 /**
- * @param source "you" when you typed the request, "restock" when a schedule started it.
- *               Anything a restock buys is held for your approval.
+ * @param source  "you" when you typed the request, "restock" when a schedule started it.
+ *                Anything a restock buys is held for your approval.
+ * @param visitor who is asking; in demo mode each visitor gets a daily allowance of Claude requests.
  */
 export async function* runAssistant(
   prompt: string,
   source: AssistantRequest["source"] = "you",
+  visitor?: string,
 ): AsyncGenerator<AssistantEvent> {
   const rules = await database.spendingRules.loadSpendingRules();
   const request = await database.assistantRequests.startAssistantRequest(
@@ -28,8 +31,14 @@ export async function* runAssistant(
   yield { type: "request_started", request };
 
   try {
-    if (serviceModes().assistant === "claude") {
+    if (serviceModes().assistant === "claude" && mayUseClaude(visitor)) {
       yield* runClaudeWithFallback(request);
+    } else if (serviceModes().assistant === "claude") {
+      yield {
+        type: "thinking",
+        text: "You've used today's Claude allowance on this demo, so the built-in assistant takes over.",
+      };
+      yield* runMockAssistant(request);
     } else {
       yield* runMockAssistant(request);
     }
