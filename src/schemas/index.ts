@@ -2,6 +2,7 @@
 // Types are inferred from the zod schemas, so validation and types never drift apart.
 
 export * from "./assistant";
+export * from "./control-room";
 export * from "./decision";
 export * from "./payee";
 export * from "./preference";

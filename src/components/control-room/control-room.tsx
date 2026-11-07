@@ -1,15 +1,19 @@
 "use client";
 
 // The control room: every purchase and payment, the rule that applied, the AI's reasoning
-// and the PayPal status, updating live. You can approve, deny or refund from here.
+// and the PayPal status, updating live. You can approve, deny or refund from here, ask it
+// questions in plain English, and click a row to see each PayPal step.
 
+import { Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { Decision, Outcome } from "@/schemas";
-import { approveDecision, denyDecision, refundDecision } from "@/lib/api-client";
+import type { Decision, GridView, Outcome } from "@/schemas";
+import { approveDecision, askControlRoom, denyDecision, refundDecision } from "@/lib/api-client";
 import { classNames, formatMoney } from "@/lib/format";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
+import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/ui/form-fields";
 import { PageHeader } from "@/components/ui/page-header";
+import { DecisionDetails } from "./decision-details";
 import { DecisionsGrid, type DecisionAction } from "./decisions-grid";
 
 const FILTERS: { key: string; label: string; outcomes: Outcome[] | null }[] = [
@@ -20,16 +24,58 @@ const FILTERS: { key: string; label: string; outcomes: Outcome[] | null }[] = [
   { key: "problems", label: "Failed & refunded", outcomes: ["failed", "refunded"] },
 ];
 
+const EXAMPLE_QUESTIONS = ["What did I spend on coffee this week?", "Held payments to people", "Biggest purchases"];
+
+/** A filter button as a grid view. */
+function viewForFilter(key: string): GridView | null {
+  const filter = FILTERS.find((f) => f.key === key);
+  if (!filter?.outcomes) return null;
+  return {
+    outcomes: filter.outcomes,
+    kind: null,
+    minAmount: null,
+    maxAmount: null,
+    searchText: null,
+    sinceDays: null,
+    sortBy: null,
+    sortDirection: null,
+    summary: filter.label,
+  };
+}
+
 const PAID: Outcome[] = ["auto_approved", "approved"];
 
 export function ControlRoom() {
   const { decisions, connectionProblem, refresh } = useLiveDecisions();
-  const [search, setSearch] = useState("");
-  const [filterKey, setFilterKey] = useState("all");
+  const [filterKey, setFilterKey] = useState<string | null>("all");
+  const [view, setView] = useState<GridView | null>(null);
+  const [question, setQuestion] = useState("");
+  const [isAsking, setIsAsking] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const totals = useMemo(() => summarise(decisions), [decisions]);
-  const visibleOutcomes = FILTERS.find((f) => f.key === filterKey)?.outcomes ?? null;
+  const selected = decisions.find((d) => d.id === selectedId) ?? null;
+
+  function showFilter(key: string) {
+    setFilterKey(key);
+    setView(viewForFilter(key));
+  }
+
+  async function ask(text: string) {
+    if (!text.trim()) return;
+    setQuestion(text);
+    setIsAsking(true);
+    setActionError(null);
+    try {
+      setView(await askControlRoom(text));
+      setFilterKey(null);
+    } catch (error) {
+      setActionError((error as Error).message);
+    } finally {
+      setIsAsking(false);
+    }
+  }
 
   async function takeAction(action: DecisionAction, decision: Decision) {
     setActionError(null);
@@ -61,7 +107,7 @@ export function ControlRoom() {
           value={formatMoney(totals.waiting)}
           detail={`${totals.waitingCount} reserved, not taken`}
           accent="text-amber-700"
-          onClick={() => setFilterKey("waiting")}
+          onClick={() => showFilter("waiting")}
         />
         <SummaryTile
           label="Stopped by the leash"
@@ -77,12 +123,46 @@ export function ControlRoom() {
         />
       </div>
 
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          ask(question);
+        }}
+        className="flex flex-col gap-2 rounded-2xl border border-violet-200 bg-violet-50/50 p-3"
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 shrink-0 text-violet-600" />
+          <TextInput
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            placeholder="Ask the control room, e.g. “held payments over $20, biggest first”"
+            className="flex-1 bg-white"
+          />
+          <Button type="submit" size="sm" disabled={isAsking || !question.trim()}>
+            {isAsking ? "Thinking…" : "Ask"}
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pl-6">
+          {EXAMPLE_QUESTIONS.map((example) => (
+            <button
+              key={example}
+              type="button"
+              disabled={isAsking}
+              onClick={() => ask(example)}
+              className="rounded-full bg-white px-2.5 py-1 text-xs text-violet-700 ring-1 ring-violet-200 hover:ring-violet-400"
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+      </form>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex flex-wrap gap-1 rounded-xl bg-stone-100 p-1">
           {FILTERS.map((filter) => (
             <button
               key={filter.key}
-              onClick={() => setFilterKey(filter.key)}
+              onClick={() => showFilter(filter.key)}
               className={classNames(
                 "rounded-lg px-3 py-1.5 text-sm transition",
                 filterKey === filter.key
@@ -94,12 +174,14 @@ export function ControlRoom() {
             </button>
           ))}
         </div>
-        <TextInput
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search items, people, reasoning…"
-          className="sm:ml-auto sm:w-80"
-        />
+        {view && filterKey === null && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-sm text-violet-800">
+            Showing: {view.summary}
+            <button onClick={() => showFilter("all")} aria-label="Clear the view" className="hover:text-violet-950">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        )}
       </div>
 
       {(actionError || connectionProblem) && (
@@ -108,13 +190,16 @@ export function ControlRoom() {
         </p>
       )}
 
-      <DecisionsGrid
-        decisions={decisions}
-        searchText={search}
-        visibleOutcomes={visibleOutcomes}
-        totalPaid={totals.paid}
-        onAction={takeAction}
-      />
+      <div className={classNames("grid gap-4", selected && "xl:grid-cols-[minmax(0,1fr)_360px]")}>
+        <DecisionsGrid
+          decisions={decisions}
+          view={view}
+          selectedId={selectedId}
+          onSelect={(decision) => setSelectedId(decision.id)}
+          onAction={takeAction}
+        />
+        {selected && <DecisionDetails decision={selected} onClose={() => setSelectedId(null)} />}
+      </div>
     </div>
   );
 }

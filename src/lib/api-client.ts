@@ -4,6 +4,7 @@
 import type {
   AssistantEvent,
   Decision,
+  GridView,
   NewPayee,
   NewPreference,
   Payee,
@@ -27,6 +28,8 @@ export const denyDecision = (id: string, why: YourReason = {}) =>
   sendJson<Decision>("POST", `/api/decisions/${id}/deny`, why);
 export const refundDecision = (id: string, why: YourReason = {}) =>
   sendJson<Decision>("POST", `/api/decisions/${id}/refund`, why);
+/** "Held payments over $20" -> what the control room grid should show. */
+export const askControlRoom = (question: string) => sendJson<GridView>("POST", "/api/control-room/ask", { question });
 
 // ---------- people ----------
 
