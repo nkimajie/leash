@@ -74,6 +74,16 @@ export async function askAssistant(prompt: string, onStep: (event: AssistantEven
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt }),
   });
+  await readSteps(response, onStep);
+}
+
+/** "Try to break the leash": plays a hijacked assistant and streams what the leash does. */
+export async function runAttack(attackId: string, onStep: (event: AssistantEvent) => void): Promise<void> {
+  await readSteps(await fetch(`/api/attacks/${attackId}`, { method: "POST" }), onStep);
+}
+
+/** Reads a stream of assistant steps, one JSON object per line. */
+async function readSteps(response: Response, onStep: (event: AssistantEvent) => void): Promise<void> {
   if (!response.ok || !response.body) throw new ApiError(await readErrorMessage(response));
 
   const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();

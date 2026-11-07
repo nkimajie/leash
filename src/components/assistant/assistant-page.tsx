@@ -2,10 +2,11 @@
 
 // The home screen: ask the assistant for something and watch it work, step by step.
 
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, ShieldAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantEvent } from "@/schemas";
-import { askAssistant } from "@/lib/api-client";
+import { askAssistant, runAttack } from "@/lib/api-client";
+import { ATTACKS } from "@/lib/attacks";
 import { ConnectReminder } from "@/components/connect/connect-reminder";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -30,18 +31,21 @@ export function AssistantPage() {
     endOfTimeline.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [steps]);
 
-  async function send(text: string) {
-    if (!text.trim() || isWorking) return;
+  /** Runs the assistant (or an attack) and shows each step as it arrives. */
+  async function show(work: (onStep: (step: AssistantEvent) => void) => Promise<void>) {
+    if (isWorking) return;
     setIsWorking(true);
     setSteps([]);
     try {
-      await askAssistant(text, (step) => setSteps((previous) => [...previous, step]));
+      await work((step) => setSteps((previous) => [...previous, step]));
     } catch (error) {
       setSteps((previous) => [...previous, { type: "error", message: (error as Error).message }]);
     } finally {
       setIsWorking(false);
     }
   }
+
+  const send = (text: string) => text.trim() && show((onStep) => askAssistant(text, onStep));
 
   return (
     <div className="mx-auto grid w-full max-w-6xl flex-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -97,6 +101,8 @@ export function AssistantPage() {
           ))}
         </div>
 
+        <TryToBreakTheLeash disabled={isWorking} onAttack={(id) => show((onStep) => runAttack(id, onStep))} />
+
         <AssistantTimeline steps={steps} isWorking={isWorking} />
         <div ref={endOfTimeline} />
       </section>
@@ -105,6 +111,29 @@ export function AssistantPage() {
         <WaitingForYou />
         <LeashSummary />
       </aside>
+    </div>
+  );
+}
+
+/** One-click attacks: a scam takes over the assistant, and the rules still decide what money moves. */
+function TryToBreakTheLeash({ disabled, onAttack }: { disabled: boolean; onAttack: (attackId: string) => void }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-rose-200 bg-rose-50/40 px-3 py-2.5">
+      <span className="flex items-center gap-1.5 text-xs font-medium text-rose-800">
+        <ShieldAlert className="h-3.5 w-3.5" />
+        Try to break the leash:
+      </span>
+      {ATTACKS.map((attack) => (
+        <button
+          key={attack.id}
+          type="button"
+          disabled={disabled}
+          onClick={() => onAttack(attack.id)}
+          className="rounded-full bg-white px-3 py-1 text-xs text-rose-700 ring-1 ring-rose-200 transition hover:ring-rose-400 disabled:opacity-50"
+        >
+          {attack.title}
+        </button>
+      ))}
     </div>
   );
 }

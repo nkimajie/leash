@@ -142,7 +142,31 @@ check(
   restockRun.body?.restock?.lastRunAt && new Date(restockRun.body.restock.nextRunAt) > new Date(),
 );
 
-// 7. PayPal connection and the daily job
+// 7. Try to break the leash: a hijacked assistant still can't get past the rules
+async function attack(id) {
+  const response = await fetch(`${BASE_URL}/api/attacks/${id}`, { method: "POST" });
+  const events = (await response.text())
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  return events.filter((e) => e.type === "decision_made").map((e) => e.decision);
+}
+const [toStranger] = await attack("stranger");
+check(
+  "a hijacked assistant can't send $900 to a stranger",
+  toStranger?.outcome === "blocked" && !toStranger.paypal.orderId,
+  JSON.stringify(toStranger),
+);
+const [giftCard2] = await attack("gift-cards");
+check("a hijacked assistant can't buy gift cards", giftCard2?.outcome === "blocked", JSON.stringify(giftCard2));
+const drained = await attack("drain");
+check(
+  "small buys stop being paid once the budget is used up",
+  drained.length === 5 && drained.some((d) => d.outcome === "held" || d.outcome === "blocked"),
+  JSON.stringify(drained.map((d) => [d.title, d.amount, d.outcome])),
+);
+
+// 8. PayPal connection and the daily job
 const paypalConnection = await call("GET", "/api/paypal/connection");
 check(
   "the PayPal connection status answers",

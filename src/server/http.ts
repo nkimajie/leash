@@ -5,6 +5,7 @@ import "server-only";
 
 import { unstable_rethrow as rethrowNextInternalErrors } from "next/navigation";
 import { z } from "zod";
+import type { AssistantEvent } from "@/schemas";
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "./errors";
 import { PayPalError } from "./payments/paypal-error";
 
@@ -14,6 +15,20 @@ export async function readJsonBody<T>(request: Request, schema: z.ZodType<T>): P
   const parsed = schema.safeParse(body);
   if (!parsed.success) throw new BadRequestError(z.prettifyError(parsed.error));
   return parsed.data;
+}
+
+/** Streams assistant steps to the browser as they happen, one JSON object per line. */
+export function streamEvents(events: AsyncIterable<AssistantEvent>): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      for await (const event of events) controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+      controller.close();
+    },
+  });
+  return new Response(stream, {
+    headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
+  });
 }
 
 /** Wraps a route handler so errors become `{ error: "..." }` responses with the right status code. */

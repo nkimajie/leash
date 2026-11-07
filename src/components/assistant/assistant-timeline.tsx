@@ -2,7 +2,7 @@
 
 // Renders the assistant's live steps: its thinking, the tools it uses, and what happened to the money.
 
-import { AlertCircle, Brain, CheckCircle2, Loader2, Wrench } from "lucide-react";
+import { AlertCircle, Brain, CheckCircle2, Loader2, Skull, Wrench } from "lucide-react";
 import type { AssistantEvent } from "@/schemas";
 import { formatMoney } from "@/lib/format";
 import { TOOL_LABEL } from "@/lib/labels";
@@ -34,6 +34,7 @@ export function AssistantTimeline({ steps, isWorking }: { steps: AssistantEvent[
 function StepIcon({ step }: { step: AssistantEvent }) {
   const icon = {
     thinking: <Brain className="h-3.5 w-3.5 text-violet-500" />,
+    attack: <Skull className="h-3.5 w-3.5 text-rose-600" />,
     tool_started: <Wrench className="h-3.5 w-3.5 text-stone-400" />,
     reply: <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />,
     error: <AlertCircle className="h-3.5 w-3.5 text-rose-600" />,
@@ -52,6 +53,13 @@ function StepBody({ step }: { step: AssistantEvent }) {
       return <p className="text-xs text-stone-400">Started · budget {formatMoney(step.request.budget)}</p>;
     case "thinking":
       return <p className="text-sm leading-relaxed text-stone-700">{step.text}</p>;
+    case "attack":
+      return (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-rose-700">The scam</div>
+          {step.text}
+        </div>
+      );
     case "tool_started":
       return <p className="text-xs font-medium text-stone-500">{TOOL_LABEL[step.tool] ?? step.tool}…</p>;
     case "tool_finished":

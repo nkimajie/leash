@@ -20,6 +20,8 @@ export type AssistantRequest = z.infer<typeof AssistantRequestSchema>;
 export type AssistantEvent =
   | { type: "request_started"; request: AssistantRequest }
   | { type: "thinking"; text: string }
+  /** The scam message in a "Try to break the leash" attack. */
+  | { type: "attack"; text: string }
   | { type: "tool_started"; tool: string; input: Record<string, unknown> }
   | { type: "tool_finished"; tool: string; summary: string }
   | { type: "decision_made"; decision: Decision }
