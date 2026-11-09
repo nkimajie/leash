@@ -118,7 +118,7 @@ export function ControlRoom() {
         <SummaryTile
           label="Failed payments"
           value={String(totals.failedCount)}
-          detail="nothing charged"
+          detail={totals.refundsFailed > 0 ? `${totals.refundsFailed} refund failed: check PayPal` : "nothing charged"}
           accent="text-rose-700"
         />
       </div>
@@ -217,6 +217,7 @@ function summarise(allDecisions: Decision[]) {
     waitingCount: waiting.length,
     stopped: sum(decisions.filter((d) => d.outcome === "blocked" || d.outcome === "denied")),
     failedCount: decisions.filter((d) => d.outcome === "failed").length,
+    refundsFailed: decisions.filter((d) => d.paypal.status === "REFUND_FAILED").length,
   };
 }
 

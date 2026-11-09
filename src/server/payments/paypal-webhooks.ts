@@ -13,7 +13,6 @@ import { PAYPAL_API, getAccessToken } from "./paypal-rest";
 
 /** The PayPal events we care about, and the status each one means. */
 const STATUS_FOR_EVENT: Record<string, string> = {
-  "PAYMENT.AUTHORIZATION.CREATED": "CREATED",
   "PAYMENT.AUTHORIZATION.VOIDED": "VOIDED",
   "PAYMENT.CAPTURE.COMPLETED": "COMPLETED",
   "PAYMENT.CAPTURE.DECLINED": "DECLINED",
@@ -43,9 +42,20 @@ export async function handlePayPalWebhook(headers: Headers, rawBody: string): Pr
   if (!status || !paypalId) return { recorded: false };
 
   const decision = await database.decisions.findDecisionByPayPalId(paypalId);
-  if (!decision) return { recorded: false };
+  if (!decision || !isNewer(event.event_type!, decision.paypal)) return { recorded: false };
   await database.decisions.updateDecision(decision.id, { paypal: { status } });
   return { recorded: true };
+}
+
+/**
+ * PayPal doesn't promise to deliver webhooks in order, and Leash already records each step itself.
+ * So a late "capture completed" only finishes a capture that was pending, and once money has been
+ * sent on to a person, only news about that payout is recorded.
+ */
+function isNewer(eventType: string, current: { status: string | null; payoutId: string | null }): boolean {
+  if (eventType === "PAYMENT.CAPTURE.COMPLETED") return current.status === "PENDING";
+  if (current.payoutId) return eventType.startsWith("PAYMENT.PAYOUTS-ITEM.");
+  return true;
 }
 
 /**

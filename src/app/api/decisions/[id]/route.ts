@@ -1,12 +1,9 @@
-// GET /api/decisions/:id  ->  one purchase or payment
+// GET /api/decisions/:id  ->  one purchase or payment (a held payment shows the person's current PayPal email)
 
-import * as database from "@/server/database";
-import { NotFoundError } from "@/server/errors";
 import { apiRoute } from "@/server/http";
+import { findDecisionToDecide } from "@/server/spending/spending-service";
 
 export const GET = apiRoute(async (_request: Request, context: RouteContext<"/api/decisions/[id]">) => {
   const { id } = await context.params;
-  const decision = await database.decisions.findDecisionById(id);
-  if (!decision) throw new NotFoundError("We couldn't find that purchase or payment.");
-  return Response.json(decision);
+  return Response.json(await findDecisionToDecide(id));
 });

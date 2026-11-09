@@ -106,6 +106,13 @@ export async function payPerson(
 
 // ---------- you deciding ----------
 
+/** One purchase or payment, as the approval screen shows it: a held payment shows where the money would go now. */
+export async function findDecisionToDecide(decisionId: string): Promise<Decision> {
+  const decision = await database.decisions.findDecisionById(decisionId);
+  if (!decision) throw new NotFoundError("We couldn't find that purchase or payment.");
+  return withCurrentPayee(decision);
+}
+
 /** You said yes to a held purchase or payment: PayPal takes the reserved money. */
 export async function approveHeldDecision(decisionId: string): Promise<Decision> {
   return oneAtATime(decisionId, async () => {
@@ -320,12 +327,18 @@ async function oneAtATime<T>(decisionId: string, work: () => Promise<T>): Promis
 
 /** A held payment may have waited for you to add the person's PayPal email, so look it up again. */
 async function withLatestEmail(decision: Decision): Promise<Decision> {
-  const payee = decision.payee && (await database.payees.findPayeeById(decision.payee.id));
-  const email = payee?.email ?? decision.payee?.email;
-  if (!email) {
+  const latest = await withCurrentPayee(decision);
+  if (!latest.payee?.email) {
     throw new BadRequestError(`Add ${decision.counterparty}'s PayPal email on the People page first, then approve.`);
   }
-  return { ...decision, payee: { ...decision.payee!, email } };
+  return latest;
+}
+
+/** A held payment, with the person's PayPal email as it is now (it may have been added or changed since). */
+async function withCurrentPayee(decision: Decision): Promise<Decision> {
+  if (decision.outcome !== "held" || !decision.payee) return decision;
+  const payee = await database.payees.findPayeeById(decision.payee.id);
+  return { ...decision, payee: { ...decision.payee, email: payee?.email ?? decision.payee.email } };
 }
 
 /** Turns a PayPal error into the fields saved on a failed decision. Re-throws anything else. */

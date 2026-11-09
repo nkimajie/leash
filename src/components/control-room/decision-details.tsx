@@ -113,6 +113,22 @@ function stepsFor(decision: Decision): Step[] {
       state: "stopped",
     },
   };
+  if (outcome === "failed" && paypal.captureId) {
+    // The money was taken, but PayPal refused to send it on to the person.
+    const refunded = paypal.status === "REFUNDED";
+    return [
+      ...steps,
+      { label: "Money taken (captured)", detail: paypal.captureId, state: "done" },
+      {
+        label: refunded
+          ? "PayPal refused the payout, so it was refunded to you"
+          : `Payout refused and the refund failed: refund capture ${paypal.captureId} in PayPal`,
+        detail: paypal.debugId && `debug_id ${paypal.debugId}`,
+        state: "stopped",
+      },
+    ];
+  }
+
   const finalStep = last[outcome];
   if (finalStep) steps.push(finalStep);
   if (paypal.payoutId) {

@@ -173,7 +173,8 @@ npm run build   # production build
 npm run smoke   # end-to-end demo story; start the app with `ANTHROPIC_API_KEY= npm run dev` first
 ```
 
-The smoke test uses the scripted assistant, because Claude's choices vary. With `ANTHROPIC_API_KEY` set, the
+The smoke test uses the scripted assistant, because Claude's choices vary. In demo mode it presses **Reset demo**
+first, so it can run again and again. With `ANTHROPIC_API_KEY` set, the
 assistant runs on Claude: it chooses the tools itself, but it can only act through them, so every purchase and
 payment still passes the spending rules. If Claude can't be reached, the scripted assistant takes over.
 
