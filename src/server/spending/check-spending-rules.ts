@@ -17,8 +17,23 @@ export type SpendingSoFar = {
   spentThisWeek: number;
 };
 
-export type PurchaseToCheck = { title: string; amount: number; currency: string; merchant: string; category: string };
-export type PaymentToCheck = { personName: string; amount: number; currency: string; personIsTrusted: boolean };
+export type PurchaseToCheck = {
+  title: string;
+  amount: number;
+  currency: string;
+  merchant: string;
+  category: string;
+  /** Your own words for this request, e.g. "Restock my coffee, under $60". */
+  whatYouAskedFor: string;
+};
+export type PaymentToCheck = {
+  personName: string;
+  amount: number;
+  currency: string;
+  personIsTrusted: boolean;
+  /** Without a PayPal email there's nowhere to send the money, so you're asked first. */
+  personHasEmail: boolean;
+};
 
 export function checkPurchase(purchase: PurchaseToCheck, rules: SpendingRules, soFar: SpendingSoFar): RuleCheck {
   const formatMoney = moneyFormatter(rules.currency);
@@ -48,6 +63,10 @@ export function checkPurchase(purchase: PurchaseToCheck, rules: SpendingRules, s
   if (hardRuleProblem) return hardRuleProblem;
 
   const reasonsToAsk = [
+    !isWhatYouAskedFor(purchase) && {
+      rule: "off_request" as const,
+      text: `You asked for "${purchase.whatYouAskedFor}", and this isn't part of it.`,
+    },
     purchase.amount > rules.autoApproveLimit && {
       rule: "auto_approve_limit" as const,
       text: `${formatMoney(purchase.amount)} is over your ${formatMoney(rules.autoApproveLimit)} auto-approve limit.`,
@@ -84,6 +103,10 @@ export function checkPayment(payment: PaymentToCheck, rules: SpendingRules, soFa
         rule: "new_person" as const,
         text: `${payment.personName} isn't on your trusted list yet.`,
       },
+    !payment.personHasEmail && {
+      rule: "no_paypal_email" as const,
+      text: `There's no PayPal email for ${payment.personName} yet; add it on the People page.`,
+    },
     payment.amount > rules.autoApproveLimit && {
       rule: "auto_approve_limit" as const,
       text: `${formatMoney(payment.amount)} is over your ${formatMoney(rules.autoApproveLimit)} auto-approve limit.`,
@@ -119,6 +142,38 @@ export function calculateSpendingSoFar(
     spentThisWeek: total(committed.filter((d) => new Date(d.createdAt) >= oneWeekAgo)),
   };
 }
+
+/**
+ * Stay on what you asked for: the product must share a word with your request
+ * ("coffee" in "Restock my coffee" and "Conical burr coffee grinder"). This stops a hijacked
+ * assistant from slipping unrelated things into your order, however cheap each one is.
+ * A request with no specific words ("surprise me") can't be checked, so it passes.
+ */
+export function isWhatYouAskedFor(purchase: Pick<PurchaseToCheck, "title" | "category" | "whatYouAskedFor">): boolean {
+  const askedFor = meaningfulWords(purchase.whatYouAskedFor);
+  if (askedFor.length === 0) return true;
+  const productWords = meaningfulWords(`${purchase.title} ${purchase.category}`);
+  return askedFor.some((asked) =>
+    productWords.some((word) => word === asked || (asked.length > 3 && word.length > 3 && word.includes(asked))),
+  );
+}
+
+/** Words that say what you want, without filler: "Restock my dog food!" -> ["dog", "food"]. */
+function meaningfulWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter((word) => word.length > 2 && !FILLER_WORDS.has(word))
+    .map((word) => (word.length > 3 ? word.replace(/s$/, "") : word)); // "beans" -> "bean"
+}
+
+const FILLER_WORDS = new Set(
+  (
+    "the and for our you your with some any more few new get buy order restock need want please can could " +
+    "find help just only under over below max budget usual same again every week month day setup set stuff " +
+    "things thing supplies something anything surprise cheap good best nice what that this from into ask"
+  ).split(" "),
+);
 
 // ---- helpers ----
 

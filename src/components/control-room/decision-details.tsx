@@ -5,14 +5,14 @@
 
 import { Check, Circle, Smartphone, X } from "lucide-react";
 import Link from "next/link";
-import type { Decision } from "@/schemas";
+import { isSampleHistory, type Decision } from "@/schemas";
 import { classNames, formatMoney, formatWhen } from "@/lib/format";
 import { RULE_LABEL } from "@/lib/labels";
 import { Card } from "@/components/ui/card";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
 import { ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
-type Step = { label: string; detail?: string | null; state: "done" | "stopped" | "waiting" };
+type Step = { label: string; detail?: string | null; state: "done" | "stopped" | "waiting" | "note" };
 
 export function DecisionDetails({ decision, onClose }: { decision: Decision; onClose: () => void }) {
   return (
@@ -85,6 +85,9 @@ function stepsFor(decision: Decision): Step[] {
     state: outcome === "blocked" ? "stopped" : "done",
   };
   if (outcome === "blocked") return [rules, { label: "PayPal was never called", state: "stopped" }];
+  if (isSampleHistory(decision)) {
+    return [rules, { label: "Sample history: shows how Leash works, but was never sent to PayPal", state: "note" }];
+  }
 
   const steps: Step[] = [rules];
   if (paypal.orderId) steps.push({ label: "PayPal order created", detail: paypal.orderId, state: "done" });
@@ -105,7 +108,15 @@ function stepsFor(decision: Decision): Step[] {
     },
   };
   const finalStep = last[outcome];
-  return finalStep ? [...steps, finalStep] : steps;
+  if (finalStep) steps.push(finalStep);
+  if (paypal.payoutId) {
+    steps.push({
+      label: `Sent on to ${decision.counterparty}'s PayPal (Payouts)`,
+      detail: paypal.payoutId,
+      state: "done",
+    });
+  }
+  return steps;
 }
 
 function StepMark({ state }: { state: Step["state"] }) {
@@ -113,6 +124,7 @@ function StepMark({ state }: { state: Step["state"] }) {
     done: "bg-emerald-100 text-emerald-700",
     stopped: "bg-rose-100 text-rose-700",
     waiting: "bg-amber-100 text-amber-700",
+    note: "bg-stone-100 text-stone-500",
   }[state];
   const Icon = state === "done" ? Check : state === "stopped" ? X : Circle;
   return (

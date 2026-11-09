@@ -16,10 +16,12 @@ export const payPersonTool = defineTool({
     reasoning: z.string().min(5).describe("Why you are sending this payment"),
   }),
   async run({ personName, amount, note, reasoning }, { request }) {
+    const known = await database.payees.findPayeeByName(personName);
     const payee =
-      (await database.payees.findPayeeByName(personName)) ??
-      (await database.payees.addPayee({ name: personName, note: "Added by the assistant", trusted: false }));
+      known ?? (await database.payees.addPayee({ name: personName, note: "Added by the assistant", trusted: false }));
     const decision = await payPerson(request, payee, amount, note, reasoning);
+    // Someone new stays on your people list only if paying them wasn't blocked (no scammers on your list).
+    if (!known && decision.outcome === "blocked") await database.payees.removePayee(payee.id);
     return { summary: `${decision.outcome}: ${decision.ruleExplanation}`, decision };
   },
 });

@@ -90,10 +90,12 @@ check(
 // 4. Paying people
 const sam = await ask("Pay Sam $25 for dinner");
 check(
-  "paying trusted Sam $25 goes through",
-  sam.decisions[0]?.outcome === "auto_approved",
+  "paying trusted Sam $25 goes through, then on to Sam with PayPal Payouts",
+  sam.decisions[0]?.outcome === "auto_approved" && Boolean(sam.decisions[0].paypal.payoutId),
   JSON.stringify(sam.decisions[0]),
 );
+const refundPayment = await call("POST", `/api/decisions/${sam.decisions[0].id}/refund`);
+check("money sent on to a person can't be refunded (400)", refundPayment.status === 400);
 const jordan = await ask("Send $30 to Jordan for concert tickets");
 check(
   "paying untrusted Jordan is held",
@@ -102,14 +104,20 @@ check(
 );
 const approved = await call("POST", `/api/decisions/${jordan.decisions[0].id}/approve`);
 check(
-  "approving captures the payment",
-  approved.body?.outcome === "approved" && approved.body.paypal.status === "COMPLETED",
+  "approving captures the payment and sends it on to Jordan",
+  approved.body?.outcome === "approved" && approved.body.paypal.status === "COMPLETED" && approved.body.paypal.payoutId,
 );
 const stranger = await ask("Pay Morgan $20 for lunch");
 const people = await call("GET", "/api/payees");
 check(
   "a new person is added to People as not trusted",
   stranger.decisions[0]?.outcome === "held" && people.body.some((p) => p.name === "Morgan" && !p.trusted),
+);
+const approveWithoutEmail = await call("POST", `/api/decisions/${stranger.decisions[0].id}/approve`);
+check(
+  "approving is refused until Morgan has a PayPal email (400), and the money stays reserved",
+  approveWithoutEmail.status === 400 && approveWithoutEmail.body?.error?.includes("PayPal email"),
+  JSON.stringify(approveWithoutEmail.body),
 );
 
 // 5. Hard rules and validation
@@ -120,6 +128,13 @@ check(
 );
 const refund = await call("POST", `/api/decisions/${beans.id}/refund`);
 check("refunding a paid purchase works", refund.body?.outcome === "refunded");
+const history = await call("GET", "/api/decisions");
+const sampleRow = history.body.find((d) => d.requestId === "sample-history" && d.outcome === "auto_approved");
+const refundSample = await call("POST", `/api/decisions/${sampleRow?.id}/refund`);
+check(
+  "sample history has no PayPal ids and can't be refunded (400)",
+  sampleRow && !sampleRow.paypal.orderId && refundSample.status === 400,
+);
 const badRules = await call("PUT", "/api/rules", { autoApproveLimit: -5 });
 check("invalid rules are rejected with 400", badRules.status === 400);
 const emptyPrompt = await call("POST", "/api/assistant", { prompt: "" });
@@ -152,18 +167,22 @@ async function attack(id) {
   return events.filter((e) => e.type === "decision_made").map((e) => e.decision);
 }
 const [toStranger] = await attack("stranger");
+const peopleAfterScam = await call("GET", "/api/payees");
 check(
-  "a hijacked assistant can't send $900 to a stranger",
-  toStranger?.outcome === "blocked" && !toStranger.paypal.orderId,
+  "a hijacked assistant can't send $900 to a stranger, who isn't added to People",
+  toStranger?.outcome === "blocked" &&
+    !toStranger.paypal.orderId &&
+    !peopleAfterScam.body.some((p) => p.name === "Alex"),
   JSON.stringify(toStranger),
 );
 const [giftCard2] = await attack("gift-cards");
 check("a hijacked assistant can't buy gift cards", giftCard2?.outcome === "blocked", JSON.stringify(giftCard2));
 const drained = await attack("drain");
 check(
-  "small buys stop being paid once the budget is used up",
-  drained.length === 5 && drained.some((d) => d.outcome === "held" || d.outcome === "blocked"),
-  JSON.stringify(drained.map((d) => [d.title, d.amount, d.outcome])),
+  "items slipped into a coffee order are never paid: held as not what you asked for (or blocked by a cap)",
+  drained.length === 5 &&
+    drained.slice(1).every((d) => d.outcome === "blocked" || (d.outcome === "held" && d.ruleHit === "off_request")),
+  JSON.stringify(drained.map((d) => [d.title, d.amount, d.outcome, d.ruleHit])),
 );
 
 // 8. PayPal connection and the daily job

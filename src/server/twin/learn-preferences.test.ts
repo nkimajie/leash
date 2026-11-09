@@ -26,7 +26,7 @@ const decisionFor = (product: Product): Decision => ({
   aiReasoning: "",
   product,
   payee: null,
-  paypal: { orderId: null, authorizationId: null, captureId: null, status: null, debugId: null },
+  paypal: { orderId: null, authorizationId: null, captureId: null, status: null, debugId: null, payoutId: null },
   createdAt: "",
   updatedAt: "",
 });

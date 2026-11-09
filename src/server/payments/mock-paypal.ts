@@ -4,7 +4,7 @@ import "server-only";
 // with a short delay, so the rest of the app behaves exactly as it will for real.
 
 import { PayPalError } from "./paypal-error";
-import type { PaymentAuthorization, PaymentCapture, PaymentRequest } from "./paypal";
+import type { PaymentAuthorization, PaymentCapture, PaymentRequest, PersonPayout, SentPayout } from "./paypal";
 
 export async function mockAuthorizePayment(payment: PaymentRequest): Promise<PaymentAuthorization> {
   await simulateNetworkDelay();
@@ -28,6 +28,12 @@ export async function mockVoidAuthorization() {
 export async function mockRefundCapture() {
   await simulateNetworkDelay();
   return { refundId: fakePayPalId(), status: "REFUNDED" };
+}
+
+export async function mockSendToPerson(payout: PersonPayout): Promise<SentPayout> {
+  await simulateNetworkDelay();
+  void payout;
+  return { payoutId: fakePayPalId().slice(0, 13), status: "PENDING" };
 }
 
 const ID_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";

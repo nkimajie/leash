@@ -17,9 +17,9 @@ import {
 import { AgGridReact } from "ag-grid-react";
 import { UserRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Decision, GridView } from "@/schemas";
+import { isSampleHistory, type Decision, type GridView } from "@/schemas";
 import { formatMoney, formatWhen } from "@/lib/format";
-import { OUTCOME_STYLE, RULE_LABEL } from "@/lib/labels";
+import { OUTCOME_STYLE, RULE_LABEL, paypalStatusInWords } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
 import { ProductPhoto } from "@/components/ui/product-photo";
@@ -93,7 +93,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
       {
         field: "createdAt",
         headerName: "When",
-        width: 110,
+        width: 140,
         sort: "desc",
         valueFormatter: (p) => (p.value ? formatWhen(p.value) : ""),
         cellClass: "text-stone-500",
@@ -112,7 +112,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
         tooltipValueGetter: (p) => p.data?.aiReasoning,
         getQuickFilterText: (p) => `${p.data?.title} ${p.data?.category ?? ""} ${p.data?.aiReasoning}`,
       },
-      { field: "counterparty", headerName: "To", width: 130 },
+      { field: "counterparty", headerName: "To", width: 170, tooltipField: "counterparty" },
       {
         field: "amount",
         headerName: "Amount",
@@ -139,20 +139,26 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
       {
         field: "paypal.status",
         headerName: "PayPal",
-        width: 170,
+        width: 160,
         enableCellChangeFlash: true,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
           p.data && !p.node.rowPinned ? (
-            <div className="flex flex-col gap-1 font-mono text-[11px] leading-none">
-              <span className="text-stone-700">{p.data.paypal.status ?? "not called"}</span>
-              {p.data.paypal.debugId && <span className="text-rose-700">debug_id {p.data.paypal.debugId}</span>}
+            <div className="flex flex-col gap-1 leading-none">
+              <span className="text-stone-800">{paypalStatusInWords(p.data)}</span>
+              {p.data.paypal.status && !isSampleHistory(p.data) && (
+                <span className="truncate font-mono text-[10px] text-stone-400">{p.data.paypal.status}</span>
+              )}
+              {p.data.paypal.debugId && (
+                <span className="truncate font-mono text-[10px] text-rose-700">debug_id {p.data.paypal.debugId}</span>
+              )}
             </div>
           ) : null,
+        getQuickFilterText: (p) => (p.data ? paypalStatusInWords(p.data) : ""),
       },
       {
         colId: "actions",
         headerName: "",
-        width: 160,
+        width: 150,
         pinned: "right",
         sortable: false,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
@@ -253,6 +259,7 @@ function ActionButtons({ decision, onAction }: { decision: Decision; onAction: G
     setIsBusy(false);
   };
 
+  if (isSampleHistory(decision)) return null;
   if (decision.outcome === "held") {
     return (
       <div className="flex h-full items-center gap-1.5">
@@ -265,7 +272,8 @@ function ActionButtons({ decision, onAction }: { decision: Decision; onAction: G
       </div>
     );
   }
-  if (decision.outcome === "auto_approved" || decision.outcome === "approved") {
+  // Money sent on to a person can't be pulled back, so only purchases can be refunded.
+  if (decision.kind === "purchase" && (decision.outcome === "auto_approved" || decision.outcome === "approved")) {
     return (
       <div className="flex h-full items-center">
         <Button size="sm" variant="ghost" disabled={isBusy} onClick={() => run("refund")}>

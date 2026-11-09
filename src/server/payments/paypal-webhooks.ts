@@ -8,8 +8,7 @@ import "server-only";
 import { paypalSettings } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { BadRequestError, UnauthorizedError } from "@/server/errors";
-
-const PAYPAL_API = "https://api-m.sandbox.paypal.com";
+import { PAYPAL_API, getAccessToken } from "./paypal-rest";
 
 /** The PayPal events we care about, and the status each one means. */
 const STATUS_FOR_EVENT: Record<string, string> = {
@@ -69,16 +68,4 @@ async function isFromPayPal(headers: Headers, rawBody: string): Promise<boolean>
   if (!response.ok) return false;
   const { verification_status } = (await response.json()) as { verification_status?: string };
   return verification_status === "SUCCESS";
-}
-
-async function getAccessToken(): Promise<string> {
-  const credentials = Buffer.from(`${paypalSettings.clientId}:${paypalSettings.clientSecret}`).toString("base64");
-  const response = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
-    method: "POST",
-    headers: { Authorization: `Basic ${credentials}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: "grant_type=client_credentials",
-  });
-  if (!response.ok) throw new Error(`PayPal sign-in failed with HTTP ${response.status}`);
-  const { access_token } = (await response.json()) as { access_token: string };
-  return access_token;
 }

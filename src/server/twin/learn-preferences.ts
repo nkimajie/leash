@@ -27,7 +27,7 @@ export function lessonFromYourDecision(
         return {
           ...learned,
           sentiment: "avoids",
-          statement: `"${title}" was too expensive at ${price}. Avoid ${category} at this price or higher.${inYourWords}`,
+          statement: `"${title}" was too expensive at ${price}, so skips ${category} at that price or more.${inYourWords}`,
           category,
           priceAtLeast: decision.amount,
         };
@@ -53,7 +53,7 @@ export function lessonFromYourDecision(
     case "denied":
       return {
         sentiment: "avoids",
-        statement: `Said no to "${title}" at ${price}. Avoid ${category} at this price or higher.`,
+        statement: `Said no to "${title}" at ${price}, so skips ${category} at that price or more.`,
         category,
         priceAtLeast: decision.amount,
         source: "learned",

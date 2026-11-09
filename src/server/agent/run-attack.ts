@@ -8,7 +8,10 @@ import type { AssistantEvent, Decision, Product } from "@/schemas";
 import { ATTACKS, type AttackStep } from "@/lib/attacks";
 import { formatMoney } from "@/lib/format";
 import * as database from "@/server/database";
+import { resetDemoIfQuiet } from "@/server/demo-mode";
 import { NotFoundError } from "@/server/errors";
+import { readBudget } from "./read-request";
+import { FRESH_DEMO_NOTE } from "./run-assistant";
 import { runTool, type ToolContext } from "./tools";
 
 export function findAttack(id: string) {
@@ -19,14 +22,16 @@ export function findAttack(id: string) {
 
 export async function* runAttack(attackId: string): AsyncGenerator<AssistantEvent> {
   const attack = findAttack(attackId);
+  const isFreshDemo = await resetDemoIfQuiet();
   const rules = await database.spendingRules.loadSpendingRules();
   const request = await database.assistantRequests.startAssistantRequest(
-    `Attack: ${attack.title}`,
-    rules.defaultRequestBudget,
+    attack.request,
+    readBudget(attack.request) ?? rules.defaultRequestBudget,
     "you",
   );
   const context: ToolContext = { request };
   yield { type: "request_started", request };
+  if (isFreshDemo) yield { type: "thinking", text: FRESH_DEMO_NOTE };
   yield { type: "attack", text: attack.scam };
   yield {
     type: "thinking",
@@ -77,7 +82,7 @@ function whatTheLeashDid(decisions: Decision[]): string {
   const parts = [
     blocked > 0 && `${formatMoney(blocked)} blocked before PayPal was ever called`,
     held > 0 && `${formatMoney(held)} reserved but waiting for you`,
-    paid > 0 && `${formatMoney(paid)} paid, all of it inside the limits you set`,
+    paid > 0 && `${formatMoney(paid)} paid, only for what you asked for and inside your limits`,
   ].filter(Boolean);
   const outcome = parts.length > 0 ? parts.join(", ") : "nothing was paid";
   return `The leash held: ${outcome}. The AI can ask for anything, but only your rules decide what money moves.`;

@@ -7,6 +7,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { AssistantEvent, AssistantRequest } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
+import { resetDemoIfQuiet } from "@/server/demo-mode";
 import { mayUseClaude } from "./claude-allowance";
 import { runClaudeAssistant } from "./claude-assistant";
 import { runMockAssistant } from "./mock-assistant";
@@ -22,6 +23,7 @@ export async function* runAssistant(
   source: AssistantRequest["source"] = "you",
   visitor?: string,
 ): AsyncGenerator<AssistantEvent> {
+  const isFreshDemo = source === "you" && (await resetDemoIfQuiet());
   const rules = await database.spendingRules.loadSpendingRules();
   const request = await database.assistantRequests.startAssistantRequest(
     prompt,
@@ -29,6 +31,7 @@ export async function* runAssistant(
     source,
   );
   yield { type: "request_started", request };
+  if (isFreshDemo) yield { type: "thinking", text: FRESH_DEMO_NOTE };
 
   try {
     if (serviceModes().assistant === "claude" && mayUseClaude(visitor)) {
@@ -50,6 +53,9 @@ export async function* runAssistant(
   }
   yield { type: "finished" };
 }
+
+/** Shown when the public demo cleared the previous visitor's changes before this request. */
+export const FRESH_DEMO_NOTE = "Fresh demo: the last visitor's purchases and lessons were cleared.";
 
 /**
  * If Claude can't be reached before it has used any tool (no credit, outage, rate limit),

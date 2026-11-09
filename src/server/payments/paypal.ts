@@ -1,17 +1,25 @@
 import "server-only";
 
-// The payments section: the only door to PayPal. The rest of the app calls these four
+// The payments section: the only door to PayPal. The rest of the app calls these five
 // functions and never knows whether PayPal is real (sandbox) or mocked.
 //
 //   authorizePayment   reserve the money (PayPal order with intent AUTHORIZE)
 //   capturePayment     take the reserved money
 //   voidAuthorization  release the reservation; the buyer is never charged
 //   refundCapture      give captured money back
+//   sendToPerson       pass a payment on to a person's PayPal email (Payouts)
 //
-// Real sandbox calls live in ./paypal-sandbox.ts; the stand-in is ./mock-paypal.ts.
+// Real sandbox calls live in ./paypal-sandbox.ts and ./paypal-payouts.ts; the stand-in is ./mock-paypal.ts.
 
 import { serviceModes } from "@/server/config/environment";
-import { mockAuthorizePayment, mockCapturePayment, mockRefundCapture, mockVoidAuthorization } from "./mock-paypal";
+import {
+  mockAuthorizePayment,
+  mockCapturePayment,
+  mockRefundCapture,
+  mockSendToPerson,
+  mockVoidAuthorization,
+} from "./mock-paypal";
+import { sandboxSendToPerson } from "./paypal-payouts";
 import {
   sandboxAuthorizePayment,
   sandboxCapturePayment,
@@ -21,17 +29,11 @@ import {
 
 export { PayPalError } from "./paypal-error";
 
-export type PaymentRequest = {
-  amount: number;
-  currency: string;
-  description: string;
-  /** True when sending money to a person rather than buying from a merchant. */
-  paysPerson: boolean;
-  /** The person's PayPal email. Purchases go to the merchant, so they leave this empty. */
-  recipientEmail?: string | null;
-};
+export type PaymentRequest = { amount: number; currency: string; description: string };
 export type PaymentAuthorization = { orderId: string; authorizationId: string; status: string };
 export type PaymentCapture = { captureId: string; status: string };
+export type PersonPayout = { email: string; amount: number; currency: string; note: string };
+export type SentPayout = { payoutId: string; status: string };
 
 const isSandbox = () => serviceModes().payments === "paypal-sandbox";
 
@@ -51,4 +53,8 @@ export async function voidAuthorization(authorizationId: string): Promise<{ stat
 
 export async function refundCapture(captureId: string): Promise<{ refundId: string; status: string }> {
   return isSandbox() ? sandboxRefundCapture(captureId) : mockRefundCapture();
+}
+
+export async function sendToPerson(payout: PersonPayout): Promise<SentPayout> {
+  return isSandbox() ? sandboxSendToPerson(payout) : mockSendToPerson(payout);
 }

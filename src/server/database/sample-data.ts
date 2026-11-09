@@ -1,8 +1,17 @@
 import "server-only";
 
 // Sample history so every screen has something to show on first run.
+// It was never sent to PayPal, so it has no PayPal ids, and the app won't approve or refund it.
 
-import type { Decision, Outcome, Payee, Preference, Restock, RuleName } from "@/schemas";
+import {
+  SAMPLE_HISTORY_REQUEST_ID,
+  type Decision,
+  type Outcome,
+  type Payee,
+  type Preference,
+  type Restock,
+  type RuleName,
+} from "@/schemas";
 import { SAMPLE_CATALOG } from "@/server/products/sample-catalog";
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();
@@ -28,7 +37,7 @@ export function samplePayees(): Payee[] {
     {
       id: "payee-jordan",
       name: "Jordan Lee",
-      email: null,
+      email: "jordan.lee@example.com",
       note: "Met at book club",
       trusted: false,
       createdAt: hoursAgo(80),
@@ -61,7 +70,7 @@ export function samplePreferences(): Preference[] {
       ...base,
       id: "pref-3",
       sentiment: "avoids",
-      statement: 'Said no to "Ergonomic office chair, mesh back" at $189.00. Avoid furniture at this price or higher.',
+      statement: 'Said no to "Ergonomic office chair, mesh back" at $189.00, so skips furniture at that price or more.',
       category: "furniture",
       priceAtLeast: 189,
       source: "learned",
@@ -100,8 +109,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     outcome: "denied",
     ruleHit: "auto_approve_limit",
     ruleExplanation: "$189.00 is over your $50.00 auto-approve limit.",
-    aiReasoning:
-      "You mentioned back pain while working, so I suggested an ergonomic chair. You said no, so the hold was voided.",
+    aiReasoning: "You mentioned back pain while working. This mesh-back chair is the best-reviewed one under $200.",
     paypalStatus: "VOIDED",
   },
   {
@@ -129,7 +137,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     outcome: "approved",
     ruleHit: "auto_approve_limit",
     ruleExplanation: "$72.00 is over your $50.00 auto-approve limit.",
-    aiReasoning: "You said the old dog bed was worn out. Held for approval; you approved it on your phone.",
+    aiReasoning: "You said the old dog bed was worn out. An orthopedic bed suits an older dog.",
     paypalStatus: "COMPLETED",
   },
   {
@@ -138,7 +146,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     outcome: "blocked",
     ruleHit: "blocked_category",
     ruleExplanation: 'You blocked the category "gift cards".',
-    aiReasoning: "You asked for a coffee present for a friend. Gift cards are blocked, so PayPal was never called.",
+    aiReasoning: "You asked for a coffee present for a friend, and a café gift card seemed the easiest.",
     paypalStatus: null,
   },
   {
@@ -147,7 +155,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     outcome: "refunded",
     ruleHit: "within_rules",
     ruleExplanation: "$19.00 is within every rule.",
-    aiReasoning: "Bought reusable food wraps. You already had some and refunded them.",
+    aiReasoning: "You asked for something to replace cling film. These wraps are reusable for a year.",
     paypalStatus: "REFUNDED",
   },
   {
@@ -155,8 +163,8 @@ const SAMPLE_ROWS: SampleRow[] = [
     hoursAgo: 6,
     outcome: "failed",
     ruleHit: "payment_declined",
-    ruleExplanation: "PayPal declined the payment method (INSTRUMENT_DECLINED).",
-    aiReasoning: "Dish soap restock was within rules, but the payment was declined. Nothing was charged.",
+    ruleExplanation: "PayPal declined the payment method (INSTRUMENT_DECLINED). Nothing was charged.",
+    aiReasoning: "Dish soap restock: the 2 L refill is the cheapest per litre.",
     paypalStatus: "DECLINED",
     debugId: "f3a9c21d7b4e0",
   },
@@ -168,12 +176,10 @@ export function sampleDecisions(): Decision[] {
     const product = row.productId ? SAMPLE_CATALOG.find((p) => p.id === row.productId)! : null;
     const payee = row.payeeId ? payees.find((p) => p.id === row.payeeId)! : null;
     const amount = product?.price ?? row.amount ?? 0;
-    const reachedPayPal = row.paypalStatus !== null;
-    const wasCaptured = row.paypalStatus === "COMPLETED" || row.paypalStatus === "REFUNDED";
     const at = hoursAgo(row.hoursAgo);
     return {
       id: `sample-${index + 1}`,
-      requestId: "sample-request",
+      requestId: SAMPLE_HISTORY_REQUEST_ID,
       kind: product ? "purchase" : "payment",
       title: product?.title ?? `Payment to ${payee!.name}`,
       counterparty: product?.merchant ?? payee!.name,
@@ -187,11 +193,12 @@ export function sampleDecisions(): Decision[] {
       product,
       payee: payee ? { id: payee.id, name: payee.name, email: payee.email } : null,
       paypal: {
-        orderId: reachedPayPal ? `SAMPLE${index + 1}ORDER00000` : null,
-        authorizationId: reachedPayPal ? `SAMPLE${index + 1}AUTH000000` : null,
-        captureId: wasCaptured ? `SAMPLE${index + 1}CAPTURE000` : null,
+        orderId: null,
+        authorizationId: null,
+        captureId: null,
         status: row.paypalStatus,
         debugId: row.debugId ?? null,
+        payoutId: null,
       },
       createdAt: at,
       updatedAt: at,

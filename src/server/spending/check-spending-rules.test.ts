@@ -5,18 +5,22 @@ import {
   checkPayment,
   checkPurchase,
   holdForScheduledRestock,
+  isWhatYouAskedFor,
+  type PaymentToCheck,
+  type PurchaseToCheck,
   type SpendingSoFar,
 } from "./check-spending-rules";
 
 const rules: SpendingRules = { ...DEFAULT_SPENDING_RULES, autoApproveLimit: 50 };
 const nothingSpent: SpendingSoFar = { requestBudget: 60, spentOnRequest: 0, spentToday: 0, spentThisWeek: 0 };
 
-const coffee = (changes: Partial<Parameters<typeof checkPurchase>[0]> = {}) => ({
+const coffee = (changes: Partial<PurchaseToCheck> = {}): PurchaseToCheck => ({
   title: "Fair-trade coffee beans",
   amount: 14,
   currency: "USD",
   merchant: "Bean & Leaf Market",
   category: "coffee",
+  whatYouAskedFor: "Restock my coffee, under $60",
   ...changes,
 });
 
@@ -74,12 +78,34 @@ describe("checkPurchase", () => {
   });
 });
 
+describe("stay on what you asked for", () => {
+  it("holds something unrelated, however cheap (a hijacked assistant adding dog food to a coffee order)", () => {
+    const dogFood = coffee({ title: "Grain-free dry dog food, 5 kg", category: "pet supplies", amount: 9 });
+    expect(checkPurchase(dogFood, rules, nothingSpent)).toMatchObject({
+      verdict: "needs_approval",
+      ruleHit: "off_request",
+    });
+  });
+
+  it("matches on the product's title or category, ignoring filler words and plurals", () => {
+    const grinder = { title: "Conical burr grinder", category: "coffee equipment" };
+    expect(isWhatYouAskedFor({ ...grinder, whatYouAskedFor: "Restock my coffee setup, under $60" })).toBe(true);
+    expect(isWhatYouAskedFor({ ...grinder, whatYouAskedFor: "I need new grinders please" })).toBe(true);
+    expect(isWhatYouAskedFor({ ...grinder, whatYouAskedFor: "Get printer paper" })).toBe(false);
+  });
+
+  it("can't check a request with nothing specific in it, so lets it pass", () => {
+    expect(isWhatYouAskedFor({ title: "Gel pens", category: "office", whatYouAskedFor: "Surprise me!" })).toBe(true);
+  });
+});
+
 describe("checkPayment", () => {
-  const payment = (changes: Partial<Parameters<typeof checkPayment>[0]> = {}) => ({
+  const payment = (changes: Partial<PaymentToCheck> = {}): PaymentToCheck => ({
     personName: "Sam",
     amount: 25,
     currency: "USD",
     personIsTrusted: true,
+    personHasEmail: true,
     ...changes,
   });
 
@@ -97,6 +123,13 @@ describe("checkPayment", () => {
   it("lets new people through when that rule is switched off", () => {
     const relaxed = { ...rules, newPeopleNeedApproval: false };
     expect(checkPayment(payment({ personIsTrusted: false }), relaxed, nothingSpent).verdict).toBe("allowed");
+  });
+
+  it("asks first when there's no PayPal email to send the money to", () => {
+    expect(checkPayment(payment({ personHasEmail: false }), rules, nothingSpent)).toMatchObject({
+      verdict: "needs_approval",
+      ruleHit: "no_paypal_email",
+    });
   });
 
   it("blocks a payment over the per-person limit", () => {

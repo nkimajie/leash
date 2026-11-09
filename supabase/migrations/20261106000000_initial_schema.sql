@@ -93,6 +93,7 @@ create table decisions (
   paypal_capture_id        text,
   paypal_status            text,
   paypal_debug_id          text,
+  paypal_payout_id         text,
   created_at               timestamptz not null default now(),
   updated_at               timestamptz not null default now()
 );

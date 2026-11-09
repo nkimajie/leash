@@ -7,11 +7,22 @@ import "server-only";
 //   rules say "needs_approval"  -> PayPal reserves the money -> held until you decide
 //   rules say "allowed"         -> PayPal reserves, then takes the money -> auto_approved
 //
+// Paying a person: once the money is taken, PayPal Payouts sends it on to their PayPal email.
 // Scheduled restocks run while you're away, so anything they buy is held for your OK.
 
-import type { AssistantRequest, Decision, NewDecision, Payee, Product, RuleCheck, YourReason } from "@/schemas";
+import {
+  isSampleHistory,
+  type AssistantRequest,
+  type Decision,
+  type NewDecision,
+  type Payee,
+  type PayPalRecord,
+  type Product,
+  type RuleCheck,
+  type YourReason,
+} from "@/schemas";
 import * as database from "@/server/database";
-import { ConflictError, NotFoundError } from "@/server/errors";
+import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors";
 import * as paypal from "@/server/payments/paypal";
 import type { YourAction } from "@/server/twin/learn-preferences";
 import { lessonFromYourWords } from "@/server/twin/understand-your-reason";
@@ -28,6 +39,7 @@ export async function checkPurchaseRules(request: AssistantRequest, product: Pro
       currency: product.currency,
       merchant: product.merchant,
       category: product.category,
+      whatYouAskedFor: request.prompt,
     },
     rules,
     soFar,
@@ -38,7 +50,13 @@ export async function checkPurchaseRules(request: AssistantRequest, product: Pro
 export async function checkPaymentRules(request: AssistantRequest, payee: Payee, amount: number): Promise<RuleCheck> {
   const { rules, soFar } = await loadRulesAndSpending(request);
   const check = checkPayment(
-    { personName: payee.name, amount, currency: rules.currency, personIsTrusted: payee.trusted },
+    {
+      personName: payee.name,
+      amount,
+      currency: rules.currency,
+      personIsTrusted: payee.trusted,
+      personHasEmail: Boolean(payee.email),
+    },
     rules,
     soFar,
   );
@@ -90,12 +108,14 @@ export async function payPerson(
 
 /** You said yes to a held purchase or payment: PayPal takes the reserved money. */
 export async function approveHeldDecision(decisionId: string): Promise<Decision> {
-  const decision = await findDecisionIn(decisionId, ["held"]);
+  const held = await findDecisionIn(decisionId, ["held"]);
+  const decision = held.kind === "payment" ? await withLatestEmail(held) : held;
   try {
-    const capture = await paypal.capturePayment(decision.paypal.authorizationId!);
+    const taken = await takeReservedMoney(decision, decision.paypal.authorizationId!);
     const approved = await database.decisions.updateDecision(decisionId, {
       outcome: "approved",
-      paypal: { captureId: capture.captureId, status: capture.status },
+      payee: decision.payee,
+      paypal: taken,
     });
     await rememberLesson(approved, "approved");
     return approved;
@@ -122,6 +142,9 @@ export async function denyHeldDecision(decisionId: string, why: YourReason = {})
 
 export async function refundDecision(decisionId: string, why: YourReason = {}): Promise<Decision> {
   const decision = await findDecisionIn(decisionId, ["auto_approved", "approved"]);
+  if (decision.kind === "payment") {
+    throw new BadRequestError(`The money already went on to ${decision.counterparty}. Ask them to send it back.`);
+  }
   const result = await paypal.refundCapture(decision.paypal.captureId!);
   const refunded = await database.decisions.updateDecision(decisionId, {
     outcome: "refunded",
@@ -141,17 +164,26 @@ export const DAYS_TO_ANSWER = 7;
  */
 export async function releaseForgottenHolds(now = new Date()): Promise<Decision[]> {
   const cutoff = now.getTime() - DAYS_TO_ANSWER * 24 * 60 * 60 * 1000;
-  const forgotten = (await database.decisions.listDecisions()).filter(
-    (d) => d.outcome === "held" && new Date(d.createdAt).getTime() < cutoff,
+  return releaseHolds(
+    (d) => new Date(d.createdAt).getTime() < cutoff,
+    `Nobody answered for ${DAYS_TO_ANSWER} days, so the reserved money was released. Nothing was charged.`,
   );
+}
 
+/** Releases every reservation, e.g. before the public demo is reset, so none is left open at PayPal. */
+export async function releaseAllHolds(): Promise<Decision[]> {
+  return releaseHolds(() => true, "The demo was reset, so the reserved money was released. Nothing was charged.");
+}
+
+async function releaseHolds(shouldRelease: (held: Decision) => boolean, explanation: string): Promise<Decision[]> {
+  const held = (await database.decisions.listDecisions()).filter((d) => d.outcome === "held" && shouldRelease(d));
   const released: Decision[] = [];
-  for (const decision of forgotten) {
+  for (const decision of held) {
     const result = await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => null);
     released.push(
       await database.decisions.updateDecision(decision.id, {
         outcome: "denied",
-        ruleExplanation: `Nobody answered for ${DAYS_TO_ANSWER} days, so the reserved money was released. Nothing was charged.`,
+        ruleExplanation: explanation,
         paypal: { status: result?.status ?? "VOIDED" },
       }),
     );
@@ -163,7 +195,14 @@ export async function releaseForgottenHolds(now = new Date()): Promise<Decision[
 
 type DecisionDetails = Omit<NewDecision, "outcome" | "ruleHit" | "ruleExplanation" | "paypal">;
 
-const NO_PAYPAL_RECORD = { orderId: null, authorizationId: null, captureId: null, status: null, debugId: null };
+const NO_PAYPAL_RECORD: PayPalRecord = {
+  orderId: null,
+  authorizationId: null,
+  captureId: null,
+  status: null,
+  debugId: null,
+  payoutId: null,
+};
 
 async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): Promise<Decision> {
   const record = { ...details, ruleHit: ruleCheck.ruleHit, ruleExplanation: ruleCheck.explanation };
@@ -179,8 +218,6 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
       amount: details.amount,
       currency: details.currency,
       description: details.title,
-      paysPerson: details.kind === "payment",
-      recipientEmail: details.payee?.email,
     });
   } catch (error) {
     const failure = paymentFailure(error);
@@ -203,17 +240,53 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
 
   // Step 2: within every rule, so take the money now.
   try {
-    const capture = await paypal.capturePayment(authorization.authorizationId);
+    const taken = await takeReservedMoney(details, authorization.authorizationId);
     return database.decisions.saveNewDecision({
       ...record,
       outcome: "auto_approved",
-      paypal: { ...reserved, captureId: capture.captureId, status: capture.status },
+      paypal: { ...reserved, ...taken },
     });
   } catch (error) {
     await paypal.voidAuthorization(authorization.authorizationId).catch(() => {});
     const failure = paymentFailure(error);
     return database.decisions.saveNewDecision({ ...record, ...failure, paypal: { ...reserved, ...failure.paypal } });
   }
+}
+
+/**
+ * Takes the reserved money. A payment to a person then goes straight on to their PayPal email
+ * (PayPal Payouts). If that fails, the money is refunded at once, so it never sits with Leash.
+ */
+async function takeReservedMoney(
+  details: Pick<NewDecision, "kind" | "amount" | "currency" | "title" | "payee">,
+  authorizationId: string,
+): Promise<Partial<PayPalRecord>> {
+  const capture = await paypal.capturePayment(authorizationId);
+  const taken = { captureId: capture.captureId, status: capture.status };
+  if (details.kind !== "payment") return taken;
+
+  try {
+    const payout = await paypal.sendToPerson({
+      email: details.payee!.email!,
+      amount: details.amount,
+      currency: details.currency,
+      note: details.title,
+    });
+    return { ...taken, payoutId: payout.payoutId };
+  } catch (error) {
+    await paypal.refundCapture(capture.captureId).catch(() => {});
+    throw error;
+  }
+}
+
+/** A held payment may have waited for you to add the person's PayPal email, so look it up again. */
+async function withLatestEmail(decision: Decision): Promise<Decision> {
+  const payee = decision.payee && (await database.payees.findPayeeById(decision.payee.id));
+  const email = payee?.email ?? decision.payee?.email;
+  if (!email) {
+    throw new BadRequestError(`Add ${decision.counterparty}'s PayPal email on the People page first, then approve.`);
+  }
+  return { ...decision, payee: { ...decision.payee!, email } };
 }
 
 /** Turns a PayPal error into the fields saved on a failed decision. Re-throws anything else. */
@@ -253,6 +326,7 @@ async function loadRulesAndSpending(request: AssistantRequest) {
 async function findDecisionIn(decisionId: string, allowedOutcomes: Decision["outcome"][]): Promise<Decision> {
   const decision = await database.decisions.findDecisionById(decisionId);
   if (!decision) throw new NotFoundError("We couldn't find that purchase or payment.");
+  if (isSampleHistory(decision)) throw new BadRequestError("This is sample history. It was never sent to PayPal.");
   if (!allowedOutcomes.includes(decision.outcome)) {
     throw new ConflictError(`This was already ${decision.outcome.replace("_", " ")}.`);
   }

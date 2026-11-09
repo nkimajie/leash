@@ -75,13 +75,14 @@ export async function finishSavingPayPalAccount(setupTokenId: string) {
 
 // ---------- moving money ----------
 
+/**
+ * Reserves the money from your saved PayPal account. Leash's own sandbox business account is
+ * the payee: it stands in for every store, and passes payments to people on (see paypal-payouts.ts).
+ */
 export async function sandboxAuthorizePayment(payment: PaymentRequest): Promise<PaymentAuthorization> {
   const wallet = await database.wallets.findConnectedWallet();
   if (!wallet) {
     throw new PayPalError("PAYPAL_NOT_CONNECTED", "", "Connect your PayPal account first, on the Connect PayPal page.");
-  }
-  if (payment.paysPerson && !payment.recipientEmail) {
-    throw new PayPalError("PAYEE_EMAIL_MISSING", "", "Add this person's PayPal email on the People page first.");
   }
 
   const { result: order } = await callPayPal(() =>
@@ -93,7 +94,6 @@ export async function sandboxAuthorizePayment(payment: PaymentRequest): Promise<
           {
             amount: { currencyCode: payment.currency, value: payment.amount.toFixed(2) },
             description: payment.description.slice(0, 127),
-            payee: payment.recipientEmail ? { emailAddress: payment.recipientEmail } : undefined,
           },
         ],
         paymentSource: { paypal: { vaultId: wallet.vaultId } },

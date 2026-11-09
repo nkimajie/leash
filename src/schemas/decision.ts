@@ -28,6 +28,8 @@ export const PayPalRecordSchema = z.object({
   status: z.string().nullable(),
   /** PayPal's debug_id for errors, so a failure can be traced in PayPal's logs. */
   debugId: z.string().nullable(),
+  /** Payments to a person: the PayPal Payouts batch that sent the money on to them. */
+  payoutId: z.string().nullable(),
 });
 export type PayPalRecord = z.infer<typeof PayPalRecordSchema>;
 
@@ -55,4 +57,9 @@ export const DecisionSchema = z.object({
 });
 
 export type Decision = z.infer<typeof DecisionSchema>;
+
+/** The sample history every new account starts with. It was never sent to PayPal, so nobody can act on it. */
+export const SAMPLE_HISTORY_REQUEST_ID = "sample-history";
+export const isSampleHistory = (decision: Pick<Decision, "requestId">) =>
+  decision.requestId === SAMPLE_HISTORY_REQUEST_ID;
 export type NewDecision = Omit<Decision, "id" | "createdAt" | "updatedAt">;

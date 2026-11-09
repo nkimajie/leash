@@ -1,6 +1,6 @@
 // Human-readable labels and colours for outcomes and rules.
 
-import type { Outcome, QuickReason, RuleName } from "@/schemas";
+import { isSampleHistory, type Decision, type Outcome, type QuickReason, type RuleName } from "@/schemas";
 
 export const OUTCOME_STYLE: Record<Outcome, { label: string; tone: string; dot: string }> = {
   auto_approved: {
@@ -20,7 +20,9 @@ export const RULE_LABEL: Record<RuleName, string> = {
   within_rules: "Within rules",
   auto_approve_limit: "Over auto-approve limit",
   request_budget: "Over request budget",
+  off_request: "Not what you asked for",
   new_person: "New person",
+  no_paypal_email: "No PayPal email yet",
   scheduled_restock: "Scheduled restock",
   max_item_price: "Over max item price",
   max_payment_per_person: "Over per-person limit",
@@ -52,4 +54,24 @@ export const TOOL_LABEL: Record<string, string> = {
   pay_person: "Sending with PayPal",
   recall_preferences: "Recalling what you like",
   remember_preference: "Remembering",
+};
+
+/** Where the money is at PayPal, in plain words. The control room shows PayPal's own status underneath. */
+export function paypalStatusInWords(decision: Decision): string {
+  if (isSampleHistory(decision)) return "Sample, never sent";
+  const status = decision.paypal.status;
+  if (!status) return "Never called";
+  if (status === "COMPLETED" && decision.paypal.payoutId) return "Taken, sent on";
+  return PAYPAL_STATUS_IN_WORDS[status] ?? "PayPal error";
+}
+
+const PAYPAL_STATUS_IN_WORDS: Record<string, string> = {
+  CREATED: "Reserved",
+  AUTHORIZED: "Reserved",
+  PENDING: "Being taken",
+  COMPLETED: "Taken",
+  VOIDED: "Released",
+  REFUNDED: "Refunded",
+  DECLINED: "Declined",
+  PAYPAL_NOT_CONNECTED: "Not connected",
 };
