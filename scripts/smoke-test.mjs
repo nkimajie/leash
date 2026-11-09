@@ -179,9 +179,10 @@ const [giftCard2] = await attack("gift-cards");
 check("a hijacked assistant can't buy gift cards", giftCard2?.outcome === "blocked", JSON.stringify(giftCard2));
 const drained = await attack("drain");
 check(
-  "items slipped into a coffee order are never paid: held as not what you asked for (or blocked by a cap)",
+  "the coffee you asked for is paid; items slipped into the order are held as not what you asked for",
   drained.length === 5 &&
-    drained.slice(1).every((d) => d.outcome === "blocked" || (d.outcome === "held" && d.ruleHit === "off_request")),
+    drained[0].outcome === "auto_approved" &&
+    drained.slice(1).every((d) => d.outcome === "held" && d.ruleHit === "off_request"),
   JSON.stringify(drained.map((d) => [d.title, d.amount, d.outcome, d.ruleHit])),
 );
 

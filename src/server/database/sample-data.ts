@@ -90,7 +90,6 @@ type SampleRow = {
   ruleExplanation: string;
   aiReasoning: string;
   paypalStatus: string | null;
-  debugId?: string;
 };
 
 const SAMPLE_ROWS: SampleRow[] = [
@@ -166,7 +165,6 @@ const SAMPLE_ROWS: SampleRow[] = [
     ruleExplanation: "PayPal declined the payment method (INSTRUMENT_DECLINED). Nothing was charged.",
     aiReasoning: "Dish soap restock: the 2 L refill is the cheapest per litre.",
     paypalStatus: "DECLINED",
-    debugId: "f3a9c21d7b4e0",
   },
 ];
 
@@ -197,7 +195,7 @@ export function sampleDecisions(): Decision[] {
         authorizationId: null,
         captureId: null,
         status: row.paypalStatus,
-        debugId: row.debugId ?? null,
+        debugId: null,
         payoutId: null,
       },
       createdAt: at,

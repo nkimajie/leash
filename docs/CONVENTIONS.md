@@ -70,7 +70,8 @@ docs/                       Documentation
 | `failed`        | PayPal error, e.g. card declined | voided; `debug_id` saved            |
 
 Paying a person: once the money is captured, PayPal Payouts sends it on to their email (the payout id is saved).
-If the payout fails, the capture is refunded and the outcome is `failed`. Money sent to a person can't be refunded.
+If PayPal refuses the payout, the capture is refunded and the outcome is `failed` (PayPal status `REFUNDED`, or
+`REFUND_FAILED` with the capture id in the explanation). Money sent to a person can't be refunded.
 
 ## Checks before every commit
 

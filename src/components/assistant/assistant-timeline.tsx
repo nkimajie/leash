@@ -11,13 +11,14 @@ import { DecisionResultCard } from "./decision-result-card";
 
 export function AssistantTimeline({ steps, isWorking }: { steps: AssistantEvent[]; isWorking: boolean }) {
   if (steps.length === 0 && !isWorking) return null;
+  const firstHeld = steps.find((step) => step.type === "decision_made" && step.decision.outcome === "held");
 
   return (
     <ol className="relative flex flex-col gap-3 border-l border-stone-200 pl-6">
       {steps.filter(hasSomethingToShow).map((step, index) => (
         <li key={index} className="animate-step relative">
           <StepIcon step={step} />
-          <StepBody step={step} />
+          <StepBody step={step} showQrCode={step === firstHeld} />
         </li>
       ))}
       {isWorking && (
@@ -54,7 +55,7 @@ function StepIcon({ step }: { step: AssistantEvent }) {
   );
 }
 
-function StepBody({ step }: { step: AssistantEvent }) {
+function StepBody({ step, showQrCode }: { step: AssistantEvent; showQrCode: boolean }) {
   switch (step.type) {
     case "request_started":
       return (
@@ -81,7 +82,7 @@ function StepBody({ step }: { step: AssistantEvent }) {
         </p>
       );
     case "decision_made":
-      return <DecisionResultCard decision={step.decision} />;
+      return <DecisionResultCard decision={step.decision} showQrCode={showQrCode} />;
     case "reply":
       return <p className="rounded-xl bg-stone-900 px-4 py-3 text-sm text-white">{step.text}</p>;
     case "error":

@@ -51,7 +51,7 @@ control room questions ("what did I spend on coffee this week?"), and click any 
 - **PayPal:** Vault v3 saves your PayPal account once (setup token, then payment token). Each payment is an Orders
   v2 order with `AUTHORIZE` intent, paid with the vaulted account, so there's no popup per purchase. Payments v2
   captures, voids or refunds it. A vaulted account can only pay the app that saved it, so payments to people are
-  captured to Leash and sent straight on with **Payouts**, refunded at once if that fails. Webhooks keep statuses
+  captured to Leash and sent straight on with **Payouts**, refunded at once if PayPal refuses it. Webhooks keep statuses
   current, and every error stores PayPal's `debug_id`. Built on `@paypal/paypal-server-sdk`, plus the REST API for
   Payouts.
 - **Claude Haiku** runs the assistant as a tool-use agent. Its tools are intent-level ("buy this product", "pay Sam

@@ -6,7 +6,7 @@
 
 import { Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { Decision, GridView, Outcome } from "@/schemas";
+import { isSampleHistory, type Decision, type GridView, type Outcome } from "@/schemas";
 import { approveDecision, askControlRoom, denyDecision, refundDecision } from "@/lib/api-client";
 import { classNames, formatMoney } from "@/lib/format";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
@@ -99,7 +99,7 @@ export function ControlRoom() {
         <SummaryTile
           label="Paid through PayPal"
           value={formatMoney(totals.paid)}
-          detail={`${totals.paidCount} payments`}
+          detail={`${totals.paidCount} ${totals.paidCount === 1 ? "payment" : "payments"}`}
           accent="text-emerald-700"
         />
         <SummaryTile
@@ -204,7 +204,9 @@ export function ControlRoom() {
   );
 }
 
-function summarise(decisions: Decision[]) {
+/** Totals for the tiles. Sample history was never sent to PayPal, so it isn't counted. */
+function summarise(allDecisions: Decision[]) {
+  const decisions = allDecisions.filter((d) => !isSampleHistory(d));
   const sum = (list: Decision[]) => list.reduce((total, d) => total + d.amount, 0);
   const paid = decisions.filter((d) => PAID.includes(d.outcome));
   const waiting = decisions.filter((d) => d.outcome === "held");

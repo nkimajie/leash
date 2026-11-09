@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { COMMITTED_OUTCOMES, type Decision, type SpendingRules } from "@/schemas";
+import { COMMITTED_OUTCOMES, isSampleHistory, type Decision, type SpendingRules } from "@/schemas";
 import { fetchSpendingRules } from "@/lib/api-client";
 import { classNames, formatMoney } from "@/lib/format";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
@@ -95,7 +95,7 @@ function CapUsed({ label, spent, cap }: { label: string; spent: number; cap: num
 /** Money paid or reserved since a moment: the same sums the rules check against the caps. */
 function spentSince(decisions: Decision[], since: Date): number {
   return decisions
-    .filter((d) => COMMITTED_OUTCOMES.includes(d.outcome) && new Date(d.createdAt) >= since)
+    .filter((d) => COMMITTED_OUTCOMES.includes(d.outcome) && !isSampleHistory(d) && new Date(d.createdAt) >= since)
     .reduce((sum, d) => sum + d.amount, 0);
 }
 

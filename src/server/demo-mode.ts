@@ -2,11 +2,11 @@ import "server-only";
 
 // Demo mode (DEMO_MODE=true) is for the public demo judges use. Everyone shares one account, so:
 //   - anyone can put it back to the sample data, and the daily job does so every night
-//   - it resets itself when the next person arrives after 20 quiet minutes
+//   - it starts fresh when the next person arrives after 30 quiet minutes
 //   - every fresh demo starts with one real purchase waiting for approval, to try on your phone
 // The connected PayPal account is kept, and can't be disconnected while demo mode is on.
 
-import { isSampleHistory } from "@/schemas";
+import { isSampleHistory, type AssistantEvent } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { BadRequestError } from "@/server/errors";
@@ -14,28 +14,36 @@ import { getPayPalConnection } from "@/server/payments/paypal-connection";
 import { SAMPLE_CATALOG } from "@/server/products/sample-catalog";
 import { buyProduct, releaseAllHolds } from "@/server/spending/spending-service";
 
-const QUIET_MINUTES_BEFORE_RESET = 20;
+const QUIET_MINUTES_BEFORE_RESET = 30;
+
+/** The reset that's running right now, if any: two visitors arriving together share it. */
+let resetInProgress: Promise<void> | null = null;
 
 export async function resetDemo(): Promise<void> {
   if (!serviceModes().demoMode) throw new BadRequestError("Resetting is only available in demo mode.");
-  await releaseAllHolds(); // nothing stays reserved at PayPal
-  await database.demoData.resetToSampleData();
-  await startWithOnePurchaseWaiting();
+  resetInProgress ??= startFresh().finally(() => (resetInProgress = null));
+  return resetInProgress;
 }
 
 /**
- * Called when someone starts the assistant. If nobody has done anything for a while,
- * the last visitor's changes (their twin's lessons, the daily cap they used) are cleared first.
- * Returns true when it reset.
+ * Runs before the assistant or an attack starts. If nobody has done anything for a while,
+ * the last visitor's changes (their twin's lessons, the caps they used) are cleared first.
  */
-export async function resetDemoIfQuiet(now = new Date()): Promise<boolean> {
-  if (!serviceModes().demoMode) return false;
+export async function* startFreshIfQuiet(now = new Date()): AsyncGenerator<AssistantEvent> {
+  if (!serviceModes().demoMode) return;
   const lastActivity = (await database.decisions.listDecisions())
     .filter((d) => !isSampleHistory(d))
     .reduce((latest, d) => Math.max(latest, new Date(d.updatedAt).getTime()), 0);
-  if (lastActivity === 0 || now.getTime() - lastActivity < QUIET_MINUTES_BEFORE_RESET * 60_000) return false;
+  if (lastActivity === 0 || now.getTime() - lastActivity < QUIET_MINUTES_BEFORE_RESET * 60_000) return;
+
+  yield { type: "thinking", text: "Fresh demo: clearing the last visitor's purchases and lessons first…" };
   await resetDemo();
-  return true;
+}
+
+async function startFresh() {
+  await releaseAllHolds(); // nothing stays reserved at PayPal
+  await database.demoData.resetToSampleData();
+  await startWithOnePurchaseWaiting();
 }
 
 /** A real PayPal reservation (the $85 grinder), so a visitor can approve or deny it straight away. */

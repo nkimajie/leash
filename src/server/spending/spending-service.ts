@@ -108,21 +108,25 @@ export async function payPerson(
 
 /** You said yes to a held purchase or payment: PayPal takes the reserved money. */
 export async function approveHeldDecision(decisionId: string): Promise<Decision> {
-  const held = await findDecisionIn(decisionId, ["held"]);
-  const decision = held.kind === "payment" ? await withLatestEmail(held) : held;
-  try {
-    const taken = await takeReservedMoney(decision, decision.paypal.authorizationId!);
-    const approved = await database.decisions.updateDecision(decisionId, {
-      outcome: "approved",
-      payee: decision.payee,
-      paypal: taken,
-    });
-    await rememberLesson(approved, "approved");
-    return approved;
-  } catch (error) {
-    await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => {});
-    return database.decisions.updateDecision(decisionId, paymentFailure(error));
-  }
+  return oneAtATime(decisionId, async () => {
+    const held = await findDecisionIn(decisionId, ["held"]);
+    const decision = held.kind === "payment" ? await withLatestEmail(held) : held;
+    try {
+      const taken = await takeReservedMoney(decision, decision.paypal.authorizationId!);
+      if (taken.failure)
+        return database.decisions.updateDecision(decisionId, { ...taken.failure, paypal: taken.paypal });
+      const approved = await database.decisions.updateDecision(decisionId, {
+        outcome: "approved",
+        payee: decision.payee,
+        paypal: taken.paypal,
+      });
+      await rememberLesson(approved, "approved");
+      return approved;
+    } catch (error) {
+      await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => {});
+      return database.decisions.updateDecision(decisionId, paymentFailure(error));
+    }
+  });
 }
 
 /**
@@ -130,28 +134,32 @@ export async function approveHeldDecision(decisionId: string): Promise<Decision>
  * If you said why, the twin learns that exact lesson.
  */
 export async function denyHeldDecision(decisionId: string, why: YourReason = {}): Promise<Decision> {
-  const decision = await findDecisionIn(decisionId, ["held"]);
-  const result = await paypal.voidAuthorization(decision.paypal.authorizationId!);
-  const denied = await database.decisions.updateDecision(decisionId, {
-    outcome: "denied",
-    paypal: { status: result.status },
+  return oneAtATime(decisionId, async () => {
+    const decision = await findDecisionIn(decisionId, ["held"]);
+    const result = await paypal.voidAuthorization(decision.paypal.authorizationId!);
+    const denied = await database.decisions.updateDecision(decisionId, {
+      outcome: "denied",
+      paypal: { status: result.status },
+    });
+    await rememberLesson(denied, "denied", why);
+    return denied;
   });
-  await rememberLesson(denied, "denied", why);
-  return denied;
 }
 
 export async function refundDecision(decisionId: string, why: YourReason = {}): Promise<Decision> {
-  const decision = await findDecisionIn(decisionId, ["auto_approved", "approved"]);
-  if (decision.kind === "payment") {
-    throw new BadRequestError(`The money already went on to ${decision.counterparty}. Ask them to send it back.`);
-  }
-  const result = await paypal.refundCapture(decision.paypal.captureId!);
-  const refunded = await database.decisions.updateDecision(decisionId, {
-    outcome: "refunded",
-    paypal: { status: result.status },
+  return oneAtATime(decisionId, async () => {
+    const decision = await findDecisionIn(decisionId, ["auto_approved", "approved"]);
+    if (decision.kind === "payment") {
+      throw new BadRequestError(`The money already went on to ${decision.counterparty}. Ask them to send it back.`);
+    }
+    const result = await paypal.refundCapture(decision.paypal.captureId!);
+    const refunded = await database.decisions.updateDecision(decisionId, {
+      outcome: "refunded",
+      paypal: { status: result.status },
+    });
+    await rememberLesson(refunded, "refunded", why);
+    return refunded;
   });
-  await rememberLesson(refunded, "refunded", why);
-  return refunded;
 }
 
 /** How long a held purchase or payment waits for you before the reserved money is released. */
@@ -177,18 +185,16 @@ export async function releaseAllHolds(): Promise<Decision[]> {
 
 async function releaseHolds(shouldRelease: (held: Decision) => boolean, explanation: string): Promise<Decision[]> {
   const held = (await database.decisions.listDecisions()).filter((d) => d.outcome === "held" && shouldRelease(d));
-  const released: Decision[] = [];
-  for (const decision of held) {
-    const result = await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => null);
-    released.push(
-      await database.decisions.updateDecision(decision.id, {
+  return Promise.all(
+    held.map(async (decision) => {
+      const result = await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => null);
+      return database.decisions.updateDecision(decision.id, {
         outcome: "denied",
         ruleExplanation: explanation,
         paypal: { status: result?.status ?? "VOIDED" },
-      }),
-    );
-  }
-  return released;
+      });
+    }),
+  );
 }
 
 // ---------- internals ----------
@@ -243,8 +249,8 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
     const taken = await takeReservedMoney(details, authorization.authorizationId);
     return database.decisions.saveNewDecision({
       ...record,
-      outcome: "auto_approved",
-      paypal: { ...reserved, ...taken },
+      ...(taken.failure ?? { outcome: "auto_approved" }),
+      paypal: { ...reserved, ...taken.paypal },
     });
   } catch (error) {
     await paypal.voidAuthorization(authorization.authorizationId).catch(() => {});
@@ -253,17 +259,24 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
   }
 }
 
+type TakenMoney = {
+  paypal: Partial<PayPalRecord>;
+  /** Set when the money was taken but couldn't be sent on to the person. */
+  failure?: { outcome: "failed"; ruleHit: "payment_error"; ruleExplanation: string };
+};
+
 /**
  * Takes the reserved money. A payment to a person then goes straight on to their PayPal email
- * (PayPal Payouts). If that fails, the money is refunded at once, so it never sits with Leash.
+ * (PayPal Payouts). If PayPal refuses the payout, the money is refunded at once, so it never
+ * sits with Leash, and if even the refund fails, the record says so. Capture errors are thrown.
  */
 async function takeReservedMoney(
   details: Pick<NewDecision, "kind" | "amount" | "currency" | "title" | "payee">,
   authorizationId: string,
-): Promise<Partial<PayPalRecord>> {
+): Promise<TakenMoney> {
   const capture = await paypal.capturePayment(authorizationId);
   const taken = { captureId: capture.captureId, status: capture.status };
-  if (details.kind !== "payment") return taken;
+  if (details.kind !== "payment") return { paypal: taken };
 
   try {
     const payout = await paypal.sendToPerson({
@@ -271,11 +284,37 @@ async function takeReservedMoney(
       amount: details.amount,
       currency: details.currency,
       note: details.title,
+      reference: authorizationId, // one payout per reservation: PayPal refuses a second one
     });
-    return { ...taken, payoutId: payout.payoutId };
+    return { paypal: { ...taken, payoutId: payout.payoutId } };
   } catch (error) {
-    await paypal.refundCapture(capture.captureId).catch(() => {});
-    throw error;
+    if (!(error instanceof paypal.PayPalError)) throw error;
+    const refund = await paypal.refundCapture(capture.captureId).catch(() => null);
+    const notSent = `PayPal took the money but couldn't send it on to ${details.payee!.name} (${error.issue})`;
+    return {
+      paypal: { ...taken, status: refund ? "REFUNDED" : "REFUND_FAILED", debugId: error.debugId || null },
+      failure: {
+        outcome: "failed",
+        ruleHit: "payment_error",
+        ruleExplanation: refund
+          ? `${notSent}, so it was refunded to you.`
+          : `${notSent}, and the refund failed too. Refund capture ${capture.captureId} in PayPal.`,
+      },
+    };
+  }
+}
+
+/** Decisions someone is approving, denying or refunding right now. */
+const decisionsInProgress = new Set<string>();
+
+/** A double tap on Approve must never move money twice, so each decision is handled one at a time. */
+async function oneAtATime<T>(decisionId: string, work: () => Promise<T>): Promise<T> {
+  if (decisionsInProgress.has(decisionId)) throw new ConflictError("This is already being handled.");
+  decisionsInProgress.add(decisionId);
+  try {
+    return await work();
+  } finally {
+    decisionsInProgress.delete(decisionId);
   }
 }
 

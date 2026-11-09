@@ -32,7 +32,14 @@ export { PayPalError } from "./paypal-error";
 export type PaymentRequest = { amount: number; currency: string; description: string };
 export type PaymentAuthorization = { orderId: string; authorizationId: string; status: string };
 export type PaymentCapture = { captureId: string; status: string };
-export type PersonPayout = { email: string; amount: number; currency: string; note: string };
+export type PersonPayout = {
+  email: string;
+  amount: number;
+  currency: string;
+  note: string;
+  /** Unique per payment. PayPal refuses a second payout with the same reference, so a retry can't pay twice. */
+  reference: string;
+};
 export type SentPayout = { payoutId: string; status: string };
 
 const isSandbox = () => serviceModes().payments === "paypal-sandbox";

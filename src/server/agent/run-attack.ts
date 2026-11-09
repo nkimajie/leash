@@ -8,10 +8,9 @@ import type { AssistantEvent, Decision, Product } from "@/schemas";
 import { ATTACKS, type AttackStep } from "@/lib/attacks";
 import { formatMoney } from "@/lib/format";
 import * as database from "@/server/database";
-import { resetDemoIfQuiet } from "@/server/demo-mode";
+import { startFreshIfQuiet } from "@/server/demo-mode";
 import { NotFoundError } from "@/server/errors";
 import { readBudget } from "./read-request";
-import { FRESH_DEMO_NOTE } from "./run-assistant";
 import { runTool, type ToolContext } from "./tools";
 
 export function findAttack(id: string) {
@@ -22,7 +21,7 @@ export function findAttack(id: string) {
 
 export async function* runAttack(attackId: string): AsyncGenerator<AssistantEvent> {
   const attack = findAttack(attackId);
-  const isFreshDemo = await resetDemoIfQuiet();
+  yield* startFreshIfQuiet();
   const rules = await database.spendingRules.loadSpendingRules();
   const request = await database.assistantRequests.startAssistantRequest(
     attack.request,
@@ -31,7 +30,6 @@ export async function* runAttack(attackId: string): AsyncGenerator<AssistantEven
   );
   const context: ToolContext = { request };
   yield { type: "request_started", request };
-  if (isFreshDemo) yield { type: "thinking", text: FRESH_DEMO_NOTE };
   yield { type: "attack", text: attack.scam };
   yield {
     type: "thinking",

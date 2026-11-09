@@ -27,7 +27,7 @@ export async function sandboxSendToPerson(payout: PersonPayout): Promise<SentPay
       headers: { Authorization: `Bearer ${await getAccessToken()}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         // PayPal refuses a second batch with the same id, so a retry can never pay twice.
-        sender_batch_header: { sender_batch_id: crypto.randomUUID(), email_subject: "You've received money" },
+        sender_batch_header: { sender_batch_id: payout.reference, email_subject: "You've received money" },
         items: [
           {
             recipient_type: "EMAIL",

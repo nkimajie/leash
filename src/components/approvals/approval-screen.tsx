@@ -6,6 +6,7 @@
 
 import { ShieldAlert, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { use, useEffect, useState } from "react";
 import { QUICK_REASONS, type Decision, type Preference, type QuickReason } from "@/schemas";
 import { approveDecision, denyDecision, fetchDecision, fetchPreferences } from "@/lib/api-client";
@@ -64,10 +65,18 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
               <div className="min-w-0">
                 <div className="font-semibold leading-snug">{decision.title}</div>
                 <div className="text-sm text-stone-500">{decision.counterparty}</div>
-                <div className="flex flex-wrap gap-x-2">
-                  <StoreLink decision={decision} />
-                  <FoundWith product={decision.product} />
-                </div>
+                {decision.payee ? (
+                  <div className="break-words text-xs text-stone-500">
+                    {decision.payee.email
+                      ? `To ${decision.payee.email}, sent with PayPal Payouts`
+                      : "No PayPal email yet: add one on the People page before approving"}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-x-2">
+                    <StoreLink decision={decision} />
+                    <FoundWith product={decision.product} />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -126,6 +135,8 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
           )}
 
           {error && <p className="rounded-xl bg-rose-50 px-3 py-2 text-center text-sm text-rose-700">{error}</p>}
+
+          {decision.outcome === "held" && <ContinueOnYourPhone />}
 
           <Link
             href="/control-room"
@@ -237,6 +248,19 @@ function WhatYourTwinLearned({ decisionId }: { decisionId: string }) {
         <span className="font-medium">Your twin learned: </span>
         {lesson.statement}
       </span>
+    </div>
+  );
+}
+
+/** On a computer, a QR code to carry on with this screen on your phone. Hidden on phone-sized screens. */
+function ContinueOnYourPhone() {
+  // Only shown once the decision has loaded in the browser, so the address is always known here.
+  const url = typeof window === "undefined" ? "" : window.location.href;
+  if (!url) return null;
+  return (
+    <div className="hidden items-center gap-3 rounded-2xl border border-stone-200 bg-white p-3 text-sm text-stone-500 md:flex">
+      <QRCodeSVG value={url} size={64} marginSize={1} className="shrink-0" />
+      On a computer? Scan this to decide on your phone instead.
     </div>
   );
 }

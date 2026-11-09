@@ -7,7 +7,7 @@
 // Anything that passes both is "allowed": PayPal reserves and takes the money.
 
 import type { Outcome, RuleCheck, RuleName, SpendingRules } from "@/schemas";
-import { COMMITTED_OUTCOMES } from "@/schemas";
+import { COMMITTED_OUTCOMES, isSampleHistory } from "@/schemas";
 
 /** Money already committed (paid or reserved) when a new purchase or payment is checked. */
 export type SpendingSoFar = {
@@ -65,7 +65,7 @@ export function checkPurchase(purchase: PurchaseToCheck, rules: SpendingRules, s
   const reasonsToAsk = [
     !isWhatYouAskedFor(purchase) && {
       rule: "off_request" as const,
-      text: `You asked for "${purchase.whatYouAskedFor}", and this isn't part of it.`,
+      text: `Your request ("${purchase.whatYouAskedFor}") doesn't mention anything like this, so I'm asking first.`,
     },
     purchase.amount > rules.autoApproveLimit && {
       rule: "auto_approve_limit" as const,
@@ -122,14 +122,14 @@ export function checkPayment(payment: PaymentToCheck, rules: SpendingRules, soFa
   );
 }
 
-/** Adds up money already paid or reserved, for budgets and caps. */
+/** Adds up money already paid or reserved, for budgets and caps. Sample history never counts. */
 export function calculateSpendingSoFar(
   decisions: { requestId: string; amount: number; outcome: Outcome; createdAt: string }[],
   requestId: string,
   requestBudget: number,
   now: Date = new Date(),
 ): SpendingSoFar {
-  const committed = decisions.filter((d) => COMMITTED_OUTCOMES.includes(d.outcome));
+  const committed = decisions.filter((d) => COMMITTED_OUTCOMES.includes(d.outcome) && !isSampleHistory(d));
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -144,36 +144,48 @@ export function calculateSpendingSoFar(
 }
 
 /**
- * Stay on what you asked for: the product must share a word with your request
- * ("coffee" in "Restock my coffee" and "Conical burr coffee grinder"). This stops a hijacked
- * assistant from slipping unrelated things into your order, however cheap each one is.
+ * Stay on what you asked for: the product must share a word with your request, or a closely
+ * related one ("coffee" also covers espresso, grinders and filters). A hijacked assistant can then
+ * no longer slip unrelated things into your order, however cheap each one is: they wait for you.
  * A request with no specific words ("surprise me") can't be checked, so it passes.
  */
 export function isWhatYouAskedFor(purchase: Pick<PurchaseToCheck, "title" | "category" | "whatYouAskedFor">): boolean {
-  const askedFor = meaningfulWords(purchase.whatYouAskedFor);
+  const askedFor = meaningfulWords(purchase.whatYouAskedFor).flatMap((word) => [word, ...(RELATED_WORDS[word] ?? [])]);
   if (askedFor.length === 0) return true;
   const productWords = meaningfulWords(`${purchase.title} ${purchase.category}`);
   return askedFor.some((asked) =>
-    productWords.some((word) => word === asked || (asked.length > 3 && word.length > 3 && word.includes(asked))),
+    // Longer words may sit inside a product word: "coffee" in "coffeemaker", but not "card" in "cardigan".
+    productWords.some((word) => word === asked || (asked.length >= 5 && word.includes(asked))),
   );
 }
 
-/** Words that say what you want, without filler: "Restock my dog food!" -> ["dog", "food"]. */
+/** Words that say what you want, without filler: "Restock my dog's food!" -> ["dog", "food"]. */
 function meaningfulWords(text: string): string[] {
   return text
     .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "") // "café" -> "cafe"
     .split(/[^a-z]+/)
-    .filter((word) => word.length > 2 && !FILLER_WORDS.has(word))
-    .map((word) => (word.length > 3 ? word.replace(/s$/, "") : word)); // "beans" -> "bean"
+    .map((word) => (word.length > 3 ? word.replace(/ies$/, "y").replace(/s$/, "") : word)) // "beans" -> "bean"
+    .filter((word) => word.length > 2 && !FILLER_WORDS.has(word));
 }
 
 const FILLER_WORDS = new Set(
   (
     "the and for our you your with some any more few new get buy order restock need want please can could " +
     "find help just only under over below max budget usual same again every week month day setup set stuff " +
-    "things thing supplies something anything surprise cheap good best nice what that this from into ask"
+    "thing supply something anything surprise cheap good best nice what that this from into ask"
   ).split(" "),
 );
+
+/** Everyday requests use a general word ("coffee") for specific products ("burr mill"). */
+const RELATED_WORDS: Record<string, string[]> = {
+  coffee: ["espresso", "bean", "roast", "brew", "blend", "grinder", "mill", "burr", "filter", "dripper", "kettle"],
+  grinder: ["mill", "burr"],
+  dog: ["puppy", "pet", "kibble", "chew", "treat", "leash", "collar"],
+  cat: ["kitten", "pet", "litter"],
+  office: ["paper", "pen", "notebook", "stapler", "desk"],
+};
 
 // ---- helpers ----
 

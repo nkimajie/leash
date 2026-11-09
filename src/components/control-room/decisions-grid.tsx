@@ -79,6 +79,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
     api.forEachNodeAfterFilter((node) => {
       if (!node.data) return;
       next.shown++;
+      if (isSampleHistory(node.data)) return; // never sent to PayPal, so not in the money totals
       if (PAID.includes(node.data.outcome)) next.paid += node.data.amount;
       if (node.data.outcome === "held") next.reserved += node.data.amount;
     });
@@ -158,7 +159,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
       {
         colId: "actions",
         headerName: "",
-        width: 140,
+        width: 156,
         pinned: "right",
         sortable: false,
         cellRenderer: (p: ICellRendererParams<Decision>) =>

@@ -15,9 +15,9 @@ digital twin.
 
 1. Open the live demo (link in the Devpost submission) and click **Reset demo** (bottom left) for a clean start.
    PayPal is already connected to a sandbox account, so you don't need to log in to anything.
-2. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Scan its QR code (or
-   click it) and tap **Deny**. Say why, in your own words. PayPal voids the reservation, and the screen shows what
-   your twin learned.
+2. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Click **Phone view**
+   (scan the QR code there to use your real phone) and tap **Deny**. Say why, in your own words. PayPal voids the
+   reservation, and the screen shows what your twin learned.
 3. On **Assistant**, click **"Restock my coffee setup, under $60…"**. Watch Claude search real stores (Channel3),
    check your rules and pay. Anything within your rules is paid; anything over your $50 limit is held.
 4. Click **Try to break the leash** and pick an attack. A scam "takes over" the assistant, and the rules stop the
@@ -45,8 +45,13 @@ so there is no PayPal popup for every purchase, and the authorize-then-capture f
 
 A saved PayPal account can only pay the app that saved it. So paying Sam is two PayPal steps: your account pays
 Leash (reserved, then captured, exactly like a purchase), and Leash sends the same amount straight on to Sam's
-email with **PayPal Payouts**. If the payout fails, the capture is refunded at once. If Sam has no PayPal account,
-PayPal emails Sam a link to claim it.
+email with **PayPal Payouts**. If PayPal refuses the payout, the capture is refunded at once (and if even the
+refund fails, the record says exactly where the money is). If Sam has no PayPal account, PayPal emails Sam a link to
+claim it, and returns the money if it isn't claimed within 30 days. A double tap on Approve can't pay twice: each
+decision is handled one at a time, and each payout uses its reservation's id, which PayPal won't accept twice.
+
+In the sandbox, the capture reaches Leash's account minus PayPal's fee, and the payout sends the full amount. A real
+launch would use PayPal's marketplace setup, since Leash would be passing money between people.
 
 ### What's real and what's simulated
 
@@ -98,8 +103,9 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
 - **Approve from your phone.** Anything held shows a QR code. Scan it, approve or deny, and the desktop updates live.
 - **Ask why, and learn it.** When you deny, say why: "too expensive", "wrong store", or your own words like "I only
   want hand grinders". Claude turns it into a precise preference, and the twin applies it next time.
-- **Stay on what you asked for.** Ask for coffee, and anything that isn't coffee waits for you, however cheap. A
-  hijacked assistant can't slip extra items into your order one small buy at a time.
+- **Stay on what you asked for.** Ask for coffee, and anything that isn't coffee (or close to it: beans, a grinder,
+  filters) waits for you, however cheap. That makes it much harder for a hijacked assistant to slip extra items into
+  your order one small buy at a time.
 - **Survive a hijack.** "Try to break the leash" plays three scams against the assistant: $900 to a stranger, gift
   cards from a poisoned product page, and extra items hidden in your coffee order. They skip the AI entirely, so
   only the rules stand in the way, and they hold. The stranger doesn't even end up on your people list.

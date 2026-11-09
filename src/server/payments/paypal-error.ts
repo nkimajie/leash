@@ -23,8 +23,6 @@ export class PayPalError extends Error {
 
 /** PayPal issues people are most likely to meet, explained without jargon. */
 const PLAIN_ENGLISH: Record<string, string> = {
-  RECEIVER_ACCOUNT_LOCKED: "Their PayPal account can't receive money right now, so it went straight back to you.",
-  INSUFFICIENT_FUNDS: "PayPal couldn't pass the money on to them, so it went straight back to you.",
   PAYER_ACCOUNT_RESTRICTED: "Your PayPal account can't send money right now.",
   PAYER_CANNOT_PAY: "Your PayPal account can't pay for this right now.",
   AUTHORIZATION_EXPIRED: "PayPal's reservation expired before it was used.",

@@ -2,6 +2,8 @@
 
 // Side panel listing everything the leash is holding for your decision.
 
+import { Smartphone } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { approveDecision, denyDecision } from "@/lib/api-client";
 import { formatMoney } from "@/lib/format";
@@ -59,6 +61,14 @@ export function WaitingForYou() {
                 >
                   Deny
                 </Button>
+                <Link
+                  href={`/approve/${decision.id}`}
+                  target="_blank"
+                  className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-stone-500 hover:text-stone-900"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                  Phone view
+                </Link>
               </div>
             </li>
           ))}

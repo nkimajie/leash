@@ -9,8 +9,11 @@ import { RULE_LABEL } from "@/lib/labels";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
 import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
-/** What happened to one purchase or payment, shown inside the assistant timeline. */
-export function DecisionResultCard({ decision }: { decision: Decision }) {
+/**
+ * What happened to one purchase or payment, shown inside the assistant timeline.
+ * Only the first held item in a run shows a QR code; the others get a small link, to keep the page short.
+ */
+export function DecisionResultCard({ decision, showQrCode = true }: { decision: Decision; showQrCode?: boolean }) {
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
       <div className="flex items-start gap-3">
@@ -36,7 +39,19 @@ export function DecisionResultCard({ decision }: { decision: Decision }) {
           </div>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">{decision.ruleExplanation}</p>
 
-          {decision.outcome === "held" && <ApproveOnYourPhone decisionId={decision.id} />}
+          {decision.outcome === "held" &&
+            (showQrCode ? (
+              <ApproveOnYourPhone decisionId={decision.id} />
+            ) : (
+              <Link
+                href={`/approve/${decision.id}`}
+                target="_blank"
+                className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-900"
+              >
+                <Smartphone className="h-4 w-4" />
+                Approve or deny
+              </Link>
+            ))}
 
           {decision.paypal.orderId && (
             <div className="mt-3 font-mono text-[11px] text-stone-400">

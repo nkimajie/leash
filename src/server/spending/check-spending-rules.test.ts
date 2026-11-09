@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SPENDING_RULES, type SpendingRules } from "@/schemas";
+import { DEFAULT_SPENDING_RULES, SAMPLE_HISTORY_REQUEST_ID, type SpendingRules } from "@/schemas";
 import {
   calculateSpendingSoFar,
   checkPayment,
@@ -94,6 +94,24 @@ describe("stay on what you asked for", () => {
     expect(isWhatYouAskedFor({ ...grinder, whatYouAskedFor: "Get printer paper" })).toBe(false);
   });
 
+  it("understands real store titles that use a more specific word than you did", () => {
+    const asked = (whatYouAskedFor: string, title: string, category = "") =>
+      isWhatYouAskedFor({ title, category, whatYouAskedFor });
+    expect(asked("Restock my coffee setup", "Baratza Encore Conical Burr Grinder", "small kitchen appliances")).toBe(
+      true,
+    );
+    expect(asked("I need a coffee grinder", "Hario Skerton Pro Ceramic Burr Hand Mill")).toBe(true);
+    expect(asked("Restock fair-trade coffee beans", "Equal Exchange Organic Breakfast Blend Ground")).toBe(true);
+    expect(asked("My dog needs food", "Blue Buffalo Life Protection Puppy Kibble")).toBe(true);
+    expect(asked("Two cafés' worth of coffee", "Café bustelo espresso")).toBe(true);
+  });
+
+  it("doesn't match short words inside longer ones", () => {
+    expect(
+      isWhatYouAskedFor({ title: "Wool cardigan", category: "clothing", whatYouAskedFor: "A birthday card" }),
+    ).toBe(false);
+  });
+
   it("can't check a request with nothing specific in it, so lets it pass", () => {
     expect(isWhatYouAskedFor({ title: "Gel pens", category: "office", whatYouAskedFor: "Surprise me!" })).toBe(true);
   });
@@ -165,6 +183,16 @@ describe("calculateSpendingSoFar", () => {
       now,
     );
     expect(soFar).toEqual({ requestBudget: 60, spentOnRequest: 99, spentToday: 99, spentThisWeek: 119 });
+  });
+
+  it("never counts the sample history, which was never sent to PayPal", () => {
+    const soFar = calculateSpendingSoFar(
+      [decision(SAMPLE_HISTORY_REQUEST_ID, 72, "auto_approved", "2026-11-06T10:00:00")],
+      "r1",
+      60,
+      now,
+    );
+    expect(soFar.spentToday).toBe(0);
   });
 });
 
