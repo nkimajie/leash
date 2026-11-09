@@ -64,7 +64,7 @@ export async function* runClaudeAssistant(request: AssistantRequest): AsyncGener
       const input = call.input as Record<string, unknown>;
       yield { type: "tool_started", tool: call.name, input };
       const result = await runTool(call.name, input, context);
-      yield { type: "tool_finished", tool: call.name, summary: result.summary };
+      yield { type: "tool_finished", tool: call.name, summary: result.summary, products: result.products };
       if (result.decision) yield { type: "decision_made", decision: result.decision };
       toolResults.push({ type: "tool_result", tool_use_id: call.id, content: describeForClaude(result) });
     }

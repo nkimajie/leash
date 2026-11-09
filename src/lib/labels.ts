@@ -58,7 +58,7 @@ export const TOOL_LABEL: Record<string, string> = {
 
 /** Where the money is at PayPal, in plain words. The control room shows PayPal's own status underneath. */
 export function paypalStatusInWords(decision: Decision): string {
-  if (isSampleHistory(decision)) return "Sample, never sent";
+  if (isSampleHistory(decision)) return "Sample only";
   const status = decision.paypal.status;
   if (!status) return "Never called";
   if (status === "COMPLETED" && decision.paypal.payoutId) return "Taken, sent on";

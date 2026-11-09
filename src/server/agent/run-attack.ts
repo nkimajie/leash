@@ -68,7 +68,7 @@ async function* callTool(
 ): AsyncGenerator<AssistantEvent, Decision | null> {
   yield { type: "tool_started", tool: name, input };
   const result = await runTool(name, input, context);
-  yield { type: "tool_finished", tool: name, summary: result.summary };
+  yield { type: "tool_finished", tool: name, summary: result.summary, products: result.products };
   if (result.decision) yield { type: "decision_made", decision: result.decision };
   return result.decision ?? null;
 }

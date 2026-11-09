@@ -1,5 +1,5 @@
 import { ShoppingBag, UserRound } from "lucide-react";
-import type { Decision } from "@/schemas";
+import type { Decision, Product } from "@/schemas";
 import { classNames } from "@/lib/format";
 
 /** The product's photo from the store (via Channel3), or an icon when there is none. */
@@ -39,5 +39,32 @@ export function StoreLink({ decision }: { decision: Decision }) {
     >
       View at {decision.counterparty}
     </a>
+  );
+}
+
+/** A small product photo for search results, or a bag icon when there is none. */
+export function ProductThumbnail({ imageUrl }: { imageUrl?: string }) {
+  if (!imageUrl) {
+    return (
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-500">
+        <ShoppingBag className="h-4 w-4" />
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- same reason as ProductPhoto
+    <img src={imageUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg bg-white object-contain ring-1 ring-stone-200" />
+  );
+}
+
+/** "Found with Channel3 · cheapest of 3 stores", or "Sample catalog" when Channel3 isn't set up. */
+export function FoundWith({ product }: { product: Product | null }) {
+  if (!product) return null;
+  if (product.source !== "channel3") return <span className="text-xs text-stone-400">Sample catalog</span>;
+  const stores = product.storesCompared ?? 1;
+  return (
+    <span className="text-xs text-stone-500">
+      Found with Channel3{stores > 1 ? ` · cheapest of ${stores} stores` : ""}
+    </span>
   );
 }

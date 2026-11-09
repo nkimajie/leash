@@ -14,7 +14,7 @@ import { QUICK_REASON_LABEL, RULE_LABEL } from "@/lib/labels";
 import { LeashLogo } from "@/components/layout/leash-logo";
 import { Button } from "@/components/ui/button";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
-import { ProductPhoto, StoreLink } from "@/components/ui/product-photo";
+import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
 export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -64,7 +64,10 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
               <div className="min-w-0">
                 <div className="font-semibold leading-snug">{decision.title}</div>
                 <div className="text-sm text-stone-500">{decision.counterparty}</div>
-                <StoreLink decision={decision} />
+                <div className="flex flex-wrap gap-x-2">
+                  <StoreLink decision={decision} />
+                  <FoundWith product={decision.product} />
+                </div>
               </div>
             </div>
 

@@ -6,6 +6,8 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  // Link previews need the full address: APP_URL, or the address Render gives the service.
+  metadataBase: new URL(process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000"),
   title: { default: "Leash", template: "%s · Leash" },
   description: "A personal assistant that spends and sends money like you would, but only inside rules you set.",
 };

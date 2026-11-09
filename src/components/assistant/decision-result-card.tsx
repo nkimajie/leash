@@ -7,7 +7,7 @@ import type { Decision } from "@/schemas";
 import { formatMoney } from "@/lib/format";
 import { RULE_LABEL } from "@/lib/labels";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
-import { ProductPhoto, StoreLink } from "@/components/ui/product-photo";
+import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
 /** What happened to one purchase or payment, shown inside the assistant timeline. */
 export function DecisionResultCard({ decision }: { decision: Decision }) {
@@ -22,6 +22,7 @@ export function DecisionResultCard({ decision }: { decision: Decision }) {
               <div className="flex flex-wrap items-center gap-x-2 text-sm text-stone-500">
                 {decision.counterparty}
                 <StoreLink decision={decision} />
+                <FoundWith product={decision.product} />
               </div>
             </div>
             <div className="text-right">

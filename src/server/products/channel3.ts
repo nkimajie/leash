@@ -45,9 +45,8 @@ export async function searchChannel3(query: string, options: { maxPrice?: number
 }
 
 function toProduct(item: Channel3Product): Product | null {
-  const cheapestOffer = item.offers
-    .filter((offer) => offer.availability === "InStock")
-    .sort((a, b) => a.price.price - b.price.price)[0];
+  const inStock = item.offers.filter((offer) => offer.availability === "InStock");
+  const cheapestOffer = inStock.sort((a, b) => a.price.price - b.price.price)[0];
   if (!cheapestOffer) return null;
 
   const image = item.images.find((i) => i.is_main_image) ?? item.images[0];
@@ -60,5 +59,7 @@ function toProduct(item: Channel3Product): Product | null {
     category: item.category?.title.toLowerCase() ?? "other",
     url: cheapestOffer.url,
     imageUrl: image?.cleaned_url ?? image?.url,
+    source: "channel3",
+    storesCompared: inStock.length,
   };
 }

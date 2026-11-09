@@ -121,7 +121,7 @@ async function* callTool(
   yield { type: "tool_started", tool: name, input };
   const result = await runTool(name, input, context);
   await pause(250);
-  yield { type: "tool_finished", tool: name, summary: result.summary };
+  yield { type: "tool_finished", tool: name, summary: result.summary, products: result.products };
   if (result.decision) yield { type: "decision_made", decision: result.decision };
   return result;
 }

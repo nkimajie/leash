@@ -10,7 +10,7 @@ import { classNames, formatMoney, formatWhen } from "@/lib/format";
 import { RULE_LABEL } from "@/lib/labels";
 import { Card } from "@/components/ui/card";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
-import { ProductPhoto, StoreLink } from "@/components/ui/product-photo";
+import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
 type Step = { label: string; detail?: string | null; state: "done" | "stopped" | "waiting" | "note" };
 
@@ -25,7 +25,10 @@ export function DecisionDetails({ decision, onClose }: { decision: Decision; onC
             <div className="text-sm text-stone-500">
               {decision.counterparty} · {formatWhen(decision.createdAt)}
             </div>
-            <StoreLink decision={decision} />
+            <div className="flex flex-wrap gap-x-2">
+              <StoreLink decision={decision} />
+              <FoundWith product={decision.product} />
+            </div>
           </div>
           <button onClick={onClose} aria-label="Close" className="text-stone-400 hover:text-stone-700">
             <X className="h-4 w-4" />

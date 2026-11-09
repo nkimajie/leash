@@ -11,7 +11,7 @@ import {
   type SpendingSoFar,
 } from "./check-spending-rules";
 
-const rules: SpendingRules = { ...DEFAULT_SPENDING_RULES, autoApproveLimit: 50 };
+const rules: SpendingRules = { ...DEFAULT_SPENDING_RULES, autoApproveLimit: 50, dailyCap: 250, weeklyCap: 500 };
 const nothingSpent: SpendingSoFar = { requestBudget: 60, spentOnRequest: 0, spentToday: 0, spentThisWeek: 0 };
 
 const coffee = (changes: Partial<PurchaseToCheck> = {}): PurchaseToCheck => ({

@@ -102,7 +102,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
         field: "title",
         headerName: "What & why",
         flex: 1,
-        minWidth: 300,
+        minWidth: 260,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
           p.node.rowPinned ? (
             <TotalsLabel totals={p.data as unknown as TotalsRow} />
@@ -112,7 +112,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
         tooltipValueGetter: (p) => p.data?.aiReasoning,
         getQuickFilterText: (p) => `${p.data?.title} ${p.data?.category ?? ""} ${p.data?.aiReasoning}`,
       },
-      { field: "counterparty", headerName: "To", width: 170, tooltipField: "counterparty" },
+      { field: "counterparty", headerName: "To", width: 150, tooltipField: "counterparty" },
       {
         field: "amount",
         headerName: "Amount",
@@ -124,7 +124,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
       {
         field: "outcome",
         headerName: "Outcome & rule",
-        width: 180,
+        width: 170,
         enableCellChangeFlash: true,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
           p.data && !p.node.rowPinned ? (
@@ -139,7 +139,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
       {
         field: "paypal.status",
         headerName: "PayPal",
-        width: 160,
+        width: 150,
         enableCellChangeFlash: true,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
           p.data && !p.node.rowPinned ? (
@@ -158,7 +158,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
       {
         colId: "actions",
         headerName: "",
-        width: 150,
+        width: 140,
         pinned: "right",
         sortable: false,
         cellRenderer: (p: ICellRendererParams<Decision>) =>

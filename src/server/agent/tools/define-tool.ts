@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { AssistantRequest, Decision } from "@/schemas";
+import type { AssistantRequest, Decision, SearchResult } from "@/schemas";
 
 /** What every tool gets when it runs: the request it is working on. */
 export type ToolContext = { request: AssistantRequest };
@@ -9,6 +9,8 @@ export type ToolResult = {
   summary: string;
   /** Set when the tool moved (or tried to move) money. */
   decision?: Decision;
+  /** Set by a product search, for the assistant page to show. */
+  products?: SearchResult[];
   /** Structured data for the AI model. */
   data?: unknown;
 };

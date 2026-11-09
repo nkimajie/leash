@@ -9,6 +9,7 @@ const grinder: Product = {
   currency: "USD",
   merchant: "Kitchen Depot",
   category: "coffee equipment",
+  source: "sample",
 };
 
 const decisionFor = (product: Product): Decision => ({

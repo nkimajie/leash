@@ -4,7 +4,16 @@
 import type { Product } from "@/schemas";
 
 function sampleProduct(id: string, title: string, price: number, merchant: string, category: string): Product {
-  return { id, title, price, currency: "USD", merchant, category, url: `https://example.com/products/${id}` };
+  return {
+    id,
+    title,
+    price,
+    currency: "USD",
+    merchant,
+    category,
+    url: `https://example.com/products/${id}`,
+    source: "sample",
+  };
 }
 
 export const SAMPLE_CATALOG: Product[] = [

@@ -2,7 +2,7 @@
 
 // The home screen: ask the assistant for something and watch it work, step by step.
 
-import { ArrowUp, ShieldAlert } from "lucide-react";
+import { ArrowUp, ChevronRight, ShieldAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantEvent } from "@/schemas";
 import { askAssistant, runAttack } from "@/lib/api-client";
@@ -54,6 +54,7 @@ export function AssistantPage() {
           title="What can I take care of?"
           description="I can buy things and pay people with your PayPal, the way you would. Anything outside your rules waits for your OK."
         />
+        <HowTheLeashWorks />
         <ConnectReminder />
 
         <form
@@ -135,5 +136,27 @@ function TryToBreakTheLeash({ disabled, onAttack }: { disabled: boolean; onAttac
         </button>
       ))}
     </div>
+  );
+}
+
+/** The idea in one line: the AI chooses, code decides, PayPal moves the money. */
+function HowTheLeashWorks() {
+  const steps = [
+    "The AI chooses what to buy or pay",
+    "Your rules check it, in code",
+    "PayPal pays, reserves, or never hears of it",
+  ];
+  return (
+    <ol className="-mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-stone-500">
+      {steps.map((step, index) => (
+        <li key={step} className="flex items-center gap-1.5">
+          {index > 0 && <ChevronRight className="h-3 w-3 text-stone-300" />}
+          <span className="grid h-4 w-4 place-items-center rounded-full bg-stone-200 text-[10px] font-semibold text-stone-600">
+            {index + 1}
+          </span>
+          {step}
+        </li>
+      ))}
+    </ol>
   );
 }

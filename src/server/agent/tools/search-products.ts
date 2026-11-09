@@ -1,6 +1,8 @@
 import "server-only";
 
 import { z } from "zod";
+import type { SearchResult } from "@/schemas";
+import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { searchProducts } from "@/server/products/product-search";
 import { findReasonToAvoid, findReasonToLike } from "@/server/twin/learn-preferences";
@@ -21,17 +23,25 @@ export const searchProductsTool = defineTool({
     ]);
     if (products.length === 0) return { summary: "No products found.", data: [] };
 
-    const results = products.map((product) => ({
+    const results: SearchResult[] = products.map((product) => ({
       ...product,
       twinAvoids: findReasonToAvoid(product, preferences)?.statement ?? null,
       twinLikes: findReasonToLike(product, preferences)?.statement ?? null,
     }));
 
-    const summary = results
+    const found = results
       .map(
         (p) => `${p.title}: $${p.price.toFixed(2)} (${p.merchant})${p.twinAvoids ? "  [your twin avoids this]" : ""}`,
       )
       .join("\n");
-    return { summary, data: results };
+    return { summary: `${whereFrom(results)}:\n${found}`, data: results, products: results };
   },
 });
+
+/** Says where results came from, including when Channel3 didn't answer and the sample catalog stood in. */
+function whereFrom(results: SearchResult[]): string {
+  if (results[0].source === "channel3") return "Found with Channel3";
+  return serviceModes().productSearch === "channel3"
+    ? "Channel3 didn't answer, so these are from the sample catalog"
+    : "From the sample catalog";
+}

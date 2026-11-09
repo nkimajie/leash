@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Decision } from "./decision";
+import type { SearchResult } from "./product";
 
 /** One message you send the assistant ("Restock my coffee, under $60"). */
 export const AssistantRequestSchema = z.object({
@@ -23,7 +24,8 @@ export type AssistantEvent =
   /** The scam message in a "Try to break the leash" attack. */
   | { type: "attack"; text: string }
   | { type: "tool_started"; tool: string; input: Record<string, unknown> }
-  | { type: "tool_finished"; tool: string; summary: string }
+  /** `products` is set after a search, so the page can show what was found. */
+  | { type: "tool_finished"; tool: string; summary: string; products?: SearchResult[] }
   | { type: "decision_made"; decision: Decision }
   | { type: "reply"; text: string }
   | { type: "error"; message: string }

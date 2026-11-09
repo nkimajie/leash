@@ -10,6 +10,13 @@ export const ProductSchema = z.object({
   category: z.string(),
   url: z.string().optional(),
   imageUrl: z.string().optional(),
+  /** Where it was found: real stores through Channel3, or Leash's built-in sample catalog. */
+  source: z.enum(["channel3", "sample"]),
+  /** Channel3 only: how many stores had it in stock (the price is the cheapest of them). */
+  storesCompared: z.number().optional(),
 });
 
 export type Product = z.infer<typeof ProductSchema>;
+
+/** A search result, with what your digital twin thinks of it. */
+export type SearchResult = Product & { twinAvoids: string | null; twinLikes: string | null };
