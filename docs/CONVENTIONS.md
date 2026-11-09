@@ -26,7 +26,7 @@ src/
       memory/               no setup, resets on restart (used when Supabase keys are missing)
       supabase/             the real Postgres database; adds sample data to an empty database
       index.ts              picks one; TypeScript checks both versions match
-    payments/               PayPal: authorize, capture, void, refund, connecting with Vault, webhooks (+ mock)
+    payments/               PayPal: authorize, capture, void, refund, Payouts, connecting with Vault, webhooks (+ mock)
     products/               Product search: Channel3 (+ sample catalog)
     restocks/               Recurring restocks and the daily job
     spending/               The rule engine and the money path
@@ -68,6 +68,9 @@ docs/                       Documentation
 | `blocked`       | A hard rule said no              | never called                        |
 | `refunded`      | Money returned                   | refunded                            |
 | `failed`        | PayPal error, e.g. card declined | voided; `debug_id` saved            |
+
+Paying a person: once the money is captured, PayPal Payouts sends it on to their email (the payout id is saved).
+If the payout fails, the capture is refunded and the outcome is `failed`. Money sent to a person can't be refunded.
 
 ## Checks before every commit
 
