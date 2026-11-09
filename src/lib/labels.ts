@@ -74,4 +74,11 @@ const PAYPAL_STATUS_IN_WORDS: Record<string, string> = {
   REFUNDED: "Refunded",
   DECLINED: "Declined",
   PAYPAL_NOT_CONNECTED: "Not connected",
+  // Payments to people, once Payouts reports back
+  SUCCESS: "Received",
+  UNCLAIMED: "Sent, not claimed yet",
+  FAILED: "Payout failed",
+  RETURNED: "Payout returned",
+  BLOCKED: "Payout blocked",
+  REFUND_FAILED: "Refund failed",
 };

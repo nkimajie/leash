@@ -7,7 +7,7 @@ import { Check, Circle, Smartphone, X } from "lucide-react";
 import Link from "next/link";
 import { isSampleHistory, type Decision } from "@/schemas";
 import { classNames, formatMoney, formatWhen } from "@/lib/format";
-import { RULE_LABEL } from "@/lib/labels";
+import { RULE_LABEL, paypalStatusInWords } from "@/lib/labels";
 import { Card } from "@/components/ui/card";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
 import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
@@ -79,6 +79,9 @@ export function DecisionDetails({ decision, onClose }: { decision: Decision; onC
   );
 }
 
+/** Statuses PayPal reports for money sent on to a person. */
+const PAYOUT_RESULTS = ["SUCCESS", "UNCLAIMED", "FAILED", "RETURNED", "BLOCKED"];
+
 /** Each step the money went through, from the rule check to PayPal's last word. */
 function stepsFor(decision: Decision): Step[] {
   const { paypal, outcome } = decision;
@@ -113,10 +116,14 @@ function stepsFor(decision: Decision): Step[] {
   const finalStep = last[outcome];
   if (finalStep) steps.push(finalStep);
   if (paypal.payoutId) {
+    // Once PayPal reports back (webhook), say what happened at the person's end, e.g. "not claimed yet".
+    const reported = PAYOUT_RESULTS.includes(paypal.status ?? "")
+      ? `: ${paypalStatusInWords(decision).toLowerCase()}`
+      : "";
     steps.push({
-      label: `Sent on to ${decision.counterparty}'s PayPal (Payouts)`,
+      label: `Sent on to ${decision.counterparty}'s PayPal (Payouts)${reported}`,
       detail: paypal.payoutId,
-      state: "done",
+      state: ["FAILED", "RETURNED", "BLOCKED"].includes(paypal.status ?? "") ? "stopped" : "done",
     });
   }
   return steps;

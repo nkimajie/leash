@@ -19,14 +19,21 @@ export async function findDecisionById(id: string): Promise<Decision | null> {
   return row ? toDecision(row) : null;
 }
 
-/** Finds the decision a PayPal webhook is about, by its authorization or capture id. */
+/** Finds the decision a PayPal webhook is about, by its order, authorization, capture or payout id. */
 export async function findDecisionByPayPalId(paypalId: string): Promise<Decision | null> {
   const db = await connectToSupabase();
   const row = dataOrThrow(
     await db
       .from("decisions")
       .select("*")
-      .or(`paypal_authorization_id.eq.${paypalId},paypal_capture_id.eq.${paypalId},paypal_order_id.eq.${paypalId}`)
+      .or(
+        [
+          `paypal_authorization_id.eq.${paypalId}`,
+          `paypal_capture_id.eq.${paypalId}`,
+          `paypal_order_id.eq.${paypalId}`,
+          `paypal_payout_id.eq.${paypalId}`,
+        ].join(","),
+      )
       .limit(1)
       .maybeSingle(),
     "find a decision by PayPal id",

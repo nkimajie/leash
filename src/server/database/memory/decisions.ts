@@ -11,11 +11,15 @@ export async function findDecisionById(id: string): Promise<Decision | null> {
   return memoryTables.decisions.find((decision) => decision.id === id) ?? null;
 }
 
-/** Finds the decision a PayPal webhook is about, by its authorization or capture id. */
+/** Finds the decision a PayPal webhook is about, by its order, authorization, capture or payout id. */
 export async function findDecisionByPayPalId(paypalId: string): Promise<Decision | null> {
   return (
     memoryTables.decisions.find(
-      (d) => d.paypal.authorizationId === paypalId || d.paypal.captureId === paypalId || d.paypal.orderId === paypalId,
+      (d) =>
+        d.paypal.authorizationId === paypalId ||
+        d.paypal.captureId === paypalId ||
+        d.paypal.orderId === paypalId ||
+        d.paypal.payoutId === paypalId,
     ) ?? null
   );
 }

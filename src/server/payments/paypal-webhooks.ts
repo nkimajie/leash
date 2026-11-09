@@ -1,8 +1,9 @@
 import "server-only";
 
 // PayPal webhooks: PayPal tells us when something happens to a payment (captured, voided,
-// refunded, declined). We check the message really came from PayPal, then record the new
-// status on the matching decision so the control room always shows what PayPal says.
+// refunded, declined), or to money sent on to a person (received, unclaimed, returned).
+// We check the message really came from PayPal, then record the new status on the matching
+// decision so the control room always shows what PayPal says.
 // Webhooks only record what happened; they never move money.
 
 import { paypalSettings } from "@/server/config/environment";
@@ -19,11 +20,17 @@ const STATUS_FOR_EVENT: Record<string, string> = {
   "PAYMENT.CAPTURE.DENIED": "DENIED",
   "PAYMENT.CAPTURE.PENDING": "PENDING",
   "PAYMENT.CAPTURE.REFUNDED": "REFUNDED",
+  // Payouts finish after we've sent them: these say what happened at the person's end.
+  "PAYMENT.PAYOUTS-ITEM.SUCCEEDED": "SUCCESS",
+  "PAYMENT.PAYOUTS-ITEM.UNCLAIMED": "UNCLAIMED",
+  "PAYMENT.PAYOUTS-ITEM.FAILED": "FAILED",
+  "PAYMENT.PAYOUTS-ITEM.RETURNED": "RETURNED",
+  "PAYMENT.PAYOUTS-ITEM.BLOCKED": "BLOCKED",
 };
 
 type WebhookEvent = {
   event_type?: string;
-  resource?: { id?: string; links?: { rel: string; href: string }[] };
+  resource?: { id?: string; payout_batch_id?: string; links?: { rel: string; href: string }[] };
 };
 
 export async function handlePayPalWebhook(headers: Headers, rawBody: string): Promise<{ recorded: boolean }> {
@@ -41,8 +48,12 @@ export async function handlePayPalWebhook(headers: Headers, rawBody: string): Pr
   return { recorded: true };
 }
 
-/** Refund events are about the refund; the capture they belong to is in the "up" link. */
+/**
+ * The PayPal id that matches a decision. Refund events are about the refund, so the capture
+ * they belong to is in the "up" link; payout events are found by their payout batch.
+ */
 function paymentIdFrom(event: WebhookEvent): string | undefined {
+  if (event.event_type?.startsWith("PAYMENT.PAYOUTS-ITEM.")) return event.resource?.payout_batch_id;
   if (event.event_type === "PAYMENT.CAPTURE.REFUNDED") {
     const captureLink = event.resource?.links?.find((link) => link.rel === "up")?.href;
     return captureLink?.split("/").pop();
