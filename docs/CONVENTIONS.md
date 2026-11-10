@@ -15,13 +15,15 @@ src/
     ui/                     Shared building blocks: Button, Card, form fields, badges
     layout/                 App shell, logo, service status
     assistant/ control-room/ approvals/ people/ twin/ restocks/ rules/ connect/
-  lib/                      Browser-safe helpers: API client, formatting, labels, hooks, the attack scripts
+  lib/                      Browser-safe helpers: API client, formatting, labels, hooks, the attack scripts,
+                            and voice (use-voice-input.ts listens, speak.ts talks back)
   schemas/                  SCHEMA SECTION. Zod schemas + TypeScript types for every kind of data
   server/                   Server-only code (never imported by components)
     agent/                  AGENT SECTION. The assistant, its tools, and request parsing
       tools/                One file per tool the assistant can use
       ask-claude.ts         One small question to Claude with a zod-checked answer (control room, rules, twin)
       read-*.ts             Pure built-in readers used when Claude is off, each with unit tests
+      what-leash-can-do.ts  What Leash can do, in its own words: Claude and the built-in assistant answer from it
     database/               DATABASE SECTION. One file per table, in two versions with the same functions:
       memory/               no setup, resets on restart (used when Supabase keys are missing)
       supabase/             the real Postgres database; adds sample data to an empty database

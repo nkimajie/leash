@@ -9,24 +9,27 @@ Leash lets Claude shop and pay with your PayPal for the boring parts of running 
 food, paying the babysitter, settling dinner with a roommate. Claude chooses, but **code decides whether money
 moves**. Anything outside your rules is **reserved, not taken** (a PayPal authorization) until you say yes on your
 phone. Say no, and PayPal releases it: you're never charged. Leash also learns from every yes, no and refund, like a
-digital twin.
+digital twin. And you can just talk to it: say what you need, and it tells you what it's doing and answers out loud.
 
 ## For judges: a 60-second test
 
 1. Open the live demo (link in the Devpost submission) and click **Reset demo** (bottom left) for a clean start.
    PayPal is already connected to a sandbox account, so you don't need to log in to anything.
-2. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Click **Phone view**
+2. Click **Talk** (or hold the space bar) and ask out loud: _"What can you do for me?"_. Leash checks your account and
+   answers out loud. (Or click the same question under the box to type it.)
+3. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Click **Phone view**
    (scan the QR code there to use your real phone) and tap **Deny**. Say why, in your own words. PayPal voids the
-   reservation, and the screen shows what your twin learned.
-3. On **Assistant**, click **"Restock my coffee setup, under $60…"**. Watch Claude search real stores (Channel3),
+   reservation, and the screen shows what your twin learned. You can also just say _"Deny the grinder, I only want
+   hand grinders"_; try _"Approve it"_ too, and Leash refuses: only you can approve.
+4. On **Assistant**, click **"Restock my coffee setup, under $60…"**. Watch Claude search real stores (Channel3),
    check your rules and pay. Anything within your rules is paid; anything over your $50 limit is held.
-4. Click **Try to break the leash** and pick an attack. A scam "takes over" the assistant, and the rules stop the
+5. Click **Try to break the leash** and pick an attack. A scam "takes over" the assistant, and the rules stop the
    money anyway.
-5. Click **"Pay Sam $25 for dinner"**. PayPal takes the money from your account and **Payouts** sends it on to Sam.
-6. Open **Control room** and ask a question in plain English, e.g. _"what did I spend on coffee this week?"_.
-   Click any row to see each PayPal step with its id.
+6. Click **"Pay Sam $25 for dinner"**. PayPal takes the money from your account and **Payouts** sends it on to Sam.
+7. Ask _"what did I spend on coffee today?"_ and click **See it in the control room**: the AG Grid shows the same
+   question as a table. Click any row to see each PayPal step with its id.
 
-Everyone shares one demo account. It resets every night, and on its own when someone arrives after 20 quiet
+Everyone shares one demo account. It resets every night, and on its own when someone arrives after 30 quiet
 minutes. Resetting releases every open PayPal reservation first.
 
 ## How the money moves
@@ -92,6 +95,13 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
 
 ## What it can do
 
+- **Talk to it.** Tap **Talk** or hold the space bar and say what you need. Leash tells you what it's doing as it
+  goes and answers out loud, using the browser's own speech recognition and voice, so there's nothing to install.
+  Ask it what it can do, what's waiting for you, or what you spent on coffee this week, and Claude answers from your
+  real account. A spending answer links to the same question in the AG Grid control room.
+- **Say no for you, never yes.** _"Deny the grinder, I only want hand grinders"_: PayPal voids the reservation, and
+  your twin learns why. Claude has a tool to deny, and deliberately none to approve, so a scam (or a voice on the TV)
+  can never release your money. Only your tap can.
 - **Shop like you.** Claude searches real products (Channel3), explains every pick, and avoids things you've said
   no to before.
 - **Pay people.** "Pay Sam $25 for dinner." Trusted people are paid within your limits, through PayPal Payouts;
@@ -208,8 +218,10 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
   outputs (checked with zod) for the twin's lessons, control room questions and rules in your own words
 - **Channel3**: product search API
 - **Supabase**: Postgres and Realtime
-- **AG Grid Community**: the control room grid: external filters and sorting set by Claude, quick filter, a pinned
-  totals row for the rows shown, cell flashing on live updates, and row selection for the PayPal step-by-step view
+- **AG Grid Community**: the control room grid: external filters and sorting set by Claude (from the control room's
+  own question box, or from a spending question you asked the assistant out loud), quick filter, a pinned totals row
+  for the rows shown, cell flashing on live updates, and row selection for the PayPal step-by-step view
+- **Web Speech API**: the browser's own speech recognition and voice, for talking to Leash (Chrome, Edge, Safari)
 - **Render**: hosting and the daily cron job
 - Next.js 16, React 19, TypeScript, zod, Tailwind CSS, Vitest, lucide icons
 

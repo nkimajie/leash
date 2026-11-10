@@ -21,12 +21,13 @@ it") and an agent with your wallet will do it. So today, handing an AI your PayP
 
 We wanted the middle ground a busy household would actually trust: an assistant that does the boring buying and
 paying (coffee and dog food restocks, the babysitter, dinner with a roommate) and asks first whenever it matters,
-the way a good personal assistant would.
+the way a good personal assistant would. And one you can simply talk to, so it also works for the people in a
+household for whom typing and checkout forms are the hard part.
 
 ### What it does
 
-You tell Leash what you need: "restock my coffee, under $60", "pay Sam $25 for dinner", "restock dog food every 30
-days". Claude searches real stores (Channel3), picks what fits your taste, and pays with your PayPal. Every
+You tell Leash what you need, typed or out loud: "restock my coffee, under $60", "pay Sam $25 for dinner",
+"restock dog food every 30 days". Claude searches real stores (Channel3), picks what fits your taste, and pays with your PayPal. Every
 purchase and payment first passes your spending rules, which are plain code, not a prompt:
 
 - **Within every rule:** PayPal authorizes and captures. Paid automatically.
@@ -42,6 +43,11 @@ and extra items hidden in your coffee order, each cheap enough to slip under the
 the AI entirely, so only the rules stand in the way. They hold: the coffee you asked for is paid, and everything
 else waits for you.
 
+You can talk to it. Hold the space bar (or tap Talk) and ask anything: "what can you do for me?", "what's waiting
+for me?", "what did I spend on coffee this week?". Claude answers from your real account, out loud, and narrates
+what it's doing while it shops. It can say no for you ("deny the grinder, I only want hand grinders"), but it has
+no way to say yes: only your tap releases money, so a scam, or a voice on the TV, never can.
+
 It learns like a digital twin. Deny something and say why, in your own words ("I only want hand grinders"), and
 Claude turns it into a preference it applies next time. You can change the rules in plain English, ask the AG Grid
 control room questions ("what did I spend on coffee this week?"), and click any payment to see each PayPal step.
@@ -56,7 +62,10 @@ control room questions ("what did I spend on coffee this week?"), and click any 
   Payouts.
 - **Claude Haiku** runs the assistant as a tool-use agent. Its tools are intent-level ("buy this product", "pay Sam
   $25"), not PayPal's raw `create_order`/`capture`: every money-moving tool goes through one function that applies
-  the rules, calls PayPal, saves the decision and teaches the twin. Claude structured outputs, checked with zod,
+  the rules, calls PayPal, saves the decision and teaches the twin. Read-only tools let it answer questions about
+  your account and spending, and it has a tool to deny a held payment but deliberately none to approve one.
+- **Voice** uses the browser's own speech recognition and voice (the Web Speech API), so it needs no extra service
+  or key. Spoken requests tell Claude to keep its replies short enough to listen to. Claude structured outputs, checked with zod,
   power the smaller features: the twin's lessons, control room questions, and rules in your own words.
 - **The rule engine and the twin's learning are pure functions** with unit tests: no network, no database.
 - **Channel3** for real product search (we show the cheapest in-stock offer and how many stores it compared),
@@ -97,12 +106,13 @@ so any AI agent can spend through the same rules, holds and phone approvals.
 ## Built with
 
 `paypal` `paypal-vault` `paypal-orders-api` `paypal-payouts` `claude` `anthropic` `channel3` `ag-grid` `supabase`
-`render` `next.js` `react` `typescript` `zod` `tailwindcss`
+`render` `next.js` `react` `typescript` `zod` `tailwindcss` `web-speech-api`
 
 ## Tools: how each AI tool is used
 
 - **Claude Haiku (Anthropic), tool use:** the assistant itself. It chooses products and payments by calling Leash's
-  tools; it never touches money directly.
+  tools, answers questions about your account, and narrates what it's doing (read aloud when you spoke to it). It
+  never touches money directly.
 - **Claude Haiku, structured outputs:** turns your reason for a "no" into a preference, control room questions into
   grid filters, and rules in plain English into rule changes. Each answer is checked against a zod schema, with a
   simple built-in fallback.
