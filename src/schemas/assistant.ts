@@ -2,6 +2,10 @@ import { z } from "zod";
 import type { Decision } from "./decision";
 import type { SearchResult } from "./product";
 
+/** The pages the assistant can open for you ("open the control room"). */
+export const LEASH_PAGES = ["assistant", "control-room", "people", "twin", "restocks", "rules", "connect"] as const;
+export type LeashPage = (typeof LEASH_PAGES)[number];
+
 /** One message you send the assistant ("Restock my coffee, under $60"). */
 export const AssistantRequestSchema = z.object({
   id: z.string(),
@@ -27,6 +31,8 @@ export type AssistantEvent =
   /** `products` is set after a search, so the page can show what was found. */
   | { type: "tool_finished"; tool: string; summary: string; products?: SearchResult[] }
   | { type: "decision_made"; decision: Decision }
+  /** You asked to go somewhere ("open the control room"); the page goes there once the reply is done. */
+  | { type: "open_page"; path: string; label: string }
   | { type: "reply"; text: string }
   | { type: "error"; message: string }
   | { type: "finished" };

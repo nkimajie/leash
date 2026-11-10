@@ -7,8 +7,12 @@ import { z } from "zod";
 import { buyProductTool } from "./buy-product";
 import { checkPaymentRulesTool, checkPurchaseRulesTool } from "./check-rules";
 import type { AssistantTool, ToolContext, ToolResult } from "./define-tool";
+import { denyHeldItemTool } from "./deny-held-item";
+import { lookUpSpendingTool } from "./look-up-spending";
+import { openPageTool } from "./open-page";
 import { payPersonTool } from "./pay-person";
 import { recallPreferencesTool, rememberPreferenceTool } from "./preferences";
+import { readMyLeashTool } from "./read-my-leash";
 import { searchProductsTool } from "./search-products";
 
 export type { ToolContext, ToolResult } from "./define-tool";
@@ -21,6 +25,10 @@ export const ASSISTANT_TOOLS = [
   payPersonTool,
   recallPreferencesTool,
   rememberPreferenceTool,
+  readMyLeashTool,
+  lookUpSpendingTool,
+  denyHeldItemTool,
+  openPageTool,
 ] as AssistantTool[];
 
 export async function runTool(name: string, input: unknown, context: ToolContext): Promise<ToolResult> {

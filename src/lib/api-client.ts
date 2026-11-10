@@ -76,12 +76,19 @@ export const resetDemo = () => sendJson<void>("POST", "/api/demo/reset");
 
 // ---------- assistant ----------
 
-/** Sends a request to the assistant and calls `onStep` for each step as it streams in. */
-export async function askAssistant(prompt: string, onStep: (event: AssistantEvent) => void): Promise<void> {
+/**
+ * Sends a request to the assistant and calls `onStep` for each step as it streams in.
+ * `spoken`: you said it out loud, so the assistant keeps its replies short enough to listen to.
+ */
+export async function askAssistant(
+  prompt: string,
+  onStep: (event: AssistantEvent) => void,
+  spoken = false,
+): Promise<void> {
   const response = await fetch("/api/assistant", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, spoken }),
   });
   await readSteps(response, onStep);
 }

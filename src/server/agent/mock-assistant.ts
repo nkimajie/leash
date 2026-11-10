@@ -5,8 +5,11 @@ import "server-only";
 // through the real rules, PayPal flow and digital twin. Only the "thinking" is scripted.
 
 import type { AssistantEvent, AssistantRequest, Decision, Product } from "@/schemas";
+import { pickWaitingItem, readCommand, type Command } from "./read-command";
+import { readGridQuestion } from "./read-grid-question";
 import { readPaymentInstruction, type PaymentInstruction } from "./read-request";
 import { runTool, type ToolContext, type ToolResult } from "./tools";
+import { describeWaiting, describeWhatICanDo, ONLY_YOU_CAN_APPROVE, type LeashStatus } from "./what-leash-can-do";
 
 type ShoppingStep = { search: string; why: (product: Product) => string };
 
@@ -48,11 +51,61 @@ const SHOPPING_PLANS: { matches: RegExp; steps: ShoppingStep[] }[] = [
   },
 ];
 
-export async function* runMockAssistant(request: AssistantRequest): AsyncGenerator<AssistantEvent> {
+export async function* runMockAssistant(request: AssistantRequest, spoken = false): AsyncGenerator<AssistantEvent> {
   const context: ToolContext = { request };
+  const command = readCommand(request.prompt);
+  if (command) {
+    yield* followCommand(command, context, spoken);
+    return;
+  }
   const payment = readPaymentInstruction(request.prompt);
   const decisions = payment ? yield* sendPayment(payment, context) : yield* goShopping(context);
-  yield { type: "reply", text: describeResults(decisions) };
+  yield reply(describeResults(decisions));
+}
+
+/** Questions and commands: "what can you do?", "what's waiting?", "deny the grinder", "open the rules". */
+async function* followCommand(command: Command, context: ToolContext, spoken: boolean): AsyncGenerator<AssistantEvent> {
+  switch (command.kind) {
+    case "what_can_you_do": {
+      const leash = yield* callTool("read_my_leash", {}, context);
+      yield reply(describeWhatICanDo(leash.data as LeashStatus, spoken));
+      return;
+    }
+    case "whats_waiting": {
+      const leash = yield* callTool("read_my_leash", {}, context);
+      yield reply(describeWaiting(leash.data as LeashStatus));
+      return;
+    }
+    case "look_up_spending": {
+      const { searchText, sinceDays, kind } = readGridQuestion(context.request.prompt);
+      const found = yield* callTool("look_up_spending", { searchText, sinceDays, kind }, context);
+      yield reply(found.summary);
+      return;
+    }
+    case "deny": {
+      const leash = yield* callTool("read_my_leash", {}, context);
+      const item = pickWaitingItem((leash.data as LeashStatus).waitingForYou, command.what);
+      if (!item) {
+        yield reply(`Nothing waiting for you matches "${command.what}", so I didn't deny anything.`);
+        return;
+      }
+      yield think(
+        `You want to say no to "${item.title}". PayPal will release the $${item.amount.toFixed(2)} it reserved.`,
+      );
+      const denied = yield* callTool("deny_held_item", { decisionId: item.id, reason: command.reason }, context);
+      const learned = command.reason && denied.decision ? " Your twin will remember why." : "";
+      yield reply(denied.summary + learned);
+      return;
+    }
+    case "approve":
+      yield reply(ONLY_YOU_CAN_APPROVE);
+      return;
+    case "open_page": {
+      const opened = yield* callTool("open_page", { page: command.page }, context);
+      yield reply(opened.summary);
+      return;
+    }
+  }
 }
 
 async function* goShopping(context: ToolContext): AsyncGenerator<AssistantEvent, Decision[]> {
@@ -123,6 +176,7 @@ async function* callTool(
   await pause(250);
   yield { type: "tool_finished", tool: name, summary: result.summary, products: result.products };
   if (result.decision) yield { type: "decision_made", decision: result.decision };
+  if (result.openPage) yield { type: "open_page", ...result.openPage };
   return result;
 }
 
@@ -139,4 +193,5 @@ function describeResults(decisions: Decision[]): string {
 }
 
 const think = (text: string): AssistantEvent => ({ type: "thinking", text });
+const reply = (text: string): AssistantEvent => ({ type: "reply", text });
 const pause = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));

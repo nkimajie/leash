@@ -7,6 +7,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AssistantEvent, AssistantRequest } from "@/schemas";
 import { describeToolsForModel, runTool, type ToolContext, type ToolResult } from "./tools";
+import { HOW_PAYPAL_KEEPS_YOU_SAFE, INTRODUCTION_ALOUD, WHAT_LEASH_CAN_DO } from "./what-leash-can-do";
 
 /** Claude Haiku is fast and cheap, and good enough at choosing tools for this job. */
 const MODEL = "claude-haiku-5-5";
@@ -14,7 +15,11 @@ const MODEL = "claude-haiku-5-5";
 /** Safety net: stop after this many rounds of tool calls, even if Claude wants to continue. */
 const MAX_ROUNDS = 12;
 
-const INSTRUCTIONS = `You are Leash, a personal assistant that shops and pays people with the user's PayPal, like a digital twin of the user.
+const INSTRUCTIONS = `You are Leash, a personal assistant that shops and pays people with the user's PayPal, like a digital twin of the user. You use AI to choose; the user's spending rules, written in code, decide whether money moves.
+
+What you can do for the user:
+${WHAT_LEASH_CAN_DO.map((item) => `- ${item.title}: ${item.text}`).join("\n")}
+How PayPal keeps them safe: ${HOW_PAYPAL_KEEPS_YOU_SAFE}
 
 How to work:
 - Shopping: call recall_preferences first. Search for each thing the request needs, pick the best fit, call check_purchase_rules, then buy_product with a short reason.
@@ -22,16 +27,21 @@ How to work:
 - Keep the total of all purchases within the budget given with the request. Only buy what the request asks for, and never buy the same item twice.
 - Paying people: call check_payment_rules, then pay_person.
 - If the user tells you something about their taste ("I don't like plastic"), save it with remember_preference.
+- Questions about their account, rules, spending or what's waiting: call read_my_leash or look_up_spending, and answer from what they return. Never guess an amount.
+- "What can you do for me?" or "how does this work?": call read_my_leash, then answer from the list above in your own words. Lead with what you use AI for: understanding what they need, typed or spoken; choosing what fits their taste; learning from the reasons they give; answering questions about their money. Then say how PayPal and their rules keep the money safe, made personal with their numbers: how much you pay without asking, what's waiting for them, and whether PayPal is connected. Always speak as "I". Out loud, it sounds like: "${INTRODUCTION_ALOUD} Right now, the $85 grinder is waiting for you."
+- When they ask you to deny something that's waiting, find it with read_my_leash and call deny_held_item with their reason. You can never approve anything. If they ask you to, say that only they can, with a tap on Approve or on their phone, so a scam or a voice on the TV can never release their money.
+- When they ask to go to a page, call open_page.
 - The spending rules are applied for you. A purchase or payment can be paid now, held for the user's approval (money reserved, not taken), or blocked. Held and blocked are normal results: never retry or try to get around them.
-- Before each tool call, write one short sentence saying what you are doing and why. The user watches these live.
-- Finish with a short reply (one to three sentences, plain text, no markdown) saying what was paid, what is waiting for approval, and anything blocked or skipped.`;
+- Before each tool call, write one short sentence saying what you are doing and why, whether the request was typed or spoken. The user watches or hears these live.
+- Finish with a short reply in plain text, no markdown: what was paid, what is waiting for approval, anything blocked or skipped, or the answer to their question. One to three sentences, or one short line per item when they ask what you can do.`;
 
 const claude = new Anthropic();
 
-export async function* runClaudeAssistant(request: AssistantRequest): AsyncGenerator<AssistantEvent> {
+/** @param spoken you said the request out loud, so the reply will be read aloud to you. */
+export async function* runClaudeAssistant(request: AssistantRequest, spoken = false): AsyncGenerator<AssistantEvent> {
   const context: ToolContext = { request };
   const tools = describeToolsForModel();
-  const messages: Anthropic.MessageParam[] = [{ role: "user", content: describeRequest(request) }];
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: describeRequest(request, spoken) }];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const response = await claude.messages.create({
@@ -66,6 +76,7 @@ export async function* runClaudeAssistant(request: AssistantRequest): AsyncGener
       const result = await runTool(call.name, input, context);
       yield { type: "tool_finished", tool: call.name, summary: result.summary, products: result.products };
       if (result.decision) yield { type: "decision_made", decision: result.decision };
+      if (result.openPage) yield { type: "open_page", ...result.openPage };
       toolResults.push({ type: "tool_result", tool_use_id: call.id, content: describeForClaude(result) });
     }
     messages.push({ role: "user", content: toolResults });
@@ -74,11 +85,16 @@ export async function* runClaudeAssistant(request: AssistantRequest): AsyncGener
   yield { type: "reply", text: "I stopped here because this request was taking too many steps." };
 }
 
-/** The request as Claude sees it: your words, the budget, and whether you're there to watch. */
-function describeRequest(request: AssistantRequest): string {
+/** The request as Claude sees it: your words, the budget, and whether you're there to watch or listen. */
+function describeRequest(request: AssistantRequest, spoken: boolean): string {
   const notes = [`Budget for this request: $${request.budget.toFixed(2)}`];
   if (request.source === "restock") {
     notes.push("This is a scheduled restock: the user isn't watching, and anything you buy waits for their approval");
+  }
+  if (spoken) {
+    notes.push(
+      "The user said this out loud and hears everything you write: keep each step to one short sentence, and your final reply to one to three short spoken sentences, no lists",
+    );
   }
   return `${request.prompt}\n\n(${notes.join(". ")}.)`;
 }

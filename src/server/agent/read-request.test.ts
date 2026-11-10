@@ -7,6 +7,7 @@ describe("readBudget", () => {
     ["office stuff, max $25.50", 25.5],
     ["dog food with a budget of $120", 120],
     ["up to $ 40 on snacks", 40],
+    ["restock my coffee under 60 dollars", 60],
   ])("reads %s", (prompt, budget) => {
     expect(readBudget(prompt)).toBe(budget);
   });
@@ -36,6 +37,15 @@ describe("readPaymentInstruction", () => {
       note: "concert tickets",
     });
     expect(readPaymentInstruction("pay Sam $12 for lunch")?.personName).toBe("Sam");
+  });
+
+  it("reads money the way speech recognition writes it", () => {
+    expect(readPaymentInstruction("pay Sam 25 dollars for dinner")).toEqual({
+      personName: "Sam",
+      amount: 25,
+      note: "dinner",
+    });
+    expect(readPaymentInstruction("send 30 bucks to Jordan")?.amount).toBe(30);
   });
 
   it("ignores shopping requests", () => {

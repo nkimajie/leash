@@ -21,12 +21,12 @@ async function call(method, path, body) {
   return { status: response.status, body: text ? JSON.parse(text) : null };
 }
 
-/** Sends a request to the assistant and returns the decisions it made. */
-async function ask(prompt) {
+/** Sends a request to the assistant (typed, or `spoken` out loud) and returns what happened. */
+async function ask(prompt, spoken = false) {
   const response = await fetch(`${BASE_URL}/api/assistant`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, spoken }),
   });
   const events = (await response.text())
     .trim()
@@ -35,6 +35,7 @@ async function ask(prompt) {
   return {
     events,
     decisions: events.filter((e) => e.type === "decision_made").map((e) => e.decision),
+    reply: events.find((e) => e.type === "reply")?.text ?? "",
   };
 }
 
@@ -62,6 +63,35 @@ check(
   "grinder ($85) is held for approval",
   grinder?.outcome === "held" && grinder.ruleHit === "auto_approve_limit",
   JSON.stringify(grinder),
+);
+
+// 1b. Talking to Leash: questions and commands, typed or said out loud
+const capabilities = await ask("What can you do for me?", true);
+check(
+  "asked what it can do, Leash explains itself (with PayPal) and moves no money",
+  capabilities.decisions.length === 0 &&
+    capabilities.reply.includes("PayPal") &&
+    capabilities.reply.includes("approve"),
+  capabilities.reply,
+);
+const waiting = await ask("What's waiting for me?");
+check("asked what's waiting, it names the held grinder", waiting.reply.includes(grinder.title), waiting.reply);
+const coffeeSpending = await ask("What did I spend on coffee today?");
+check(
+  "asked what it spent on coffee today, it adds it up",
+  coffeeSpending.reply.includes("$14.00"),
+  coffeeSpending.reply,
+);
+const approveByVoice = await ask("Approve the grinder", true);
+check(
+  "it can't approve anything by itself: only you can, with a tap",
+  approveByVoice.decisions.length === 0 && approveByVoice.reply.includes("only you"),
+  approveByVoice.reply,
+);
+const openPage = await ask("Open the control room", true);
+check(
+  "it opens pages when asked",
+  openPage.events.some((e) => e.type === "open_page" && e.path === "/control-room"),
 );
 
 // 2. You deny the grinder: PayPal voids it and the twin learns
@@ -170,6 +200,15 @@ check(
 check(
   "running a restock schedules the next one",
   restockRun.body?.restock?.lastRunAt && new Date(restockRun.body.restock.nextRunAt) > new Date(),
+);
+const denyByVoice = await ask("Deny the dog food, we buy it at the vet", true);
+check(
+  "saying 'deny the dog food' makes PayPal release it, and nothing else is touched",
+  denyByVoice.decisions.length === 1 &&
+    denyByVoice.decisions[0].outcome === "denied" &&
+    denyByVoice.decisions[0].paypal.status === "VOIDED" &&
+    /dog food/i.test(denyByVoice.decisions[0].title),
+  JSON.stringify(denyByVoice.decisions.map((d) => [d.title, d.outcome])) + " " + denyByVoice.reply,
 );
 
 // 7. Try to break the leash: a hijacked assistant still can't get past the rules

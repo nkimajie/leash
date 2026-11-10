@@ -14,14 +14,16 @@ import { runMockAssistant } from "./mock-assistant";
 import { readBudget } from "./read-request";
 
 /**
- * @param source  "you" when you typed the request, "restock" when a schedule started it.
+ * @param source  "you" when you asked, "restock" when a schedule started it.
  *                Anything a restock buys is held for your approval.
  * @param visitor who is asking; in demo mode each visitor gets a daily allowance of Claude requests.
+ * @param spoken  you said it out loud, so the replies are kept short enough to listen to.
  */
 export async function* runAssistant(
   prompt: string,
   source: AssistantRequest["source"] = "you",
   visitor?: string,
+  spoken = false,
 ): AsyncGenerator<AssistantEvent> {
   if (source === "you") yield* startFreshIfQuiet();
   const rules = await database.spendingRules.loadSpendingRules();
@@ -34,15 +36,15 @@ export async function* runAssistant(
 
   try {
     if (serviceModes().assistant === "claude" && mayUseClaude(visitor)) {
-      yield* runClaudeWithFallback(request);
+      yield* runClaudeWithFallback(request, spoken);
     } else if (serviceModes().assistant === "claude") {
       yield {
         type: "thinking",
         text: "You've used today's Claude allowance on this demo, so the built-in assistant takes over.",
       };
-      yield* runMockAssistant(request);
+      yield* runMockAssistant(request, spoken);
     } else {
-      yield* runMockAssistant(request);
+      yield* runMockAssistant(request, spoken);
     }
     await database.assistantRequests.markAssistantRequest(request.id, "finished");
   } catch (error) {
@@ -58,10 +60,10 @@ export async function* runAssistant(
  * the scripted assistant takes over so the app keeps working. Once a tool has run,
  * errors are not retried, so nothing is ever bought twice.
  */
-async function* runClaudeWithFallback(request: AssistantRequest): AsyncGenerator<AssistantEvent> {
+async function* runClaudeWithFallback(request: AssistantRequest, spoken: boolean): AsyncGenerator<AssistantEvent> {
   let toolsUsed = 0;
   try {
-    for await (const event of runClaudeAssistant(request)) {
+    for await (const event of runClaudeAssistant(request, spoken)) {
       if (event.type === "tool_started") toolsUsed++;
       yield event;
     }
@@ -69,6 +71,6 @@ async function* runClaudeWithFallback(request: AssistantRequest): AsyncGenerator
     if (!(error instanceof Anthropic.APIError) || toolsUsed > 0) throw error;
     console.warn(`Claude unavailable (${error.status}), using the built-in assistant`, error.message);
     yield { type: "thinking", text: "Claude is unavailable right now, so I'm using the built-in assistant." };
-    yield* runMockAssistant(request);
+    yield* runMockAssistant(request, spoken);
   }
 }

@@ -11,6 +11,8 @@ export type ToolResult = {
   decision?: Decision;
   /** Set by a product search, for the assistant page to show. */
   products?: SearchResult[];
+  /** Set when you asked to go to another page. */
+  openPage?: { path: string; label: string };
   /** Structured data for the AI model. */
   data?: unknown;
 };

@@ -1,20 +1,27 @@
 "use client";
 
-// The home screen: ask the assistant for something and watch it work, step by step.
+// The home screen: ask the assistant for something, by typing or out loud, and watch it work
+// step by step. When you speak, Leash talks back: a running commentary, then its reply.
 
 import { ArrowUp, ChevronRight, ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { AssistantEvent } from "@/schemas";
 import { askAssistant, runAttack } from "@/lib/api-client";
 import { ATTACKS } from "@/lib/attacks";
+import { TOOL_LABEL } from "@/lib/labels";
+import { speak, stopSpeaking } from "@/lib/speak";
+import { useVoiceInput } from "@/lib/use-voice-input";
 import { ConnectReminder } from "@/components/connect/connect-reminder";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { AssistantTimeline } from "./assistant-timeline";
 import { LeashSummary } from "./leash-summary";
+import { ReadAloudToggle, TalkButton } from "./voice-controls";
 import { WaitingForYou } from "./waiting-for-you";
 
 const EXAMPLE_REQUESTS = [
+  "What can you do for me?",
   "Restock my coffee setup, under $60, fair-trade beans only",
   "Pay Sam $25 for dinner",
   "Send $30 to Jordan for concert tickets",
@@ -22,37 +29,55 @@ const EXAMPLE_REQUESTS = [
 ];
 
 export function AssistantPage() {
+  const router = useRouter();
   const [prompt, setPrompt] = useState("");
   const [steps, setSteps] = useState<AssistantEvent[]>([]);
   const [isWorking, setIsWorking] = useState(false);
+  const [wasSpoken, setWasSpoken] = useState(false);
+  const [readAloud, setReadAloud] = useState(false);
   const endOfTimeline = useRef<HTMLDivElement>(null);
+  const voice = useVoiceInput((heard) => {
+    setPrompt(heard);
+    send(heard, true);
+  }, !isWorking);
 
   useEffect(() => {
     endOfTimeline.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [steps]);
 
-  /** Runs the assistant (or an attack) and shows each step as it arrives. */
-  async function show(work: (onStep: (step: AssistantEvent) => void) => Promise<void>) {
+  /** Runs the assistant (or an attack) and shows each step as it arrives, saying it aloud if asked. */
+  async function show(work: (onStep: (step: AssistantEvent) => void) => Promise<void>, aloud: boolean) {
     if (isWorking) return;
+    stopSpeaking();
     setIsWorking(true);
     setSteps([]);
+    const pagesToOpen: string[] = [];
     try {
-      await work((step) => setSteps((previous) => [...previous, step]));
+      await work((step) => {
+        setSteps((previous) => [...previous, step]);
+        if (aloud) sayAloud(step);
+        if (step.type === "open_page") pagesToOpen.push(step.path);
+      });
     } catch (error) {
       setSteps((previous) => [...previous, { type: "error", message: (error as Error).message }]);
     } finally {
       setIsWorking(false);
     }
+    if (pagesToOpen[0]) router.push(pagesToOpen[0]);
   }
 
-  const send = (text: string) => text.trim() && show((onStep) => askAssistant(text, onStep));
+  function send(text: string, spoken = false) {
+    if (!text.trim()) return;
+    setWasSpoken(spoken);
+    show((onStep) => askAssistant(text, onStep, spoken), spoken || readAloud);
+  }
 
   return (
     <div className="mx-auto grid w-full max-w-6xl flex-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px]">
       <section className="flex min-w-0 flex-col gap-6">
         <PageHeader
           title="What can I take care of?"
-          description="I can buy things and pay people with your PayPal, the way you would. Anything outside your rules waits for your OK."
+          description="I buy things and pay people with your PayPal, the way you would. Type it or say it, or ask what I can do. Anything outside your rules waits for your OK."
         />
         <HowTheLeashWorks />
         <ConnectReminder />
@@ -65,7 +90,8 @@ export function AssistantPage() {
           className="rounded-2xl border border-stone-200 bg-white p-3 shadow-sm transition focus-within:border-stone-400"
         >
           <textarea
-            value={prompt}
+            value={voice.isListening ? voice.heardSoFar : prompt}
+            readOnly={voice.isListening}
             onChange={(event) => setPrompt(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
@@ -74,16 +100,41 @@ export function AssistantPage() {
               }
             }}
             rows={2}
-            placeholder="e.g. Restock my coffee setup, under $60"
+            placeholder={voice.isListening ? "Listening…" : "e.g. Restock my coffee setup, under $60"}
             className="w-full resize-none bg-transparent px-1 text-base outline-none placeholder:text-stone-400"
           />
-          <div className="flex items-center justify-end">
-            <Button type="submit" size="sm" disabled={isWorking || !prompt.trim()} aria-label="Send">
-              {isWorking ? "Working…" : "Send"}
-              <ArrowUp className="h-3.5 w-3.5" />
-            </Button>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {voice.isSupported && (
+                <>
+                  <TalkButton
+                    isListening={voice.isListening}
+                    disabled={isWorking}
+                    onStart={voice.start}
+                    onStop={voice.stop}
+                  />
+                  <span className="hidden text-xs text-stone-400 sm:inline">
+                    {voice.isListening ? "Pause when you're done" : "or hold Space and say it"}
+                  </span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <ReadAloudToggle
+                isOn={readAloud}
+                onChange={(isOn) => {
+                  setReadAloud(isOn);
+                  if (!isOn) stopSpeaking();
+                }}
+              />
+              <Button type="submit" size="sm" disabled={isWorking || !prompt.trim()} aria-label="Send">
+                {isWorking ? "Working…" : "Send"}
+                <ArrowUp className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </form>
+        {voice.problem && <p className="-mt-4 text-sm text-rose-700">{voice.problem}</p>}
 
         <div className="flex flex-wrap gap-2">
           {EXAMPLE_REQUESTS.map((example) => (
@@ -102,9 +153,15 @@ export function AssistantPage() {
           ))}
         </div>
 
-        <TryToBreakTheLeash disabled={isWorking} onAttack={(id) => show((onStep) => runAttack(id, onStep))} />
+        <TryToBreakTheLeash
+          disabled={isWorking}
+          onAttack={(id) => {
+            setWasSpoken(false);
+            show((onStep) => runAttack(id, onStep), readAloud);
+          }}
+        />
 
-        <AssistantTimeline steps={steps} isWorking={isWorking} />
+        <AssistantTimeline steps={steps} isWorking={isWorking} wasSpoken={wasSpoken} />
         <div ref={endOfTimeline} />
       </section>
 
@@ -114,6 +171,18 @@ export function AssistantPage() {
       </aside>
     </div>
   );
+}
+
+/**
+ * What Leash says out loud while it works: a running commentary (what it's thinking, or else
+ * the step it's on, like "Searching products"), then its reply. Commentary is skipped while
+ * Leash is still talking, so it never falls behind; the reply is always said.
+ */
+function sayAloud(step: AssistantEvent) {
+  if (step.type === "thinking") speak(step.text, { ifQuiet: true });
+  if (step.type === "tool_started" && TOOL_LABEL[step.tool]) speak(TOOL_LABEL[step.tool], { ifQuiet: true });
+  if (step.type === "reply") speak(step.text);
+  if (step.type === "error") speak(step.message);
 }
 
 /** One-click attacks: a scam takes over the assistant, and the rules still decide what money moves. */

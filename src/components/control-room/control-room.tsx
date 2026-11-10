@@ -3,9 +3,11 @@
 // The control room: every purchase and payment, the rule that applied, the AI's reasoning
 // and the PayPal status, updating live. You can approve, deny or refund from here, ask it
 // questions in plain English, and click a row to see each PayPal step.
+// The assistant links here with a question (/control-room?ask=...), which is asked straight away.
 
 import { Sparkles, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { isSampleHistory, type Decision, type GridView, type Outcome } from "@/schemas";
 import { approveDecision, askControlRoom, denyDecision, refundDecision } from "@/lib/api-client";
 import { classNames, formatMoney } from "@/lib/format";
@@ -56,6 +58,12 @@ export function ControlRoom() {
 
   const totals = useMemo(() => summarise(decisions), [decisions]);
   const selected = decisions.find((d) => d.id === selectedId) ?? null;
+
+  const questionFromLink = useSearchParams().get("ask");
+  const askFromLink = useEffectEvent((text: string) => ask(text));
+  useEffect(() => {
+    if (questionFromLink) askFromLink(questionFromLink);
+  }, [questionFromLink]);
 
   function showFilter(key: string) {
     setFilterKey(key);

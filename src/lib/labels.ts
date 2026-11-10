@@ -54,6 +54,10 @@ export const TOOL_LABEL: Record<string, string> = {
   pay_person: "Sending with PayPal",
   recall_preferences: "Recalling what you like",
   remember_preference: "Remembering",
+  read_my_leash: "Checking your account",
+  look_up_spending: "Adding up your spending",
+  deny_held_item: "Denying it with PayPal",
+  open_page: "Opening the page",
 };
 
 /** Where the money is at PayPal, in plain words. The control room shows PayPal's own status underneath. */

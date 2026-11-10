@@ -2,23 +2,37 @@
 
 // Renders the assistant's live steps: its thinking, the tools it uses, and what happened to the money.
 
-import { AlertCircle, Brain, CheckCircle2, Loader2, Skull, Wrench } from "lucide-react";
+import { AlertCircle, ArrowRight, Brain, CheckCircle2, Loader2, Skull, Wrench } from "lucide-react";
+import Link from "next/link";
 import type { AssistantEvent, SearchResult } from "@/schemas";
 import { classNames, formatMoney } from "@/lib/format";
 import { TOOL_LABEL } from "@/lib/labels";
 import { ProductThumbnail } from "@/components/ui/product-photo";
 import { DecisionResultCard } from "./decision-result-card";
 
-export function AssistantTimeline({ steps, isWorking }: { steps: AssistantEvent[]; isWorking: boolean }) {
+/** Tools that spend from the request's budget. Questions and commands have no use for one. */
+const MONEY_TOOLS = ["search_products", "buy_product", "pay_person"];
+
+export function AssistantTimeline(props: { steps: AssistantEvent[]; isWorking: boolean; wasSpoken: boolean }) {
+  const { steps, isWorking } = props;
   if (steps.length === 0 && !isWorking) return null;
   const firstHeld = steps.find((step) => step.type === "decision_made" && step.decision.outcome === "held");
+  const usedTool = (tools: string[]) => steps.some((step) => step.type === "tool_started" && tools.includes(step.tool));
+  const request = steps.find((step) => step.type === "request_started")?.request;
+  const context: StepContext = {
+    youSaid: props.wasSpoken ? "You said" : "You asked",
+    showBudget: usedTool(MONEY_TOOLS),
+    // A spending answer links to the control room, where AG Grid shows the same question as a table.
+    controlRoomLink:
+      request && usedTool(["look_up_spending"]) ? `/control-room?ask=${encodeURIComponent(request.prompt)}` : null,
+  };
 
   return (
     <ol className="relative flex flex-col gap-3 border-l border-stone-200 pl-6">
       {steps.filter(hasSomethingToShow).map((step, index) => (
         <li key={index} className="animate-step relative">
           <StepIcon step={step} />
-          <StepBody step={step} showQrCode={step === firstHeld} />
+          <StepBody step={step} showQrCode={step === firstHeld} context={context} />
         </li>
       ))}
       {isWorking && (
@@ -33,11 +47,21 @@ export function AssistantTimeline({ steps, isWorking }: { steps: AssistantEvent[
   );
 }
 
-/** "finished", and the end of a payment tool (its decision card follows), add nothing to the timeline. */
+/** Steps the timeline skips because something else already shows them. */
+const SHOWN_ELSEWHERE = [
+  "buy_product", // its decision card follows
+  "pay_person",
+  "deny_held_item",
+  "look_up_spending", // the reply gives the answer
+  "open_page",
+];
+
 function hasSomethingToShow(step: AssistantEvent): boolean {
-  if (step.type === "finished") return false;
-  return !(step.type === "tool_finished" && (step.tool === "buy_product" || step.tool === "pay_person"));
+  if (step.type === "finished" || step.type === "open_page") return false;
+  return !(step.type === "tool_finished" && SHOWN_ELSEWHERE.includes(step.tool));
 }
+
+type StepContext = { youSaid: string; showBudget: boolean; controlRoomLink: string | null };
 
 function StepIcon({ step }: { step: AssistantEvent }) {
   const icon = {
@@ -55,12 +79,13 @@ function StepIcon({ step }: { step: AssistantEvent }) {
   );
 }
 
-function StepBody({ step, showQrCode }: { step: AssistantEvent; showQrCode: boolean }) {
+function StepBody({ step, showQrCode, context }: { step: AssistantEvent; showQrCode: boolean; context: StepContext }) {
   switch (step.type) {
     case "request_started":
       return (
         <p className="text-xs text-stone-400">
-          You asked: “{step.request.prompt}” · budget {formatMoney(step.request.budget)}
+          {context.youSaid}: “{step.request.prompt}”
+          {context.showBudget && ` · budget ${formatMoney(step.request.budget)}`}
         </p>
       );
     case "thinking":
@@ -84,9 +109,22 @@ function StepBody({ step, showQrCode }: { step: AssistantEvent; showQrCode: bool
     case "decision_made":
       return <DecisionResultCard decision={step.decision} showQrCode={showQrCode} />;
     case "reply":
-      return <p className="rounded-xl bg-stone-900 px-4 py-3 text-sm text-white">{step.text}</p>;
+      return (
+        <div className="flex flex-col gap-2 rounded-xl bg-stone-900 px-4 py-3 text-sm text-white">
+          <p className="whitespace-pre-line leading-relaxed">{step.text}</p>
+          {context.controlRoomLink && (
+            <Link
+              href={context.controlRoomLink}
+              className="inline-flex items-center gap-1 self-start text-xs font-medium text-violet-200 hover:text-white"
+            >
+              See it in the control room <ArrowRight className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
+      );
     case "error":
       return <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{step.message}</p>;
+    case "open_page":
     case "finished":
       return null;
   }
