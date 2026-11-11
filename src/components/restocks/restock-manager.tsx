@@ -4,6 +4,7 @@
 // ones that are due. Because you aren't there to watch, everything they buy waits for your OK.
 
 import { CalendarClock, Play, Plus, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Restock } from "@/schemas";
@@ -21,6 +22,20 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Field, TextInput, Toggle } from "@/components/ui/form-fields";
 import { OutcomeBadge } from "@/components/ui/outcome-badge";
 import { PageHeader } from "@/components/ui/page-header";
+
+// The timeline uses Bryntum Scheduler, which needs the browser, so it's only loaded there.
+const RestocksTimeline = dynamic(() => import("./restocks-timeline").then((file) => file.RestocksTimeline), {
+  ssr: false,
+  loading: () => <p className="px-5 py-6 text-sm text-stone-500">Loading the timeline…</p>,
+});
+
+/** What the colours on the timeline mean. */
+const TIMELINE_KEY = [
+  { label: "Next run (drag to move)", color: "bg-sky-500" },
+  { label: "Due now", color: "bg-amber-500" },
+  { label: "Runs after that", color: "bg-sky-300" },
+  { label: "Last run", color: "bg-stone-400" },
+];
 
 export function RestockManager() {
   const [restocks, setRestocks] = useState<Restock[]>([]);
@@ -59,6 +74,27 @@ export function RestockManager() {
       />
       {error && <p className="rounded-lg bg-rose-50 px-4 py-2 text-sm text-rose-700">{error}</p>}
       {lastRun && <RunResult run={lastRun} />}
+
+      {restocks.length > 0 && (
+        <Card className="overflow-hidden">
+          <CardHeader
+            title="Coming up"
+            description="Each mark is a day a restock runs. Drag the next one to move it."
+          />
+          <RestocksTimeline
+            restocks={restocks}
+            onMoveNextRun={(id, nextRunAt) => attempt(() => updateRestock(id, { nextRunAt }))}
+          />
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 border-t border-stone-100 px-5 py-3 text-xs text-stone-500">
+            {TIMELINE_KEY.map((item) => (
+              <li key={item.label} className="flex items-center gap-1.5">
+                <span className={`h-2.5 w-2.5 rounded-sm ${item.color}`} />
+                {item.label}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>

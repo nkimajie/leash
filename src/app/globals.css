@@ -33,3 +33,9 @@ body {
 .ag-cell.ag-right-aligned-cell {
   justify-content: flex-end;
 }
+
+/* Bryntum timelines (restocks, reservations): the app's font and text size */
+.b-widget {
+  --b-widget-font-size: 0.875rem;
+  font-family: var(--font-geist-sans), sans-serif;
+}
