@@ -29,7 +29,7 @@ export function lessonFromYourDecision(
         return {
           ...learned,
           sentiment: "avoids",
-          statement: `"${title}" was too expensive at ${price}, so skips ${category} at that price or more.${inYourWords}`,
+          statement: `Skips ${category} at ${price} or more.${inYourWords}`,
           category,
           priceAtLeast: decision.amount,
         };
@@ -37,7 +37,7 @@ export function lessonFromYourDecision(
         return {
           ...learned,
           sentiment: "avoids",
-          statement: `Doesn't want to buy from ${merchant}.${inYourWords}`,
+          statement: `Doesn't buy from ${merchant}.${inYourWords}`,
           merchant,
         };
       case "not_needed":
@@ -45,7 +45,7 @@ export function lessonFromYourDecision(
         return {
           ...learned,
           sentiment: "avoids",
-          statement: `${why.reason === "not_needed" ? "Didn't need" : "Didn't like"} "${title}". Don't buy it again.${inYourWords}`,
+          statement: `Won't buy "${title}" again${why.reason === "not_needed" ? ": you already have one" : ""}.${inYourWords}`,
           productId,
         };
     }
@@ -55,7 +55,7 @@ export function lessonFromYourDecision(
     case "denied":
       return {
         sentiment: "avoids",
-        statement: `Said no to "${title}" at ${price}, so skips ${category} at that price or more.`,
+        statement: `Skips ${category} at ${price} or more.`,
         category,
         priceAtLeast: decision.amount,
         source: "learned",
@@ -64,7 +64,7 @@ export function lessonFromYourDecision(
     case "refunded":
       return {
         sentiment: "avoids",
-        statement: `Refunded "${title}". Don't buy it again.`,
+        statement: `Won't buy "${title}" again.`,
         productId,
         source: "learned",
         learnedFromDecisionId: decision.id,

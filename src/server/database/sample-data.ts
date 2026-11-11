@@ -70,7 +70,7 @@ export function samplePreferences(): Preference[] {
       ...base,
       id: "pref-3",
       sentiment: "avoids",
-      statement: 'Said no to "Ergonomic office chair, mesh back" at $189.00, so skips furniture at that price or more.',
+      statement: "Skips furniture at $189.00 or more.",
       category: "furniture",
       priceAtLeast: 189,
       source: "learned",
