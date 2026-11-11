@@ -34,12 +34,17 @@ const PROBLEMS: Record<string, string> = {
   network: "Speech recognition needs an internet connection.",
 };
 
+/** When asking, this much quiet after you speak means you're done. A breath is shorter. */
+const DONE_AFTER_QUIET_MS = 2500;
+/** When asking, stop if you say nothing at all for this long. */
+const GIVE_UP_AFTER_MS = 10_000;
+
 /**
- * Listen: call `start`, speak, and `onHeard` gets what you said.
- *   Asking (the default): a pause means you're done, so Leash can answer.
- *   Dictating (`untilStopped`): pauses are fine; it keeps listening until you call `stop`.
- * Holding the space bar does the same, as long as you're not typing in a field or in a sheet.
- * (A sheet's own mic, like "Why not?", passes `holdSpace: false` and listens only when tapped.)
+ * Listen: call `start`, speak, and `onHeard` gets what you said. It listens through short pauses.
+ *   Asking (the default): 2.5 seconds of quiet means you're done, so Leash can answer.
+ *   Dictating (`untilStopped`): any pause is fine; it listens until you call `stop`.
+ * Holding the space bar does the same, as long as you're not typing in a field or in a sheet;
+ * letting go sends it straight away. (A sheet's own mic, like "Why not?", passes `holdSpace: false`.)
  */
 export function useVoiceInput(
   onHeard: (text: string) => void,
@@ -55,38 +60,49 @@ export function useVoiceInput(
   const [heardSoFar, setHeardSoFar] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const listener = useRef<Recognition | null>(null);
-  /** True once you (or a problem) stop it, so a dictation isn't restarted. */
+  /** True once you (or a problem, or the quiet timer) stop it, so it isn't restarted. */
   const stopped = useRef(false);
+  const quietTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  /** When asking: stop after this much quiet. Every word you say starts the wait again. */
+  function stopAfterQuiet(ms: number) {
+    if (untilStopped) return;
+    clearTimeout(quietTimer.current);
+    quietTimer.current = setTimeout(stop, ms);
+  }
 
   function start() {
     if (!findRecognition() || listener.current || !enabled) return;
     stopped.current = false;
     setProblem(null);
     setIsListening(true);
+    stopAfterQuiet(GIVE_UP_AFTER_MS);
     listen("");
   }
 
   /**
-   * One stretch of listening. The browser ends it at a pause (or, when dictating, after a longer
-   * silence). When dictating, a new stretch carries on from what was already heard.
+   * One stretch of listening. The browser may end it on its own after a silence; unless you (or
+   * the quiet timer) stopped it, a new stretch carries on from what was already heard.
    */
   function listen(earlier: string) {
     const recognition = new (findRecognition()!)();
     recognition.lang = navigator.language || "en-US";
     recognition.interimResults = true; // show the words while you speak
-    recognition.continuous = untilStopped;
+    recognition.continuous = true; // don't stop at the first breath
     let heard = earlier;
     recognition.onresult = (event) => {
       heard = addWords(earlier, Array.from(event.results, (result) => result[0].transcript).join(""));
       setHeardSoFar(heard);
+      stopAfterQuiet(DONE_AFTER_QUIET_MS);
     };
     recognition.onerror = (event) => {
-      if (untilStopped && event.error === "no-speech") return; // a long pause while dictating: carry on
+      if (event.error === "no-speech") return; // a long pause: carry on (asking has its own timer)
       if (event.error !== "aborted") setProblem(PROBLEMS[event.error] ?? "Listening stopped. Please try again.");
       stopped.current = true;
     };
     recognition.onend = () => {
-      if (untilStopped && !stopped.current) return listen(heard);
+      if (!stopped.current) return listen(heard);
+      clearTimeout(quietTimer.current);
       listener.current = null;
       setIsListening(false);
       setHeardSoFar("");
@@ -98,6 +114,7 @@ export function useVoiceInput(
 
   function stop() {
     stopped.current = true;
+    clearTimeout(quietTimer.current);
     listener.current?.stop();
   }
 
@@ -123,6 +140,7 @@ export function useVoiceInput(
   useEffect(
     () => () => {
       stopped.current = true;
+      clearTimeout(quietTimer.current);
       listener.current?.abort();
     },
     [],
