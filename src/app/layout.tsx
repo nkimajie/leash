@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "A personal assistant that spends and sends money like you would, but only inside rules you set.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#fafaf9" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#f7f5f0" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
