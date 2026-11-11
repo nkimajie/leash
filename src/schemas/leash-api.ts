@@ -1,7 +1,7 @@
 // The Leash API (/api/v1): lets any outside AI agent shop and pay through the person's rules.
 // It's described once, here. The OpenAPI document below is built from these schemas, served at
-// /api/v1/openapi.json and saved as openapi/leash-api.json, where APIMatic turns it into an SDK,
-// a docs portal and a context plugin for AI coding assistants.
+// /api/v1/openapi.json and saved as leash-api/src/spec/openapi.json, where APIMatic turns it into
+// an SDK, a docs portal and a context plugin for AI coding assistants (see leash-api/README.md).
 
 import { z } from "zod";
 import { DecisionSchema } from "./decision";

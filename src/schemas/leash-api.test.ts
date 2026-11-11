@@ -4,8 +4,8 @@ import { leashApiDocument } from "./leash-api";
 describe("the Leash API's OpenAPI document", () => {
   const document = leashApiDocument();
 
-  it("matches the committed openapi/leash-api.json (after changing the API, run `npm run openapi`)", async () => {
-    await expect(JSON.stringify(document, null, 2) + "\n").toMatchFileSnapshot("../../openapi/leash-api.json");
+  it("matches the committed leash-api/src/spec/openapi.json (after changing the API, run `npm run openapi`)", async () => {
+    await expect(JSON.stringify(document, null, 2) + "\n").toMatchFileSnapshot("../../leash-api/src/spec/openapi.json");
   });
 
   it("names every operation and resolves every reference", () => {
