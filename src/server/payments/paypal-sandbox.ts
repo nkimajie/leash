@@ -22,6 +22,15 @@ import * as database from "@/server/database";
 import { PayPalError } from "./paypal-error";
 import type { PaymentAuthorization, PaymentCapture, PaymentRequest } from "./paypal";
 
+/** The vault id of the sample person you sign in as in mock mode. */
+export const MOCK_VAULT_ID = "mock-vault";
+
+/** Your saved PayPal account, if it can pay with real PayPal: the mock mode sample person can't. */
+export async function findUsableWallet() {
+  const saved = await database.wallets.findConnectedWallet();
+  return saved?.vaultId === MOCK_VAULT_ID ? null : saved;
+}
+
 const client = new Client({
   environment: Environment.Sandbox,
   clientCredentialsAuthCredentials: {
@@ -82,9 +91,13 @@ export async function finishSavingPayPalAccount(setupTokenId: string) {
  * the payee: it stands in for every store, and passes payments to people on (see paypal-payouts.ts).
  */
 export async function sandboxAuthorizePayment(payment: PaymentRequest): Promise<PaymentAuthorization> {
-  const wallet = await database.wallets.findConnectedWallet();
+  const wallet = await findUsableWallet();
   if (!wallet) {
-    throw new PayPalError("PAYPAL_NOT_CONNECTED", "", "Sign in with PayPal first: Your leash, then PayPal.");
+    throw new PayPalError(
+      "PAYPAL_NOT_CONNECTED",
+      "",
+      "Tap Continue with PayPal first, so Leash can pay with your account.",
+    );
   }
 
   const { result: order } = await callPayPal(() =>

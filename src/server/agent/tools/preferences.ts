@@ -24,8 +24,8 @@ export const rememberPreferenceTool = defineTool({
   description: "Save something new the user told you about their taste, so their digital twin remembers it next time.",
   inputSchema: z.object({
     sentiment: z.enum(["likes", "avoids"]),
-    statement: z.string().min(3).describe("Plain-English statement, e.g. 'Prefers oat milk'"),
-    category: z.string().optional().describe("Product category it applies to, if any"),
+    statement: z.string().trim().min(3).max(240).describe("Plain-English statement, e.g. 'Prefers oat milk'"),
+    category: z.string().trim().min(1).optional().describe("Product category it applies to, if any"),
   }),
   async run({ sentiment, statement, category }) {
     await database.preferences.addPreference({ sentiment, statement, category: category ?? null, source: "you" });

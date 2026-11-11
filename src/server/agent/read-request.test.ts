@@ -73,3 +73,16 @@ describe("readRestockSchedule", () => {
     expect(readRestockSchedule("every week")).toBeNull();
   });
 });
+
+describe("readRestockSchedule doesn't see a schedule that isn't there", () => {
+  it.each(["Pay Sam $20 for the weekly groceries", "Buy a daily planner", "Restock dog food every 0 days"])(
+    "'%s' is not a schedule",
+    (prompt) => {
+      expect(readRestockSchedule(prompt)).toBeNull();
+    },
+  );
+
+  it("still reads a schedule word at the end", () => {
+    expect(readRestockSchedule("Restock dog food weekly")).toEqual({ prompt: "Restock dog food", everyDays: 7 });
+  });
+});

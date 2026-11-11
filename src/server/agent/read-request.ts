@@ -66,13 +66,18 @@ export function readRestockSchedule(prompt: string): RestockSchedule | null {
   const match =
     prompt.match(
       /,?\s*\b(?:once\s+)?every\s+(?:(\d+|an?|one|other|two|three|four|five|six)\s+)?(day|week|fortnight|month)s?\b/i,
-    ) ?? prompt.match(/,?\s*\b(daily|weekly|fortnightly|monthly)\b/i);
+    ) ?? prompt.match(/,?\s*\b(daily|weekly|fortnightly|monthly)\s*[.!]?\s*$/i); // only at the end: not "the weekly groceries"
   if (!match) return null;
 
   const [phrase, countOrUnit, unit] = match;
-  const count = unit ? Number(countOrUnit ?? 1) || COUNT_WORDS[countOrUnit.toLowerCase()] : 1;
+  const count =
+    !unit || countOrUnit === undefined
+      ? 1
+      : /^\d+$/.test(countOrUnit)
+        ? Number(countOrUnit)
+        : COUNT_WORDS[countOrUnit.toLowerCase()];
   const everyDays = count * DAYS_PER[(unit ?? countOrUnit).toLowerCase()];
-  if (everyDays < 1 || everyDays > 365) return null;
+  if (!Number.isInteger(everyDays) || everyDays < 1 || everyDays > 365) return null;
 
   // What to buy each time: your words without the schedule. "Every month, restock paper" -> "Restock paper".
   const rest = prompt

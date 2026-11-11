@@ -8,7 +8,8 @@ import { finishConnectingPayPal, pageAfterPayPal } from "@/server/payments/paypa
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const then = ConnectPayPalBody.parse({ then: url.searchParams.get("then") ?? undefined }).then;
+  const asked = ConnectPayPalBody.safeParse({ then: url.searchParams.get("then") ?? undefined });
+  const then = asked.success ? asked.data.then : "paypal";
   const goBack = (result: string) =>
     Response.redirect(`${appUrl || url.origin}${pageAfterPayPal(then)}?result=${result}`);
 

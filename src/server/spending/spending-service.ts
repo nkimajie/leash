@@ -119,21 +119,23 @@ export async function approveHeldDecision(decisionId: string): Promise<Decision>
   return oneAtATime(decisionId, async () => {
     const held = await findDecisionIn(decisionId, ["held"]);
     const decision = held.kind === "payment" ? await withLatestEmail(held) : held;
+    let approved: Decision;
     try {
       const taken = await takeReservedMoney(decision, decision.paypal.authorizationId!);
       if (taken.failure)
         return database.decisions.updateDecision(decisionId, { ...taken.failure, paypal: taken.paypal });
-      const approved = await database.decisions.updateDecision(decisionId, {
+      approved = await database.decisions.updateDecision(decisionId, {
         outcome: "approved",
         payee: decision.payee,
         paypal: taken.paypal,
       });
-      await rememberLesson(approved, "approved");
-      return approved;
     } catch (error) {
       await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => {});
       return database.decisions.updateDecision(decisionId, paymentFailure(error));
     }
+    // Only once the money is safely taken: a lesson can never undo a payment.
+    await rememberLesson(approved, "approved");
+    return approved;
   });
 }
 
@@ -188,18 +190,32 @@ export async function releaseAllHolds(): Promise<Decision[]> {
   return releaseHolds(() => true, "The demo was reset, so the reserved money was released. Nothing was charged.");
 }
 
+/**
+ * One at a time, like a tap on Deny, so a release never races your Approve. Each is checked again
+ * first, and only marked released once PayPal has really released it (otherwise the next run retries).
+ */
 async function releaseHolds(shouldRelease: (held: Decision) => boolean, explanation: string): Promise<Decision[]> {
   const held = (await database.decisions.listDecisions()).filter((d) => d.outcome === "held" && shouldRelease(d));
-  return Promise.all(
-    held.map(async (decision) => {
-      const result = await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => null);
-      return database.decisions.updateDecision(decision.id, {
-        outcome: "denied",
-        ruleExplanation: explanation,
-        paypal: { status: result?.status ?? "VOIDED" },
-      });
-    }),
+  const released = await Promise.all(
+    held.map((decision) =>
+      oneAtATime(decision.id, async () => {
+        const current = await database.decisions.findDecisionById(decision.id);
+        if (current?.outcome !== "held") return null; // you decided in the meantime
+        try {
+          const result = await paypal.voidAuthorization(current.paypal.authorizationId!);
+          return await database.decisions.updateDecision(current.id, {
+            outcome: "denied",
+            ruleExplanation: explanation,
+            paypal: { status: result.status },
+          });
+        } catch (error) {
+          console.warn(`Couldn't release ${current.id} at PayPal; it stays reserved and is retried next time`, error);
+          return null;
+        }
+      }),
+    ),
   );
+  return released.filter((decision): decision is Decision => decision !== null);
 }
 
 // ---------- internals ----------
@@ -355,7 +371,8 @@ function paymentFailure(error: unknown) {
     return {
       ...failed,
       ruleHit: "paypal_not_connected" as const,
-      ruleExplanation: "Your PayPal account isn't connected yet, so nothing was charged. Connect it first.",
+      ruleExplanation:
+        "Your PayPal account isn't connected yet, so nothing was charged. Tap Continue with PayPal first.",
     };
   }
   return {
@@ -383,7 +400,18 @@ async function findDecisionIn(decisionId: string, allowedOutcomes: Decision["out
   return decision;
 }
 
+/**
+ * Teaches the twin. By now the money is already handled, so a lesson that can't be saved is logged,
+ * never thrown: it must not turn a finished approve, deny or refund into an error.
+ */
 async function rememberLesson(decision: Decision, action: YourAction, why: YourReason = {}) {
-  const lesson = await lessonFromYourWords(decision, action, why);
-  if (lesson) await database.preferences.addPreference(lesson);
+  try {
+    const lesson = await lessonFromYourWords(decision, action, why);
+    if (lesson) await database.preferences.addPreference({ ...lesson, statement: fitLesson(lesson.statement) });
+  } catch (error) {
+    console.warn(`Couldn't save what the twin learned from ${decision.id}`, error);
+  }
 }
+
+/** Lessons are at most 240 characters; a long note is cut, not refused. */
+const fitLesson = (statement: string) => (statement.length <= 240 ? statement : `${statement.slice(0, 239)}…`);

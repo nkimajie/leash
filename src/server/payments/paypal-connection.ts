@@ -13,15 +13,14 @@ import type { ConnectPayPalThen, PayPalConnection } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { BadRequestError } from "@/server/errors";
-import { finishSavingPayPalAccount, startSavingPayPalAccount } from "./paypal-sandbox";
+import { finishSavingPayPalAccount, findUsableWallet, MOCK_VAULT_ID, startSavingPayPalAccount } from "./paypal-sandbox";
 
-const MOCK_PERSON = { vaultId: "mock-vault", name: "Favor", email: "favor@example.com" };
+const MOCK_PERSON = { vaultId: MOCK_VAULT_ID, name: "Favor", email: "favor@example.com" };
 
 export async function getPayPalConnection(): Promise<PayPalConnection> {
   const mode = serviceModes().payments;
-  const saved = await database.wallets.findConnectedWallet();
-  // A sample person saved in mock mode can't pay with real PayPal.
-  const wallet = mode === "paypal-sandbox" && saved?.vaultId === MOCK_PERSON.vaultId ? null : saved;
+  // In sandbox mode, a sample person saved in mock mode doesn't count: it can't pay with real PayPal.
+  const wallet = mode === "paypal-sandbox" ? await findUsableWallet() : await database.wallets.findConnectedWallet();
   return {
     mode,
     signedIn: wallet !== null,

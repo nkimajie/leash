@@ -69,7 +69,7 @@ export function describeWhatICanDo(status: LeashStatus, spoken: boolean): string
   const rightNow = [
     status.paypal.connected
       ? `I can spend up to ${money(status.rules.autoApproveLimit)} at a time without asking you`
-      : "PayPal isn't connected yet, so I can't pay for anything until you connect it",
+      : "PayPal isn't connected yet, so I can't pay for anything until you tap Continue with PayPal",
     describeWaitingCount(status.waitingForYou.length),
   ].join(", and ");
 
