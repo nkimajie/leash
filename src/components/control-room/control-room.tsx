@@ -6,17 +6,25 @@
 // The assistant links here with a question (/control-room?ask=...), which is asked straight away.
 
 import { Sparkles, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
-import { isSampleHistory, type Decision, type GridView, type Outcome } from "@/schemas";
+import { DAYS_TO_ANSWER, isSampleHistory, type Decision, type GridView, type Outcome } from "@/schemas";
 import { approveDecision, askControlRoom, denyDecision, refundDecision } from "@/lib/api-client";
 import { classNames, formatMoney } from "@/lib/format";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader } from "@/components/ui/card";
 import { TextInput } from "@/components/ui/form-fields";
 import { PageHeader } from "@/components/ui/page-header";
 import { DecisionDetails } from "./decision-details";
 import { DecisionsGrid, type DecisionAction } from "./decisions-grid";
+
+// The timeline uses Bryntum Scheduler, which needs the browser, so it's only loaded there.
+const ReservationsTimeline = dynamic(
+  () => import("./reservations-timeline").then((file) => file.ReservationsTimeline),
+  { ssr: false, loading: () => <p className="px-5 py-6 text-sm text-stone-500">Loading the timeline…</p> },
+);
 
 const FILTERS: { key: string; label: string; outcomes: Outcome[] | null }[] = [
   { key: "all", label: "All", outcomes: null },
@@ -208,6 +216,20 @@ export function ControlRoom() {
         />
         {selected && <DecisionDetails decision={selected} onClose={() => setSelectedId(null)} />}
       </div>
+
+      <Card className="overflow-hidden">
+        <CardHeader
+          title="Money reserved at PayPal"
+          description={`When a payment needs your OK, PayPal reserves the money without taking it. Each bar runs until it was decided; one still waiting shows the ${DAYS_TO_ANSWER} days Leash gives you, then PayPal's own limit. Click a bar to see its PayPal steps.`}
+        />
+        <ReservationsTimeline
+          decisions={decisions}
+          onSelect={(id) => {
+            setSelectedId(id);
+            window.scrollTo({ top: 0, behavior: "smooth" }); // the details open next to the grid above
+          }}
+        />
+      </Card>
     </div>
   );
 }

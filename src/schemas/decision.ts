@@ -63,3 +63,13 @@ export const SAMPLE_HISTORY_REQUEST_ID = "sample-history";
 export const isSampleHistory = (decision: Pick<Decision, "requestId">) =>
   decision.requestId === SAMPLE_HISTORY_REQUEST_ID;
 export type NewDecision = Omit<Decision, "id" | "createdAt" | "updatedAt">;
+
+/** How long a held purchase or payment waits for you before Leash releases the reserved money. */
+export const DAYS_TO_ANSWER = 7;
+
+/**
+ * How long PayPal keeps an authorization (money reserved, not taken) open: 29 days.
+ * PayPal only promises the money for the first 3 days (its "honour period"); after that a capture
+ * usually still works but isn't guaranteed. Leash never gets close: it releases holds after DAYS_TO_ANSWER.
+ */
+export const PAYPAL_AUTHORIZATION_DAYS = 29;

@@ -11,6 +11,7 @@ import "server-only";
 // Scheduled restocks run while you're away, so anything they buy is held for your OK.
 
 import {
+  DAYS_TO_ANSWER,
   isSampleHistory,
   type AssistantRequest,
   type Decision,
@@ -169,12 +170,9 @@ export async function refundDecision(decisionId: string, why: YourReason = {}): 
   });
 }
 
-/** How long a held purchase or payment waits for you before the reserved money is released. */
-export const DAYS_TO_ANSWER = 7;
-
 /**
- * Releases reservations nobody answered in time, so money is never stuck "reserved".
- * (PayPal keeps an authorization for 29 days; a week is plenty for a yes or no.)
+ * Releases reservations nobody answered in DAYS_TO_ANSWER, so money is never stuck "reserved".
+ * (PayPal keeps an authorization for PAYPAL_AUTHORIZATION_DAYS; a week is plenty for a yes or no.)
  * The twin learns nothing: you didn't say no, you just didn't answer.
  */
 export async function releaseForgottenHolds(now = new Date()): Promise<Decision[]> {

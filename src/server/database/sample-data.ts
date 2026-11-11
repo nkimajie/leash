@@ -90,6 +90,8 @@ type SampleRow = {
   ruleExplanation: string;
   aiReasoning: string;
   paypalStatus: string | null;
+  /** How long after it happened you said yes or no (or asked for the refund). */
+  answeredHoursLater?: number;
 };
 
 const SAMPLE_ROWS: SampleRow[] = [
@@ -110,6 +112,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     ruleExplanation: "$189.00 is over your $50.00 auto-approve limit.",
     aiReasoning: "You mentioned back pain while working. This mesh-back chair is the best-reviewed one under $200.",
     paypalStatus: "VOIDED",
+    answeredHoursLater: 9,
   },
   {
     payeeId: "payee-priya",
@@ -138,6 +141,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     ruleExplanation: "$72.00 is over your $50.00 auto-approve limit.",
     aiReasoning: "You said the old dog bed was worn out. An orthopedic bed suits an older dog.",
     paypalStatus: "COMPLETED",
+    answeredHoursLater: 4,
   },
   {
     productId: "cof-7",
@@ -156,6 +160,7 @@ const SAMPLE_ROWS: SampleRow[] = [
     ruleExplanation: "$19.00 is within every rule.",
     aiReasoning: "You asked for something to replace cling film. These wraps are reusable for a year.",
     paypalStatus: "REFUNDED",
+    answeredHoursLater: 16,
   },
   {
     productId: "kit-1",
@@ -199,7 +204,7 @@ export function sampleDecisions(): Decision[] {
         payoutId: null,
       },
       createdAt: at,
-      updatedAt: at,
+      updatedAt: hoursAgo(row.hoursAgo - (row.answeredHoursLater ?? 0)),
     };
   });
 }

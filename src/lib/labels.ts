@@ -16,6 +16,17 @@ export const OUTCOME_STYLE: Record<Outcome, { label: string; tone: string; dot: 
   failed: { label: "Payment failed", tone: "bg-rose-50 text-rose-700 ring-rose-600/20", dot: "bg-rose-500" },
 };
 
+/** The same outcome colours as plain CSS colours, for timelines (Tailwind's 500 shades, matching `dot`). */
+export const OUTCOME_COLOR: Record<Outcome, string> = {
+  auto_approved: "#10b981", // emerald
+  approved: "#14b8a6", // teal
+  held: "#f59e0b", // amber
+  denied: "#a8a29e", // stone
+  blocked: "#a8a29e", // stone
+  refunded: "#0ea5e9", // sky
+  failed: "#f43f5e", // rose
+};
+
 export const RULE_LABEL: Record<RuleName, string> = {
   within_rules: "Within rules",
   auto_approve_limit: "Over auto-approve limit",
