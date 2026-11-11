@@ -2,29 +2,49 @@
 
 import { isSampleHistory, type Decision, type Outcome, type QuickReason, type RuleName } from "@/schemas";
 
-export const OUTCOME_STYLE: Record<Outcome, { label: string; tone: string; dot: string }> = {
-  auto_approved: {
-    label: "Paid automatically",
-    tone: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
-    dot: "bg-emerald-500",
-  },
-  approved: { label: "Approved by you", tone: "bg-teal-50 text-teal-700 ring-teal-600/20", dot: "bg-teal-500" },
-  held: { label: "Waiting for you", tone: "bg-amber-50 text-amber-800 ring-amber-600/30", dot: "bg-amber-500" },
-  denied: { label: "Denied, not charged", tone: "bg-stone-100 text-stone-600 ring-stone-500/20", dot: "bg-stone-400" },
-  blocked: { label: "Blocked by rules", tone: "bg-stone-100 text-stone-600 ring-stone-500/20", dot: "bg-stone-400" },
-  refunded: { label: "Refunded", tone: "bg-sky-50 text-sky-700 ring-sky-600/20", dot: "bg-sky-500" },
-  failed: { label: "Payment failed", tone: "bg-rose-50 text-rose-700 ring-rose-600/20", dot: "bg-rose-500" },
+/** The stamp colours, one per money state (the tokens are in globals.css). */
+export type StampTone = "paid" | "reserved" | "released" | "blocked" | "refunded" | "failed";
+
+export const STAMP_TONE_CLASSES: Record<StampTone, string> = {
+  paid: "bg-paid-wash text-paid",
+  reserved: "bg-reserved-wash text-reserved",
+  released: "bg-sand text-ink-faint",
+  blocked: "bg-ink text-white",
+  refunded: "bg-refunded-wash text-refunded",
+  failed: "bg-failed-wash text-failed",
 };
 
-/** The same outcome colours as plain CSS colours, for timelines (Tailwind's 500 shades, matching `dot`). */
+/** Every amount is stamped with what happened to the money, and what PayPal did. */
+export const OUTCOME_STYLE: Record<Outcome, { label: string; paypal: string; tone: StampTone }> = {
+  auto_approved: { label: "Paid", paypal: "PayPal captured", tone: "paid" },
+  approved: { label: "Paid", paypal: "PayPal captured", tone: "paid" },
+  held: { label: "Reserved", paypal: "PayPal authorized", tone: "reserved" },
+  denied: { label: "Released", paypal: "PayPal released", tone: "released" },
+  blocked: { label: "Blocked", paypal: "PayPal never called", tone: "blocked" },
+  refunded: { label: "Refunded", paypal: "PayPal refunded", tone: "refunded" },
+  failed: { label: "Failed", paypal: "PayPal couldn't finish", tone: "failed" },
+};
+
+/** What happened, in one plain sentence: notifications and receipts. */
+export const OUTCOME_SENTENCE: Record<Outcome, string> = {
+  auto_approved: "Within your rules, so PayPal paid it straight away.",
+  approved: "You approved it. PayPal took care of the payment.",
+  held: "PayPal reserved the money. Nothing is taken until you say yes.",
+  denied: "PayPal released the hold. You weren't charged.",
+  blocked: "Leash stopped it before PayPal was ever called.",
+  refunded: "The money is back in your PayPal.",
+  failed: "PayPal couldn't finish the payment.",
+};
+
+/** The same colours as plain CSS, for the Bryntum timelines. */
 export const OUTCOME_COLOR: Record<Outcome, string> = {
-  auto_approved: "#10b981", // emerald
-  approved: "#14b8a6", // teal
-  held: "#f59e0b", // amber
-  denied: "#a8a29e", // stone
-  blocked: "#a8a29e", // stone
-  refunded: "#0ea5e9", // sky
-  failed: "#f43f5e", // rose
+  auto_approved: "#1f8a4c",
+  approved: "#1f8a4c",
+  held: "#b7791f",
+  denied: "#7a776f",
+  blocked: "#14130f",
+  refunded: "#2563c9",
+  failed: "#c23a55",
 };
 
 export const RULE_LABEL: Record<RuleName, string> = {

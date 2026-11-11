@@ -1,12 +1,12 @@
 "use client";
 
-// Keeps a list of decisions up to date.
+// Keeps the list of decisions up to date, once for the whole app (the sidebar's count, Ask, Money).
 //   With Supabase: Realtime tells us the moment a decision is added or changes, and we reload.
 //   Without it (memory mode): we check every 2 seconds instead.
 // The browser only has the read-only "anon" key; every change still goes through our API.
 
 import { createClient } from "@supabase/supabase-js";
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Decision } from "@/schemas";
 import { fetchDecisions } from "./api-client";
 
@@ -18,7 +18,21 @@ const POLL_EVERY_MS = 2000;
 /** With Realtime, a slow check still runs in case a message is missed. */
 const SAFETY_CHECK_EVERY_MS = 30_000;
 
-export function useLiveDecisions() {
+type LiveDecisions = ReturnType<typeof useDecisionsFromServer>;
+
+const LiveDecisionsContext = createContext<LiveDecisions | null>(null);
+
+export function LiveDecisionsProvider({ children }: { children: ReactNode }) {
+  return <LiveDecisionsContext value={useDecisionsFromServer()}>{children}</LiveDecisionsContext>;
+}
+
+export function useLiveDecisions(): LiveDecisions {
+  const live = useContext(LiveDecisionsContext);
+  if (!live) throw new Error("useLiveDecisions needs a <LiveDecisionsProvider> around it.");
+  return live;
+}
+
+function useDecisionsFromServer() {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [connectionProblem, setConnectionProblem] = useState(false);

@@ -1,27 +1,28 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { classNames } from "@/lib/format";
 
+// Fields sit on white cards, so they're filled with paper. On the paper background, pass "bg-white".
 const fieldStyle =
-  "w-full rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-400 outline-none transition focus:border-stone-500 focus:ring-2 focus:ring-stone-900/10";
+  "w-full rounded-xl border border-transparent bg-paper px-4 text-base text-ink placeholder:text-ink-soft outline-none transition focus:border-leash-rim focus:ring-2 focus:ring-leash-wash";
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={classNames(fieldStyle, "h-10", className)} />;
+  return <input {...props} className={classNames(fieldStyle, "h-12", className)} />;
 }
 
 export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={classNames(fieldStyle, "py-2", className)} />;
+  return <textarea {...props} className={classNames(fieldStyle, "py-3", className)} />;
 }
 
 export function SelectInput({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={classNames(fieldStyle, "h-10", className)} />;
+  return <select {...props} className={classNames(fieldStyle, "h-12", className)} />;
 }
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-stone-800">{label}</span>
+      <span className="text-sm font-medium text-ink">{label}</span>
       {children}
-      {hint && <span className="text-xs text-stone-500">{hint}</span>}
+      {hint && <span className="text-xs text-ink-soft">{hint}</span>}
     </label>
   );
 }
@@ -43,14 +44,14 @@ export function Toggle({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={classNames(
-        "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
-        checked ? "bg-emerald-600" : "bg-stone-300",
+        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
+        checked ? "bg-leash" : "bg-hairline",
       )}
     >
       <span
         className={classNames(
-          "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform",
-          checked ? "translate-x-5" : "translate-x-0.5",
+          "inline-block h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-transform",
+          checked ? "translate-x-[23px]" : "translate-x-[3px]",
         )}
       />
     </button>

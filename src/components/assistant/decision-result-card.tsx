@@ -6,7 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import type { Decision } from "@/schemas";
 import { formatMoney } from "@/lib/format";
 import { RULE_LABEL } from "@/lib/labels";
-import { OutcomeBadge } from "@/components/ui/outcome-badge";
+import { OutcomeStamp } from "@/components/ui/stamp";
 import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
 /**
@@ -34,7 +34,7 @@ export function DecisionResultCard({ decision, showQrCode = true }: { decision: 
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <OutcomeBadge outcome={decision.outcome} />
+            <OutcomeStamp outcome={decision.outcome} />
             <span className="text-xs text-stone-500">{RULE_LABEL[decision.ruleHit]}</span>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-stone-600">{decision.ruleExplanation}</p>

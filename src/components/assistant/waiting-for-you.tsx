@@ -47,7 +47,7 @@ export function WaitingForYou() {
               <div className="flex gap-2">
                 <Button
                   size="sm"
-                  variant="approve"
+                  variant="primary"
                   disabled={busyId === decision.id}
                   onClick={() => decide(decision.id, "approve")}
                 >

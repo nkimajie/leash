@@ -1,26 +1,35 @@
-import Link from "next/link";
+// The Leash mark: a loop you can hold, with an L-shaped tether.
 
-export function LeashLogo() {
+import Link from "next/link";
+import { classNames } from "@/lib/format";
+
+export function LeashMark({ className }: { className?: string }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5">
-      <span className="grid h-8 w-8 place-items-center rounded-xl bg-stone-900 text-white">
-        <svg
-          viewBox="0 0 24 24"
-          className="h-4.5 w-4.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.25"
-          strokeLinecap="round"
-          aria-hidden
-        >
-          <circle cx="7" cy="7" r="3" />
-          <path d="M9.5 9.5 17 17" />
-          <path d="M14 20h6v-6" />
-        </svg>
-      </span>
-      <span className="leading-tight">
-        <span className="block text-[15px] font-semibold tracking-tight text-stone-900">Leash</span>
-        <span className="block text-[11px] text-stone-500">Your assistant, on a leash</span>
+    <svg viewBox="0 0 36 36" className={classNames("shrink-0", className)} aria-hidden>
+      <rect width="36" height="36" rx="10.8" fill="#1552F0" />
+      <path
+        d="M13.5 18.45c-7.2 0-7.2-10.8 0-10.8s7.2 10.8 0 10.8Zm0 0v5.4a3.6 3.6 0 0 0 3.6 3.6h9"
+        fill="none"
+        stroke="white"
+        strokeWidth="2.97"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function LeashLogo({ size = "default" }: { size?: "default" | "compact" | "large" }) {
+  return (
+    <Link href="/" className="flex items-center gap-2.5" aria-label="Leash home">
+      <LeashMark className={{ default: "h-9 w-9", compact: "h-8 w-8", large: "h-12 w-12" }[size]} />
+      <span
+        className={classNames(
+          "font-semibold tracking-[-0.03em] text-ink",
+          { default: "text-[28px]", compact: "text-xl", large: "text-[37px]" }[size],
+        )}
+      >
+        Leash
       </span>
     </Link>
   );

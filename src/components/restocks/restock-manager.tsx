@@ -20,7 +20,7 @@ import { formatDaysAway, formatMoney } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Field, TextInput, Toggle } from "@/components/ui/form-fields";
-import { OutcomeBadge } from "@/components/ui/outcome-badge";
+import { OutcomeStamp } from "@/components/ui/stamp";
 import { PageHeader } from "@/components/ui/page-header";
 
 // The timeline uses Bryntum Scheduler, which needs the browser, so it's only loaded there.
@@ -163,7 +163,7 @@ function RunResult({ run }: { run: RestockRun }) {
         <ul className="mt-3 flex flex-col gap-2">
           {run.decisions.map((decision) => (
             <li key={decision.id} className="flex flex-wrap items-center gap-3 text-sm">
-              <OutcomeBadge outcome={decision.outcome} />
+              <OutcomeStamp outcome={decision.outcome} />
               <span className="min-w-0 flex-1">{decision.title}</span>
               <span className="tabular-nums">{formatMoney(decision.amount)}</span>
               {decision.outcome === "held" && (

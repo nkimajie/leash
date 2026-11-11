@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
     // (https://github.com/vercel/next.js/issues/100267). Dev starts a little slower without it.
     turbopackFileSystemCacheForDev: false,
   },
+  // Pages from before the V2 design keep working.
+  async redirects() {
+    return [
+      { source: "/control-room", destination: "/money", permanent: false },
+      { source: "/rules", destination: "/leash", permanent: false },
+      { source: "/people", destination: "/leash/people", permanent: false },
+      { source: "/restocks", destination: "/leash/restocks", permanent: false },
+      { source: "/connect", destination: "/leash/paypal", permanent: false },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

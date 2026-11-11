@@ -14,7 +14,7 @@ import { classNames, formatMoney } from "@/lib/format";
 import { QUICK_REASON_LABEL, RULE_LABEL } from "@/lib/labels";
 import { LeashLogo } from "@/components/layout/leash-logo";
 import { Button } from "@/components/ui/button";
-import { OutcomeBadge } from "@/components/ui/outcome-badge";
+import { OutcomeStamp } from "@/components/ui/stamp";
 import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
 export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) {
@@ -61,7 +61,7 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
 
           <div className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-3">
-              <ProductPhoto decision={decision} size="lg" />
+              <ProductPhoto decision={decision} size="md" />
               <div className="min-w-0">
                 <div className="font-semibold leading-snug">{decision.title}</div>
                 <div className="text-sm text-stone-500">{decision.counterparty}</div>
@@ -110,7 +110,7 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
             <>
               <div className="grid grid-cols-2 gap-3">
                 <Button
-                  size="lg"
+                  size="md"
                   variant="secondary"
                   disabled={busyWith !== null}
                   onClick={() => setAskingWhy(true)}
@@ -119,8 +119,8 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
                   Deny
                 </Button>
                 <Button
-                  size="lg"
-                  variant="approve"
+                  size="md"
+                  variant="primary"
                   disabled={busyWith !== null}
                   onClick={() => decide("approve")}
                   className="rounded-2xl"
@@ -196,11 +196,11 @@ function WhyNot(props: {
         className="w-full resize-none rounded-xl bg-stone-50 px-3 py-2 text-sm outline-none ring-1 ring-stone-200 focus:ring-stone-400"
       />
       <div className="grid grid-cols-2 gap-3">
-        <Button size="lg" variant="ghost" disabled={props.isBusy} onClick={props.onBack} className="rounded-2xl">
+        <Button size="md" variant="text" disabled={props.isBusy} onClick={props.onBack} className="rounded-2xl">
           Back
         </Button>
         <Button
-          size="lg"
+          size="md"
           disabled={props.isBusy}
           onClick={() => props.onDeny({ reason, note: note.trim() || undefined })}
           className="rounded-2xl"
@@ -221,7 +221,7 @@ function FinalOutcome({ decision }: { decision: Decision }) {
   };
   return (
     <div className="flex flex-col items-center gap-3 rounded-3xl bg-white p-6 text-center ring-1 ring-stone-200">
-      <OutcomeBadge outcome={decision.outcome} />
+      <OutcomeStamp outcome={decision.outcome} />
       <p className="text-sm text-stone-700">{message[decision.outcome] ?? "This has already been decided."}</p>
       {decision.paypal.debugId && (
         <p className="font-mono text-xs text-stone-400">debug_id {decision.paypal.debugId}</p>

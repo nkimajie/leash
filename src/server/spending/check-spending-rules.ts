@@ -105,7 +105,7 @@ export function checkPayment(payment: PaymentToCheck, rules: SpendingRules, soFa
       },
     !payment.personHasEmail && {
       rule: "no_paypal_email" as const,
-      text: `There's no PayPal email for ${payment.personName} yet; add it on the People page.`,
+      text: `There's no PayPal email for ${payment.personName} yet; add it in Your leash, under People.`,
     },
     payment.amount > rules.autoApproveLimit && {
       rule: "auto_approve_limit" as const,

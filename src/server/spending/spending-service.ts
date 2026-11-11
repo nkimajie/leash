@@ -327,7 +327,7 @@ async function oneAtATime<T>(decisionId: string, work: () => Promise<T>): Promis
 async function withLatestEmail(decision: Decision): Promise<Decision> {
   const latest = await withCurrentPayee(decision);
   if (!latest.payee?.email) {
-    throw new BadRequestError(`Add ${decision.counterparty}'s PayPal email on the People page first, then approve.`);
+    throw new BadRequestError(`Add ${decision.counterparty}'s PayPal email in Your leash, under People, then approve.`);
   }
   return latest;
 }

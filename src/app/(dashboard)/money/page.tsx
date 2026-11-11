@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ControlRoom } from "@/components/control-room/control-room";
+import { ControlRoom } from "@/components/money/control-room";
 
 export const metadata: Metadata = { title: "Control room" };
 

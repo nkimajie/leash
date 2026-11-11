@@ -3,7 +3,7 @@ import type { Decision } from "./decision";
 import type { SearchResult } from "./product";
 
 /** The pages the assistant can open for you ("open the control room"). */
-export const LEASH_PAGES = ["assistant", "control-room", "people", "twin", "restocks", "rules", "connect"] as const;
+export const LEASH_PAGES = ["ask", "money", "limits", "people", "restocks", "paypal", "twin"] as const;
 export type LeashPage = (typeof LEASH_PAGES)[number];
 
 /** One message you send the assistant ("Restock my coffee, under $60"). */

@@ -5,6 +5,7 @@
 import { RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ServiceModes } from "@/schemas";
+import { Button } from "@/components/ui/button";
 import { fetchServiceModes, resetDemo } from "@/lib/api-client";
 import { classNames } from "@/lib/format";
 
@@ -27,27 +28,23 @@ export function ServiceStatus() {
   ];
 
   return (
-    <div className="flex flex-col gap-1.5 text-xs">
-      <div className="font-medium text-stone-500">Services</div>
-      {services.map((service) => (
-        <div
-          key={service.name}
-          className="flex items-center justify-between gap-2"
-          title={service.live ? "Live" : "Mock mode: no keys set"}
-        >
-          <span className="text-stone-600">{service.name}</span>
-          <span
-            className={classNames("flex items-center gap-1.5", service.live ? "text-emerald-700" : "text-stone-400")}
+    <div className="flex flex-col gap-4">
+      <div className="divide-y divide-hairline rounded-2xl border border-hairline bg-white px-4">
+        {services.map((service) => (
+          <div
+            key={service.name}
+            className="flex items-center justify-between gap-2 py-3 text-sm"
+            title={service.live ? "Live" : "Mock mode: no keys set"}
           >
-            <span
-              className={classNames("h-1.5 w-1.5 rounded-full", service.live ? "bg-emerald-500" : "bg-stone-300")}
-            />
-            {service.mode}
-          </span>
-        </div>
-      ))}
+            <span>{service.name}</span>
+            <span className={classNames("font-mono text-xs", service.live ? "text-paid" : "text-ink-soft")}>
+              {service.mode}
+            </span>
+          </div>
+        ))}
+      </div>
       {modes.forceDeclinedPayments && (
-        <div className="mt-1 rounded-md bg-rose-50 px-2 py-1 text-rose-700">Decline test is on</div>
+        <p className="rounded-xl bg-failed-wash px-3 py-2 text-sm text-failed">The decline test is on.</p>
       )}
       {modes.demoMode && <ResetDemoButton />}
     </div>
@@ -58,8 +55,8 @@ export function ServiceStatus() {
 function ResetDemoButton() {
   const [isResetting, setIsResetting] = useState(false);
   return (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
       disabled={isResetting}
       onClick={async () => {
         if (!window.confirm("Put everything back to the sample data? Your PayPal connection stays.")) return;
@@ -67,10 +64,9 @@ function ResetDemoButton() {
         await resetDemo().catch(() => {});
         window.location.reload();
       }}
-      className="mt-2 flex items-center justify-center gap-1.5 rounded-md bg-stone-100 px-2 py-1.5 text-stone-600 transition hover:bg-stone-200 hover:text-stone-900"
     >
-      <RotateCcw className="h-3 w-3" />
+      <RotateCcw className="h-4 w-4" strokeWidth={1.5} />
       {isResetting ? "Resetting…" : "Reset demo"}
-    </button>
+    </Button>
   );
 }

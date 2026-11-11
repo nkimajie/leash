@@ -21,7 +21,7 @@ import { isSampleHistory, type Decision, type GridView } from "@/schemas";
 import { formatMoney, formatWhen } from "@/lib/format";
 import { OUTCOME_STYLE, RULE_LABEL, paypalStatusInWords } from "@/lib/labels";
 import { Button } from "@/components/ui/button";
-import { OutcomeBadge } from "@/components/ui/outcome-badge";
+import { OutcomeStamp } from "@/components/ui/stamp";
 import { ProductPhoto } from "@/components/ui/product-photo";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -130,7 +130,7 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
         cellRenderer: (p: ICellRendererParams<Decision>) =>
           p.data && !p.node.rowPinned ? (
             <div className="flex flex-col items-start gap-1 leading-none">
-              <OutcomeBadge outcome={p.data.outcome} />
+              <OutcomeStamp outcome={p.data.outcome} />
               <span className="text-[11px] text-stone-500">{RULE_LABEL[p.data.ruleHit]}</span>
             </div>
           ) : null,
@@ -264,7 +264,7 @@ function ActionButtons({ decision, onAction }: { decision: Decision; onAction: G
   if (decision.outcome === "held") {
     return (
       <div className="flex h-full items-center gap-1.5">
-        <Button size="sm" variant="approve" disabled={isBusy} onClick={() => run("approve")}>
+        <Button size="sm" variant="primary" disabled={isBusy} onClick={() => run("approve")}>
           Approve
         </Button>
         <Button size="sm" variant="secondary" disabled={isBusy} onClick={() => run("deny")}>
@@ -277,7 +277,7 @@ function ActionButtons({ decision, onAction }: { decision: Decision; onAction: G
   if (decision.kind === "purchase" && (decision.outcome === "auto_approved" || decision.outcome === "approved")) {
     return (
       <div className="flex h-full items-center">
-        <Button size="sm" variant="ghost" disabled={isBusy} onClick={() => run("refund")}>
+        <Button size="sm" variant="text" disabled={isBusy} onClick={() => run("refund")}>
           Refund
         </Button>
       </div>

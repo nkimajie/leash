@@ -172,7 +172,7 @@ function EmailEditor({ email, onSave }: { email: string | null; onSave: (email: 
       <Button type="submit" size="sm">
         Save
       </Button>
-      <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
+      <Button type="button" size="sm" variant="text" onClick={() => setEditing(false)}>
         Cancel
       </Button>
     </form>

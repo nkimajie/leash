@@ -1,6 +1,6 @@
 // The built-in way to understand questions and commands, used when Claude is off.
 // Pure and keyword-based: "what can you do?", "what's waiting for me?", "what did I spend on coffee?",
-// "deny the grinder, I only want hand grinders", "approve it" and "open the control room".
+// "deny the grinder, I only want hand grinders", "approve it" and "open my money".
 // Anything else is a request to shop or pay someone, and returns null.
 
 import type { LeashPage } from "@/schemas";
@@ -14,13 +14,13 @@ export type Command =
   | { kind: "open_page"; page: LeashPage };
 
 const PAGE_WORDS: [RegExp, LeashPage][] = [
-  [/control ?room|dashboard|history/, "control-room"],
-  [/rules?|limits?/, "rules"],
+  [/money|payments|receipts|control ?room|dashboard|history/, "money"],
+  [/leash|rules?|limits?/, "limits"],
   [/people|contacts/, "people"],
   [/twin|preferences/, "twin"],
   [/restocks?|schedules?/, "restocks"],
-  [/connect|paypal/, "connect"],
-  [/assistant|home/, "assistant"],
+  [/connect|paypal/, "paypal"],
+  [/ask|assistant|home/, "ask"],
 ];
 
 export function readCommand(prompt: string): Command | null {

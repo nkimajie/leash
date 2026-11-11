@@ -9,7 +9,7 @@ import { isSampleHistory, type Decision } from "@/schemas";
 import { classNames, formatMoney, formatWhen } from "@/lib/format";
 import { RULE_LABEL, paypalStatusInWords } from "@/lib/labels";
 import { Card } from "@/components/ui/card";
-import { OutcomeBadge } from "@/components/ui/outcome-badge";
+import { OutcomeStamp } from "@/components/ui/stamp";
 import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 
 type Step = { label: string; detail?: string | null; state: "done" | "stopped" | "waiting" | "note" };
@@ -19,7 +19,7 @@ export function DecisionDetails({ decision, onClose }: { decision: Decision; onC
     <Card>
       <div className="flex flex-col gap-4 p-5">
         <div className="flex items-start gap-3">
-          <ProductPhoto decision={decision} size="lg" />
+          <ProductPhoto decision={decision} size="md" />
           <div className="min-w-0 flex-1">
             <div className="font-semibold leading-snug">{decision.title}</div>
             <div className="text-sm text-stone-500">
@@ -37,7 +37,7 @@ export function DecisionDetails({ decision, onClose }: { decision: Decision; onC
 
         <div className="flex items-center justify-between">
           <span className="text-3xl font-semibold tabular-nums tracking-tight">{formatMoney(decision.amount)}</span>
-          <OutcomeBadge outcome={decision.outcome} />
+          <OutcomeStamp outcome={decision.outcome} />
         </div>
 
         <p className="text-sm leading-relaxed text-stone-600">

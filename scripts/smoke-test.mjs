@@ -88,10 +88,10 @@ check(
   approveByVoice.decisions.length === 0 && approveByVoice.reply.includes("only you"),
   approveByVoice.reply,
 );
-const openPage = await ask("Open the control room", true);
+const openPage = await ask("Open my money", true);
 check(
   "it opens pages when asked",
-  openPage.events.some((e) => e.type === "open_page" && e.path === "/control-room"),
+  openPage.events.some((e) => e.type === "open_page" && e.path === "/money"),
 );
 
 // 2. You deny the grinder: PayPal voids it and the twin learns

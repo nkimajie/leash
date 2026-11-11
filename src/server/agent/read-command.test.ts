@@ -31,9 +31,11 @@ describe("readCommand", () => {
   });
 
   it("reads which page to open", () => {
-    expect(readCommand("Open the control room")).toEqual({ kind: "open_page", page: "control-room" });
-    expect(readCommand("take me to my rules")).toEqual({ kind: "open_page", page: "rules" });
-    expect(readCommand("go to PayPal")).toEqual({ kind: "open_page", page: "connect" });
+    expect(readCommand("Open my money")).toEqual({ kind: "open_page", page: "money" });
+    expect(readCommand("Open the control room")).toEqual({ kind: "open_page", page: "money" });
+    expect(readCommand("take me to my rules")).toEqual({ kind: "open_page", page: "limits" });
+    expect(readCommand("show me my leash")).toEqual({ kind: "open_page", page: "limits" });
+    expect(readCommand("go to PayPal")).toEqual({ kind: "open_page", page: "paypal" });
   });
 
   it("leaves shopping and payments to the assistant", () => {

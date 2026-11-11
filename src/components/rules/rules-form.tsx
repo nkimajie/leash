@@ -226,7 +226,7 @@ function RulesInYourWords({ onApply }: { onApply: (proposed: SpendingRules) => P
                   <Button type="button" size="sm" onClick={apply} disabled={status !== "idle"}>
                     {status === "saving" ? "Saving…" : "Apply and save"}
                   </Button>
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setSuggestion(null)}>
+                  <Button type="button" size="sm" variant="text" onClick={() => setSuggestion(null)}>
                     Cancel
                   </Button>
                 </div>
