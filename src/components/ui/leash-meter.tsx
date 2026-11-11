@@ -31,7 +31,8 @@ export function LeashMeter({
           className="absolute inset-y-0 right-0"
           style={{
             left: at(hardLimit),
-            backgroundImage: "repeating-linear-gradient(135deg, #e4e0d6 0 2px, transparent 2px 6px)",
+            backgroundColor: "#f7f5f0",
+            backgroundImage: "repeating-linear-gradient(135deg, #c9c3b5 0 1.5px, transparent 1.5px 6px)",
           }}
         />
         <div className={classNames("absolute inset-y-0 left-0", tone === "blue" ? "bg-leash" : "bg-ink")} style={{ width: at(withoutAsking) }} />
