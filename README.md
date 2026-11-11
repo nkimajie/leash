@@ -13,38 +13,43 @@ digital twin. And you can just talk to it: say what you need, and it tells you w
 
 ## For judges: a 60-second test
 
-1. Open the live demo (link in the Devpost submission) and click **Reset demo** (bottom left) for a clean start.
-   PayPal is already connected to a sandbox account, so you don't need to log in to anything.
-2. Click **Talk** (or hold the space bar) and ask out loud: _"What can you do for me?"_. Leash checks your account and
-   answers out loud. (Or click the same question under the box to type it.)
-3. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Click **Phone view**
-   (scan the QR code there to use your real phone) and tap **Deny**. Say why, in your own words. PayPal voids the
-   reservation, and the screen shows what your twin learned. You can also just say _"Deny the grinder, I only want
-   hand grinders"_; try _"Approve it"_ too, and Leash refuses: only you can approve.
-4. On **Assistant**, click **"Restock my coffee setup, under $60…"**. Watch Claude search real stores (Channel3),
-   check your rules and pay. Anything within your rules is paid; anything over your $50 limit is held.
-5. Click **Try to break the leash** and pick an attack. A scam "takes over" the assistant, and the rules stop the
-   money anyway.
+1. Open the live demo (link in the Devpost submission). You're signed in with a PayPal sandbox account already. For
+   a clean start, open **Settings** (bottom left) and click **Reset demo**.
+2. On **Ask**, tap **Talk** (or hold the space bar) and say _"What can you do for me?"_. Leash checks your account and
+   answers out loud. (Or click the same question under **A place to start**.)
+3. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Click **Open on phone**
+   and scan the QR code (or tap **Deny** right there). Pick a reason in **Why not?**, or say it in your own words.
+   PayPal releases the money, and the screen shows what your twin learned. You can also just say _"Deny the grinder,
+   I only want hand grinders"_; try _"Approve it"_ too, and Leash refuses: only you can approve.
+4. Click **"Restock my coffee setup, under $60"**. Watch Claude search real stores (Channel3), check your rules and
+   pay. Every purchase gets a receipt stamped with what happened to the money: **Paid**, **Reserved** or **Blocked**.
+5. Under **Try to break the leash**, pick an attack. A scam "takes over" the assistant, and the rules stop the money
+   anyway.
 6. Click **"Pay Sam $25 for dinner"**. PayPal takes the money from your account and **Payouts** sends it on to Sam.
-7. Ask _"what did I spend on coffee today?"_ and click **See it in the control room**: the AG Grid shows the same
-   question as a table. Click any row to see each PayPal step with its id.
+7. Ask _"what did I spend on coffee today?"_ and click **See it in Money**: AG Grid filters your receipts to the same
+   question. Click any receipt to see its PayPal trail, with every id. The **Money reserved at PayPal** timeline
+   (Bryntum) shows how long each reservation was held.
+8. Say _"Restock dog food every 30 days"_, then open **Your leash › Restocks**: it's on the Bryntum timeline. Drag
+   its next run to another day.
 
 Everyone shares one demo account. It resets every night, and on its own when someone arrives after 30 quiet
 minutes. Resetting releases every open PayPal reservation first.
 
 ## How the money moves
 
-| Your rules say                                             | PayPal does                     | You see                                        |
-| ---------------------------------------------------------- | ------------------------------- | ---------------------------------------------- |
-| Within every rule                                          | authorize, then capture         | Paid automatically                             |
-| Over a limit or budget, someone new, or not what you asked | authorize and **hold**          | Waiting for you: approve or deny on your phone |
-| You deny                                                   | **void** the authorization      | Denied, never charged. Your twin remembers.    |
-| Blocked category, merchant, cap or hard limit              | nothing; PayPal is never called | Blocked by rules                               |
-| You refund a purchase                                      | refund the capture              | Refunded. Your twin remembers.                 |
-| Paying a person, once the money is taken                   | **Payouts** to their email      | Sent on to Sam's PayPal                        |
+| Your rules say                                             | PayPal does                     | The receipt's stamp                                     |
+| ---------------------------------------------------------- | ------------------------------- | ------------------------------------------------------- |
+| Within every rule                                          | authorize, then capture         | **Paid** · PayPal captured                              |
+| Over a limit or budget, someone new, or not what you asked | authorize and **hold**          | **Reserved** · PayPal authorized: waiting for your okay |
+| You deny                                                   | **void** the authorization      | **Released** · PayPal released. Your twin remembers.    |
+| Blocked category, merchant, cap or hard limit              | nothing; PayPal is never called | **Blocked** · PayPal never called                       |
+| You refund a purchase                                      | refund the capture              | **Refunded** · PayPal refunded. Your twin remembers.    |
+| PayPal says no (e.g. a declined card)                      | void what was reserved          | **Failed**, with PayPal's `debug_id`                    |
+| Paying a person, once the money is taken                   | **Payouts** to their email      | Paid out to Sam's PayPal                                |
 
-You connect your PayPal account once with **PayPal Vault**. After that the assistant pays with the saved account,
-so there is no PayPal popup for every purchase, and the authorize-then-capture flow is what makes "held" possible.
+Signing in to Leash is **Continue with PayPal**: you save your PayPal account once with **PayPal Vault**, and PayPal
+tells Leash your name and email. After that the assistant pays with the saved account, so there is no PayPal popup
+for every purchase, and the authorize-then-capture flow is what makes "reserved, not taken" possible.
 
 A saved PayPal account can only pay the app that saved it. So paying Sam is two PayPal steps: your account pays
 Leash (reserved, then captured, exactly like a purchase), and Leash sends the same amount straight on to Sam's
@@ -98,7 +103,7 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
 - **Talk to it.** Tap **Talk** or hold the space bar and say what you need. Leash tells you what it's doing as it
   goes and answers out loud, using the browser's own speech recognition and voice, so there's nothing to install.
   Ask it what it can do, what's waiting for you, or what you spent on coffee this week, and Claude answers from your
-  real account. A spending answer links to the same question in the AG Grid control room.
+  real account. A spending answer links to the same question in Money.
 - **Say no for you, never yes.** _"Deny the grinder, I only want hand grinders"_: PayPal voids the reservation, and
   your twin learns why. Claude has a tool to deny, and deliberately none to approve, so a scam (or a voice on the TV)
   can never release your money. Only your tap can.
@@ -108,9 +113,11 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
   anyone new waits for you, and so does anyone without a PayPal email yet.
 - **Learn your taste.** Deny an $85 grinder and next time it picks the $34 one, and says why. The twin page shows
   everything it has learned, and you can teach it or make it forget.
-- **Restock on a schedule.** "Restock dog food every 30 days." A daily job runs what's due. You aren't there to
-  watch, so everything a restock buys waits for your OK.
-- **Approve from your phone.** Anything held shows a QR code. Scan it, approve or deny, and the desktop updates live.
+- **Restock on a schedule.** Say "restock dog food every 30 days" and Leash schedules it (buying nothing now). A
+  daily job runs what's due. You aren't there to watch, so everything a restock buys waits for your okay. Your
+  restocks sit on a Bryntum timeline: drag the next run to move it.
+- **Approve from your phone.** **Open on phone** shows a QR code. Scan it, approve or deny, and the desktop updates
+  live.
 - **Ask why, and learn it.** When you deny, say why: "too expensive", "wrong store", or your own words like "I only
   want hand grinders". Claude turns it into a precise preference, and the twin applies it next time.
 - **Stay on what you asked for.** Ask for coffee, and anything that isn't coffee (or close to it: beans, a grinder,
@@ -119,13 +126,45 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
 - **Survive a hijack.** "Try to break the leash" plays three scams against the assistant: $900 to a stranger, gift
   cards from a poisoned product page, and extra items hidden in your coffee order. They skip the AI entirely, so
   only the rules stand in the way, and they hold. The stranger doesn't even end up on your people list.
-- **Show everything.** The AG Grid control room lists every decision live, with the rule that applied, the AI's
-  reasoning, the PayPal status and `debug_id`, and approve, deny and refund buttons. Ask it questions in plain
-  English ("held payments over $20, biggest first"): Claude turns them into grid filters and sorting, and the totals
-  row adds up exactly what you see. Click a row to see each PayPal step with its id.
+- **Show everything.** **Money** lists every receipt live in AG Grid, stamped with what happened to the money. Filter
+  it by asking ("held payments over $20, biggest first"): Claude turns the question into grid filters and sorting,
+  and the totals row adds up exactly what you see. Click a receipt for its PayPal trail: every step and id, the rule
+  that applied, the AI's reasoning, and approve, deny or refund. A Bryntum timeline shows how long PayPal held each
+  reservation, and how long it would still wait.
+- **Let any AI agent shop, on the same leash.** The Leash API (`/api/v1`) lets an outside agent, like Claude Desktop
+  or your own script, search products, buy and pay people through your rules. It has no way to approve anything. See
+  [The Leash API](#the-leash-api-for-any-ai-agent).
 - **Rules in your own words.** "Ask me before anything over $30, and no snacks." Claude suggests the change, you see
   each difference, and nothing is saved until you confirm.
 - **Never leave money stuck.** A reservation nobody answers is released after 7 days by the daily job.
+
+## The Leash API, for any AI agent
+
+Leash's own assistant is one agent. The Leash API lets any other agent shop and pay through the same rules, the same
+PayPal flow and the same digital twin, because each call runs the very same tools. Agents can never approve: there
+is no endpoint for it. Anything outside your rules waits for you in Leash.
+
+```bash
+# Search: each result says what your twin thinks of it
+curl "http://localhost:3000/api/v1/products?query=coffee%20beans"
+
+# Buy: the answer says what happened to the money (auto_approved, held, blocked or failed)
+curl -X POST http://localhost:3000/api/v1/purchases -H "Content-Type: application/json" \
+  -d '{"productId":"cof-1","reasoning":"Fair-trade beans, well under my budget.","agentName":"My agent"}'
+```
+
+| Endpoint                   | What it does                                         |
+| -------------------------- | ---------------------------------------------------- |
+| `GET /api/v1/products`     | Search products, with your twin's notes              |
+| `POST /api/v1/purchases`   | Buy a product, through your rules                    |
+| `POST /api/v1/payments`    | Pay a person (someone new always waits for you)      |
+| `GET /api/v1/decisions/id` | Check on a purchase or payment, e.g. once you decide |
+| `GET /api/v1/rules`        | Read your limits, to plan within them                |
+
+The API is described once, with zod, in `src/schemas/leash-api.ts`. The OpenAPI 3 document is built from those
+schemas, served at `/api/v1/openapi.json`, and saved as [`leash-api/src/spec/openapi.json`](leash-api/src/spec/openapi.json),
+where APIMatic's tools look for it (see [leash-api/README.md](leash-api/README.md)). A unit test fails if the saved
+file falls behind the code.
 
 ## Run it locally (no keys needed)
 
@@ -137,30 +176,31 @@ cp .env.example .env.local   # optional: every service has a mock mode
 npm run dev
 ```
 
-Open http://localhost:3000 and try **"I need a coffee grinder"**. Approve or deny it under "Waiting for you",
-then ask again and watch the assistant choose differently. The sidebar shows which services are live and which
-are mocked.
+Open http://localhost:3000. The welcome steps start: **Continue with PayPal** signs you in as a sample person (there
+is no PayPal to visit in mock mode), then set your first limits. On **Ask**, try **"I need a coffee grinder"**.
+Approve or deny it under **Waiting for you**, then ask again and watch the assistant choose differently.
+**Settings** shows which services are live and which are mocked.
 
 ## Turning on the real services
 
 Each service switches from mock to real as soon as its keys are in `.env.local`. Add them in any order.
 
-| Service                        | Keys                                                                                     | Where to get them                                                                                                                                                                                         |
-| ------------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PayPal sandbox**             | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `NEXT_PUBLIC_PAYPAL_CLIENT_ID`               | developer.paypal.com > Apps & Credentials > Sandbox > Create App. Turn on **Save payment methods** and **Payouts**. Then open **Connect PayPal** in the app and log in with a sandbox _personal_ account. |
-| PayPal webhooks (optional)     | `PAYPAL_WEBHOOK_ID`                                                                      | In the same app, add a webhook pointing at `https://<your-app>/api/paypal/webhook` for the `PAYMENT.AUTHORIZATION.*`, `PAYMENT.CAPTURE.*` and `PAYMENT.PAYOUTS-ITEM.*` events.                            |
-| **Claude** (the assistant)     | `ANTHROPIC_API_KEY`                                                                      | console.anthropic.com. Uses Claude Haiku: a whole demo costs about a dollar.                                                                                                                              |
-| **Channel3** (product search)  | `CHANNEL3_API_KEY`                                                                       | channel3.ai                                                                                                                                                                                               |
-| **Supabase** (database + live) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Create a project, open the SQL editor and run `supabase/migrations/20261106000000_initial_schema.sql`. The app adds sample data on first start.                                                           |
-| Daily job                      | `CRON_SECRET`                                                                            | Any long random text.                                                                                                                                                                                     |
-| Public demo                    | `DEMO_MODE=true`                                                                         | For a shared demo: adds **Reset demo**, resets every night, hides **Disconnect**, and caps Claude use per visitor (the built-in assistant takes over past the cap).                                       |
+| Service                        | Keys                                                                                     | Where to get them                                                                                                                                                                                          |
+| ------------------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PayPal sandbox**             | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `NEXT_PUBLIC_PAYPAL_CLIENT_ID`               | developer.paypal.com > Apps & Credentials > Sandbox > Create App. Turn on **Save payment methods** and **Payouts**. Then **Continue with PayPal** in the app and log in with a sandbox _personal_ account. |
+| PayPal webhooks (optional)     | `PAYPAL_WEBHOOK_ID`                                                                      | In the same app, add a webhook pointing at `https://<your-app>/api/paypal/webhook` for the `PAYMENT.AUTHORIZATION.*`, `PAYMENT.CAPTURE.*` and `PAYMENT.PAYOUTS-ITEM.*` events.                             |
+| **Claude** (the assistant)     | `ANTHROPIC_API_KEY`                                                                      | console.anthropic.com. Uses Claude Haiku: a whole demo costs about a dollar.                                                                                                                               |
+| **Channel3** (product search)  | `CHANNEL3_API_KEY`                                                                       | channel3.ai                                                                                                                                                                                                |
+| **Supabase** (database + live) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Create a project, open the SQL editor and run each file in `supabase/migrations/`, oldest first. The app adds sample data on first start.                                                                  |
+| Daily job                      | `CRON_SECRET`                                                                            | Any long random text.                                                                                                                                                                                      |
+| Public demo                    | `DEMO_MODE=true`                                                                         | For a shared demo: adds **Reset demo** (in Settings), resets every night, turns off **Sign out**, and caps Claude use per visitor (the built-in assistant takes over past the cap).                        |
 
-Payments to people use PayPal Payouts, which works with any email. To watch one arrive, set the person's email on
-the **People** page to a sandbox personal account (developer.paypal.com > Sandbox accounts) and log in to it at
+Payments to people use PayPal Payouts, which works with any email. To watch one arrive, set the person's email in
+**Your leash › People** to a sandbox personal account (developer.paypal.com > Sandbox accounts) and log in to it at
 sandbox.paypal.com.
 
 To show a declined card in a demo, set `DEMO_FORCE_DECLINE=true`. PayPal's sandbox then declines every capture
-(`INSTRUMENT_DECLINED`) and the control room shows the failure with its `debug_id`.
+(`INSTRUMENT_DECLINED`) and Money shows the **Failed** receipt with its `debug_id`.
 
 ## Deploy on Render
 
@@ -205,6 +245,7 @@ src/
     spending/   Rule engine and the money path
     twin/       Learning your preferences
 supabase/migrations/   Database schema (SQL)
+leash-api/             The Leash API's OpenAPI document, laid out for APIMatic
 render.yaml            Render deployment
 ```
 
@@ -212,15 +253,22 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
 
 ## Built with
 
-- **PayPal**: Orders v2 (authorize), Payments v2 (capture, void, refund), Vault v3 (saved payment method),
-  Payouts v1 (paying people), webhooks and negative testing, through `@paypal/paypal-server-sdk` and the REST API
+- **PayPal**: Orders v2 (authorize), Payments v2 (capture, void, refund), Vault v3 (saved payment method, and
+  signing in with your PayPal name and email), Payouts v1 (paying people), webhooks and negative testing, through
+  `@paypal/paypal-server-sdk` and the REST API
+- **APIMatic**: PayPal's server SDK, `@paypal/paypal-server-sdk`, is generated by APIMatic, and every payment in
+  Leash goes through it. The Leash API's OpenAPI document is kept in APIMatic's project layout, ready for its CLI
+  to generate SDKs, a docs portal and a context plugin for AI coding assistants
 - **Claude** (Anthropic): Claude Haiku, through `@anthropic-ai/sdk`. Tool use for the assistant, and structured
-  outputs (checked with zod) for the twin's lessons, control room questions and rules in your own words
+  outputs (checked with zod) for the twin's lessons, Money filters and rules in your own words
 - **Channel3**: product search API
 - **Supabase**: Postgres and Realtime
-- **AG Grid Community**: the control room grid: external filters and sorting set by Claude (from the control room's
-  own question box, or from a spending question you asked the assistant out loud), quick filter, a pinned totals row
-  for the rows shown, cell flashing on live updates, and row selection for the PayPal step-by-step view
+- **AG Grid Community**: Money's receipts: external filters and sorting set by Claude (from "Filter by asking", or
+  from a spending question you asked out loud), quick filter, a pinned totals row for the rows shown, cell flashing
+  when a payment's outcome changes, and themed to look like a list of receipts
+- **Bryntum Scheduler**: two timelines. Your restocks (drag the next run to move it, with past days refused), and
+  money reserved at PayPal (each reservation from authorized to decided, and for one still waiting, Leash's 7 days
+  then PayPal's own 29-day limit)
 - **Web Speech API**: the browser's own speech recognition and voice, for talking to Leash (Chrome, Edge, Safari)
 - **Render**: hosting and the daily cron job
 - Next.js 16, React 19, TypeScript, zod, Tailwind CSS, Vitest, lucide icons

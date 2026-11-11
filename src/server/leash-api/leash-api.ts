@@ -48,6 +48,6 @@ async function runAsAgent(
   }
 }
 
-/** The control room shows who asked: "Claude Desktop: these beans are fair-trade and under $20." */
+/** The receipt in Money shows who asked: "Claude Desktop: these beans are fair-trade and under $20." */
 const signedBy = (agentName: string | undefined, reasoning: string) =>
   agentName ? `${agentName}: ${reasoning}` : reasoning;

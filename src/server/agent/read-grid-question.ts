@@ -1,4 +1,4 @@
-// The built-in way to understand a control room question, used when Claude is off.
+// The built-in way to understand a question about your money (Filter by asking), used when Claude is off.
 // Pure and keyword-based: it knows outcomes, "payments", amounts, "today/this week" and "biggest".
 
 import type { GridView, Outcome } from "@/schemas";

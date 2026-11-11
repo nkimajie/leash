@@ -1,7 +1,7 @@
 import "server-only";
 
 // Real PayPal sandbox calls, through PayPal's official server SDK.
-// Every payment uses the PayPal account you saved once with PayPal Vault (see /connect),
+// Every payment uses the PayPal account you saved once with PayPal Vault (see paypal-connection.ts),
 // so the assistant can pay without showing you a PayPal popup each time.
 
 import {

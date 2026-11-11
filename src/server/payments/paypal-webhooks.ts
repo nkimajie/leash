@@ -3,7 +3,7 @@ import "server-only";
 // PayPal webhooks: PayPal tells us when something happens to a payment (captured, voided,
 // refunded, declined), or to money sent on to a person (received, unclaimed, returned).
 // We check the message really came from PayPal, then record the new status on the matching
-// decision so the control room always shows what PayPal says.
+// decision so Money always shows what PayPal says.
 // Webhooks only record what happened; they never move money.
 
 import { paypalSettings } from "@/server/config/environment";

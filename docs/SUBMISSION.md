@@ -49,8 +49,15 @@ what it's doing while it shops. It can say no for you ("deny the grinder, I only
 no way to say yes: only your tap releases money, so a scam, or a voice on the TV, never can.
 
 It learns like a digital twin. Deny something and say why, in your own words ("I only want hand grinders"), and
-Claude turns it into a preference it applies next time. You can change the rules in plain English, ask the AG Grid
-control room questions ("what did I spend on coffee this week?"), and click any payment to see each PayPal step.
+Claude turns it into a preference it applies next time. You can change the rules in plain English, filter your money
+by asking ("what did I spend on coffee this week?"), and click any receipt to see its PayPal trail, with every id.
+
+Signing in is **Continue with PayPal**: PayPal Vault saves your account once and tells Leash your name and email, and
+three short welcome steps set your first limits and teach your twin a few things about you.
+
+And it isn't only for Leash's own assistant. The **Leash API** lets any outside AI agent (Claude Desktop, a script,
+another app) search, buy and pay people through the very same rules, PayPal flow and twin. It has no way to approve:
+anything outside your rules still waits for your tap.
 
 ### How we built it
 
@@ -66,12 +73,22 @@ control room questions ("what did I spend on coffee this week?"), and click any 
   your account and spending, and it has a tool to deny a held payment but deliberately none to approve one.
 - **Voice** uses the browser's own speech recognition and voice (the Web Speech API), so it needs no extra service
   or key. Spoken requests tell Claude to keep its replies short enough to listen to. Claude structured outputs, checked with zod,
-  power the smaller features: the twin's lessons, control room questions, and rules in your own words.
+  power the smaller features: the twin's lessons, Money filters, and rules in your own words.
 - **The rule engine and the twin's learning are pure functions** with unit tests: no network, no database.
 - **Channel3** for real product search (we show the cheapest in-stock offer and how many stores it compared),
-  **AG Grid** for the live control room, **Supabase** (Postgres and Realtime) for storage and live updates,
-  **Next.js 16**, hosted on **Render** with a daily cron job that runs due restocks, releases reservations nobody
-  answered, and resets the public demo.
+  **Supabase** (Postgres and Realtime) for storage and live updates, **Next.js 16**, hosted on **Render** with a
+  daily cron job that runs due restocks, releases reservations nobody answered, and resets the public demo.
+- **AG Grid** shows your money: every receipt, live, themed to look like a list of receipts. Claude turns a question
+  into the grid's external filter and sort, the totals row adds up only the rows you can see, and a cell flashes when
+  a payment's outcome changes.
+- **Bryntum Scheduler** draws two timelines: your restocks (drag the next run to move it), and money reserved at
+  PayPal (how long each authorization was held, and for one still waiting, Leash's 7 days and then PayPal's own
+  29-day limit).
+- **APIMatic:** every payment goes through `@paypal/paypal-server-sdk`, PayPal's server SDK, which APIMatic
+  generates. The Leash API is described once with zod and published as an OpenAPI 3 document in APIMatic's project
+  layout, so its CLI can generate SDKs, a docs portal and a context plugin for AI coding assistants from it.
+- **The design** is our own V2 design system, made in Figma: paper and ink, one electric blue, and a stamp for each
+  of the seven things that can happen to money (Paid, Reserved, Released, Blocked, Refunded, Failed, Not sent).
 - **Every outside service has a mock mode**, so anyone can clone the repo and run it with zero keys.
 
 ### Challenges we ran into
@@ -100,32 +117,32 @@ money is reserved and a human decides", without ever charging and refunding.
 
 ### What's next for Leash
 
-Accounts for several people (a household sharing one leash), spending limits per category, and a Leash MCP server
-so any AI agent can spend through the same rules, holds and phone approvals.
+Accounts for several people (a household sharing one leash), a key per outside agent for the Leash API, an MCP
+server on top of it, and spending limits per category.
 
 ## Built with
 
-`paypal` `paypal-vault` `paypal-orders-api` `paypal-payouts` `claude` `anthropic` `channel3` `ag-grid` `supabase`
-`render` `next.js` `react` `typescript` `zod` `tailwindcss` `web-speech-api`
+`paypal` `paypal-vault` `paypal-orders-api` `paypal-payouts` `apimatic` `openapi` `claude` `anthropic` `channel3`
+`ag-grid` `bryntum` `supabase` `render` `next.js` `react` `typescript` `zod` `tailwindcss` `web-speech-api` `figma`
 
 ## Tools: how each AI tool is used
 
 - **Claude Haiku (Anthropic), tool use:** the assistant itself. It chooses products and payments by calling Leash's
   tools, answers questions about your account, and narrates what it's doing (read aloud when you spoke to it). It
   never touches money directly.
-- **Claude Haiku, structured outputs:** turns your reason for a "no" into a preference, control room questions into
+- **Claude Haiku, structured outputs:** turns your reason for a "no" into a preference, money questions into
   grid filters, and rules in plain English into rule changes. Each answer is checked against a zod schema, with a
   simple built-in fallback.
 
 ## Try it out
 
 - Live demo: `<live Render URL>`
-- Code: `<GitHub repo URL>`
+- Code: https://github.com/nkimajie/leash
 
 ## Testing instructions
 
-The live demo is already connected to a PayPal sandbox account, so there's nothing to log in to. Click **Reset
-demo** (bottom left), then follow "For judges: a 60-second test" in the README. To connect your own sandbox buyer
+The live demo is already signed in with a PayPal sandbox account, so there's nothing to log in to. Open **Settings**
+(bottom left) and click **Reset demo**, then follow "For judges: a 60-second test" in the README. To connect your own sandbox buyer
 instead, use: `<sandbox Personal account email>` / `<its password>`.
 
 To run it yourself with zero keys: `npm install && npm run dev`, then open http://localhost:3000.

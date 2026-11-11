@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readGridQuestion } from "./read-grid-question";
 
-describe("reading a control room question without Claude", () => {
+describe("reading a money question without Claude", () => {
   it("understands outcomes, people, amounts and order", () => {
     expect(readGridQuestion("held payments over $20, biggest first")).toMatchObject({
       outcomes: ["held"],

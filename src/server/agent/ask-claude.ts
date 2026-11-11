@@ -1,7 +1,7 @@
 import "server-only";
 
 // One small question to Claude with a typed answer. Used by the twin ("why did you say no?"),
-// the control room ("show me held payments") and the rules page ("never spend over $30 on snacks").
+// Money ("show me held payments") and Your leash ("never spend over $30 on snacks").
 // Claude's answer must fit the zod schema; if Claude is off or the answer doesn't fit, callers
 // get null and use their simple built-in version instead.
 

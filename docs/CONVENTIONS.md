@@ -7,21 +7,23 @@ How Leash is organised, and the rules every change follows. Read this before add
 ```
 src/
   app/                      Routes only. Pages and API endpoints stay thin.
-    (dashboard)/            Pages that share the sidebar: assistant, control room, people, twin, restocks,
-                            rules, connect PayPal
+    (dashboard)/            Pages that share the sidebar: Ask, Money, Your leash (tabs: limits, people,
+                            restocks, PayPal) and Twin
     approve/[id]/           Phone-sized approval screen (no sidebar)
+    welcome/                First visit: sign in with PayPal, set your leash, meet your twin (no sidebar)
     api/                    HTTP endpoints. Each one: validate input -> call a server function -> return JSON
   components/               React components, grouped by screen
-    ui/                     Shared building blocks: Button, Card, form fields, badges
-    layout/                 App shell, logo, service status
-    assistant/ control-room/ approvals/ people/ twin/ restocks/ rules/ connect/
+    ui/                     Shared building blocks from the V2 design system: Button, Card, Stamp, ReceiptCard,
+                            LeashMeter, Segmented, Chip, Sheet, Illustration
+    layout/                 App shell (sidebar, tabs), logo, notifications, profile, settings, help
+    assistant/ money/ approvals/ people/ twin/ restocks/ rules/ connect/ welcome/
   lib/                      Browser-safe helpers: API client, formatting, labels, hooks, the attack scripts,
                             and voice (use-voice-input.ts listens, speak.ts talks back)
   schemas/                  SCHEMA SECTION. Zod schemas + TypeScript types for every kind of data
   server/                   Server-only code (never imported by components)
     agent/                  AGENT SECTION. The assistant, its tools, and request parsing
       tools/                One file per tool the assistant can use
-      ask-claude.ts         One small question to Claude with a zod-checked answer (control room, rules, twin)
+      ask-claude.ts         One small question to Claude with a zod-checked answer (Money filters, rules, twin)
       read-*.ts             Pure built-in readers used when Claude is off, each with unit tests
       what-leash-can-do.ts  What Leash can do, in its own words: Claude and the built-in assistant answer from it
     database/               DATABASE SECTION. One file per table, in two versions with the same functions:
@@ -61,15 +63,17 @@ docs/                       Documentation
 
 ## Outcomes (what happened to the money)
 
-| Outcome         | Meaning                          | PayPal                              |
-| --------------- | -------------------------------- | ----------------------------------- |
-| `auto_approved` | Within every rule                | authorized, then captured           |
-| `held`          | Needs your OK                    | authorized (money reserved)         |
-| `approved`      | You said yes                     | captured                            |
-| `denied`        | You said no                      | authorization voided, never charged |
-| `blocked`       | A hard rule said no              | never called                        |
-| `refunded`      | Money returned                   | refunded                            |
-| `failed`        | PayPal error, e.g. card declined | voided; `debug_id` saved            |
+| Outcome         | Meaning                          | PayPal                              | Stamp on screen |
+| --------------- | -------------------------------- | ----------------------------------- | --------------- |
+| `auto_approved` | Within every rule                | authorized, then captured           | Paid            |
+| `held`          | Needs your okay                  | authorized (money reserved)         | Reserved        |
+| `approved`      | You said yes                     | captured                            | Paid            |
+| `denied`        | You said no                      | authorization voided, never charged | Released        |
+| `blocked`       | A hard rule said no              | never called                        | Blocked         |
+| `refunded`      | Money returned                   | refunded                            | Refunded        |
+| `failed`        | PayPal error, e.g. card declined | voided; `debug_id` saved            | Failed          |
+
+The stamps, their colours and their PayPal wording live in `src/lib/labels.ts` (`OUTCOME_STYLE`).
 
 Paying a person: once the money is captured, PayPal Payouts sends it on to their email (the payout id is saved).
 If PayPal refuses the payout, the capture is refunded and the outcome is `failed` (PayPal status `REFUNDED`, or

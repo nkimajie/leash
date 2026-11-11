@@ -1,6 +1,6 @@
 import "server-only";
 
-// "Ask the control room": turns a question like "what did I spend on coffee this week?" into
+// "Filter by asking" on Money: turns a question like "what did I spend on coffee this week?" into
 // a view of the AG Grid (filters + sorting). Claude reads the question; the browser applies the view,
 // and the grid's total row then answers "how much".
 
