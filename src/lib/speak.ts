@@ -14,6 +14,7 @@ export function speak(text: string, { ifQuiet = false } = {}) {
   for (const sentence of forListening(text).split(/(?<=[.!?])\s+/)) {
     const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.voice = pickVoice();
+    utterance.rate = 0.98; // a touch calmer than the default
     voice.speak(utterance);
   }
 }
@@ -32,13 +33,20 @@ function forListening(text: string): string {
     .trim();
 }
 
-const PREFERRED_VOICES = ["Samantha", "Google US English", "Microsoft Aria", "Karen", "Daniel"];
+/**
+ * The most human-sounding voice the browser has, best first:
+ *   - neural voices: Edge's "Natural" ones (Ava, Andrew, Emma…), and macOS "Premium" or "Enhanced"
+ *     voices (Ava, Zoe, Evan…) once downloaded in System Settings > Accessibility > Spoken Content
+ *   - Chrome's online Google voice
+ *   - the older built-in voices last
+ */
+const MOST_NATURAL_FIRST = [/natural/i, /premium/i, /enhanced/i, /^Google US English/, /^Google UK English Female/];
 
 function pickVoice(): SpeechSynthesisVoice | null {
   const english = window.speechSynthesis.getVoices().filter((voice) => voice.lang.startsWith("en"));
-  for (const name of PREFERRED_VOICES) {
-    const match = english.find((voice) => voice.name.includes(name));
+  for (const pattern of MOST_NATURAL_FIRST) {
+    const match = english.find((voice) => pattern.test(voice.name));
     if (match) return match;
   }
-  return english[0] ?? null;
+  return english.find((voice) => voice.default) ?? english[0] ?? null;
 }
