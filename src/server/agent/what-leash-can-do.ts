@@ -82,6 +82,23 @@ export function describeWhatICanDo(status: LeashStatus, spoken: boolean): string
   ].join("\n\n");
 }
 
+/** When the built-in assistant isn't sure what you mean, it says so and spends nothing. */
+export const HOW_TO_ASK =
+  'I\'m not sure what you\'d like, so I didn\'t buy or pay anything. I can shop ("restock my coffee, under $60"), pay someone ("pay Sam $25 for dinner"), answer questions about your money ("what did I spend on coffee this week?", "what\'s my limit?") or open a page ("open my limits").';
+
+/** The built-in answer to "what's my limit?" and "how much is left today?". */
+export function describeLimits(status: LeashStatus): string {
+  const money = moneyFormatter(status.rules.currency);
+  const { rules, paidOrReserved } = status;
+  const leftToday = Math.max(0, rules.dailyCap - paidOrReserved.today);
+  const leftThisWeek = Math.max(0, rules.weeklyCap - paidOrReserved.thisWeek);
+  return [
+    `I pay up to ${money(rules.autoApproveLimit)} without asking. Your hard limits: ${money(rules.maxItemPrice)} for one item, ${money(rules.maxPaymentPerPerson)} to one person.`,
+    `Today ${money(leftToday)} of your ${money(rules.dailyCap)} daily cap is left, and ${money(leftThisWeek)} of ${money(rules.weeklyCap)} this week. Money reserved for your okay counts too, so denying something waiting frees it.`,
+    "Want me to open your limits?",
+  ].join(" ");
+}
+
 /** The built-in answer to "what's waiting for me?". */
 export function describeWaiting(status: LeashStatus): string {
   const money = moneyFormatter(status.rules.currency);

@@ -12,7 +12,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { LEASH_PAGE, PAGE_FOR_RULE, type Decision, type LeashPage } from "@/schemas";
+import { LEASH_PAGE, pageToFix, type Decision, type LeashPage } from "@/schemas";
 import { classNames, formatMoney, formatReceiptTime } from "@/lib/format";
 import { paypalTrail } from "@/lib/labels";
 import { OutcomeStamp } from "./stamp";
@@ -58,13 +58,13 @@ export function ReceiptCard({
 const CHANGE_IT: Partial<Record<LeashPage, string>> = {
   limits: "Change your limits",
   people: "Go to the people you pay",
-  paypal: "Connect your PayPal",
+  paypal: "Continue with PayPal",
 };
 
-/** A rule held or blocked this: link to the page where you can change it. Only you can change it. */
+/** A rule blocked this: link to the page where you can change it. Only you can change it. */
 function ChangeTheRule({ decision }: { decision: Decision }) {
-  const page = PAGE_FOR_RULE[decision.ruleHit];
-  if (!page || (decision.outcome !== "held" && decision.outcome !== "blocked")) return null;
+  const page = pageToFix(decision);
+  if (!page) return null;
   return (
     <Link href={LEASH_PAGE[page].path} className="mt-2 inline-flex items-center gap-1 text-sm text-leash">
       {CHANGE_IT[page]}

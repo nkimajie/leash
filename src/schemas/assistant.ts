@@ -35,6 +35,18 @@ export const PAGE_FOR_RULE: Partial<Record<RuleName, LeashPage>> = {
   paypal_not_connected: "paypal",
 };
 
+/**
+ * The page that would unblock this, if any. Something held only needs your Approve or Deny, so it
+ * gets no nudge to loosen your rules; the exception is a payment still missing the person's PayPal
+ * email. Blocked ones and a missing PayPal connection point to where you can change things.
+ */
+export function pageToFix(decision: { outcome: string; ruleHit: RuleName }): LeashPage | null {
+  const page = PAGE_FOR_RULE[decision.ruleHit] ?? null;
+  if (decision.outcome === "blocked" || decision.outcome === "failed") return page;
+  if (decision.outcome === "held" && decision.ruleHit === "no_paypal_email") return page;
+  return null;
+}
+
 /** One earlier exchange in the conversation, so a follow-up like "yes, do that" makes sense. */
 export const EarlierTurnSchema = z.object({
   you: z.string().trim().min(1).max(500),

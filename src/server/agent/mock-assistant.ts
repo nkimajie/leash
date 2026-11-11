@@ -5,7 +5,7 @@ import "server-only";
 // through the real rules, PayPal flow and digital twin. Only the "thinking" is scripted.
 
 import {
-  PAGE_FOR_RULE,
+  pageToFix,
   type AssistantEvent,
   type AssistantRequest,
   type Decision,
@@ -17,7 +17,14 @@ import { pickWaitingItem, readCommand, readFollowUp, type Command } from "./read
 import { readGridQuestion } from "./read-grid-question";
 import { readPaymentInstruction, readRestockSchedule, type PaymentInstruction } from "./read-request";
 import { runTool, type ToolContext, type ToolResult } from "./tools";
-import { describeWaiting, describeWhatICanDo, ONLY_YOU_CAN_APPROVE, type LeashStatus } from "./what-leash-can-do";
+import {
+  describeLimits,
+  describeWaiting,
+  describeWhatICanDo,
+  HOW_TO_ASK,
+  ONLY_YOU_CAN_APPROVE,
+  type LeashStatus,
+} from "./what-leash-can-do";
 
 type ShoppingStep = { search: string; why: (product: Product) => string };
 
@@ -119,8 +126,16 @@ async function* followCommand(command: Command, context: ToolContext, spoken: bo
     case "approve":
       yield reply(ONLY_YOU_CAN_APPROVE);
       return;
+    case "my_limits": {
+      const leash = yield* callTool("read_my_leash", {}, context);
+      yield reply(describeLimits(leash.data as LeashStatus));
+      return;
+    }
+    case "unclear":
+      yield reply(HOW_TO_ASK);
+      return;
     case "open_page": {
-      const opened = yield* callTool("open_page", { page: command.page }, context);
+      const opened = yield* callTool("open_page", { page: command.page, suggestedChange: command.change }, context);
       yield reply(opened.summary);
       return;
     }
@@ -217,10 +232,9 @@ const OFFER: Partial<Record<LeashPage, string>> = {
   paypal: " Want me to open your PayPal?",
 };
 
-/** When a rule held or blocked something, offer to open the page where you can change it. */
+/** When a rule blocked something (not just held it for your okay), offer the page where you can change it. */
 function offerToChangeTheRule(decisions: Decision[]): string {
-  const stopped = decisions.filter((d) => d.outcome === "held" || d.outcome === "blocked");
-  const page = stopped.map((d) => PAGE_FOR_RULE[d.ruleHit]).find(Boolean);
+  const page = decisions.map(pageToFix).find(Boolean);
   return (page && OFFER[page]) ?? "";
 }
 
