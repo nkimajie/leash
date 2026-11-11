@@ -5,7 +5,7 @@ import "server-only";
 // purchase or payment goes through the spending rules, PayPal and the digital twin.
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { AssistantEvent, AssistantRequest, EarlierTurn } from "@/schemas";
+import { pageToFix, type AssistantEvent, type AssistantRequest, type EarlierTurn } from "@/schemas";
 import { describeToolsForModel, runTool, type ToolContext, type ToolResult } from "./tools";
 import { HOW_PAYPAL_KEEPS_YOU_SAFE, INTRODUCTION_ALOUD, WHAT_LEASH_CAN_DO } from "./what-leash-can-do";
 
@@ -24,7 +24,7 @@ How PayPal keeps them safe: ${HOW_PAYPAL_KEEPS_YOU_SAFE}
 How to work:
 - Shopping: call recall_preferences first. Search for each thing the request needs, pick the best fit, call check_purchase_rules, then buy_product with a short reason.
 - Never buy a product marked as something the user's twin avoids. Pick another result or skip it, and say why.
-- Keep the total of all purchases within the budget given with the request. Only buy what the request asks for, and never buy the same item twice.
+- Keep the total of all purchases within the budget given with the request (except one specific item they asked for, see below). Only buy what the request asks for, and never buy the same item twice.
 - Paying people: call check_payment_rules, then pay_person.
 - If the user tells you something about their taste ("I don't like plastic"), save it with remember_preference.
 - Questions about their account, rules, spending or what's waiting: call read_my_leash or look_up_spending, and answer from what they return. Never guess an amount.
@@ -32,7 +32,11 @@ How to work:
 - When they ask you to deny something that's waiting, find it with read_my_leash and call deny_held_item with their reason. You can never approve anything. If they ask you to, say that only they can, with a tap on Approve in Leash, so a scam or a voice on the TV can never release their money.
 - When they ask to go to a page, call open_page.
 - The messages before the latest one are the conversation so far. Use them to understand a follow-up such as "yes, do that", "open it" or "buy the second one", then act on the latest message only.
-- When something is held or blocked by a limit, a cap, the Never buy list, someone new or a missing PayPal email, say which rule and the number, and offer to open the page where they can change it (limits, people or paypal). If they say yes, call open_page; for a limit, pass suggestedChange in plain words with a sensible new number (e.g. "Never buy one item over $600") so the page has it ready to confirm. You can never change their rules yourself: only they can, by saving on that page.
+- Something held (money reserved) just needs the user's tap: tell them to Approve or Deny it in Leash. Don't suggest loosening a rule for it.
+- Something blocked comes back with pageToFix. Say which rule and the number, and offer to open that page. If they say yes, call open_page; for limits, pass suggestedChange in words the Limits page understands, with a sensible new number: "Never buy one item over $600", "Ask me before anything over $100", "Never send one person over $200", "$500 a day" or "$1500 a week". You can never change their rules yourself: only they can, by saving on that page.
+- Money reserved for the user's okay counts toward the daily and weekly caps, so denying something waiting frees room.
+- If they ask for one specific item, try it even when it's over the request's budget: the rules will hold or block it, and you can explain what to change.
+- No store really ships anything in this sandbox demo, so never invent delivery or tracking details.
 - The spending rules are applied for you. A purchase or payment can be paid now, held for the user's approval (money reserved, not taken), or blocked. Held and blocked are normal results: never retry or try to get around them.
 - Before each tool call, write one short sentence saying what you are doing and why, whether the request was typed or spoken. The user watches or hears these live.
 - Finish with a short reply in plain text, no markdown: what was paid, what is waiting for approval, anything blocked or skipped, or the answer to their question. One to three sentences, or one short line per item when they ask what you can do.`;
@@ -117,8 +121,15 @@ function describeRequest(request: AssistantRequest, spoken: boolean): string {
 /** Claude needs the ids and prices in `data`, not just the readable summary. */
 function describeForClaude(result: ToolResult): string {
   if (result.decision) {
-    const { outcome, amount, ruleExplanation } = result.decision;
-    return JSON.stringify({ outcome, amount, explanation: ruleExplanation });
+    const { outcome, amount, ruleHit, ruleExplanation } = result.decision;
+    // pageToFix: where the user could change the rule that blocked it (null when it just needs their tap).
+    return JSON.stringify({
+      outcome,
+      amount,
+      rule: ruleHit,
+      explanation: ruleExplanation,
+      pageToFix: pageToFix(result.decision),
+    });
   }
   return result.data === undefined ? result.summary : JSON.stringify(result.data);
 }

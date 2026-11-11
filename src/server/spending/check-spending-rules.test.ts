@@ -32,7 +32,7 @@ describe("checkPurchase", () => {
   it("holds an item over the auto-approve limit (demo: the $85 grinder)", () => {
     const result = checkPurchase(coffee({ amount: 85 }), rules, nothingSpent);
     expect(result).toMatchObject({ verdict: "needs_approval", ruleHit: "auto_approve_limit" });
-    expect(result.explanation).toContain("$50.00 auto-approve limit");
+    expect(result.explanation).toContain("$50.00 pay-without-asking limit");
   });
 
   it("holds an item that would go over the request budget", () => {
@@ -205,5 +205,23 @@ describe("holdForScheduledRestock", () => {
   it("keeps a blocked purchase blocked", () => {
     const blocked = { verdict: "blocked", ruleHit: "blocked_category", explanation: "" } as const;
     expect(holdForScheduledRestock(blocked)).toEqual(blocked);
+  });
+});
+
+describe("blocked for more than one reason", () => {
+  it("names every hard rule at once, so raising one limit doesn't just reveal the next", () => {
+    const ps5 = coffee({ title: "PS5", category: "electronics", amount: 499, whatYouAskedFor: "Buy a PS5" });
+    const result = checkPurchase(ps5, rules, nothingSpent);
+    expect(result.verdict).toBe("blocked");
+    expect(result.ruleHit).toBe("max_item_price");
+    expect(result.explanation).toContain("hard limit for one item");
+    expect(result.explanation).toContain("daily cap");
+  });
+});
+
+describe("a purchase asked for by an outside agent", () => {
+  it("skips the what-you-asked-for check: the agent's words aren't yours", () => {
+    const result = checkPurchase(coffee({ title: "Garden hose", whatYouAskedFor: null }), rules, nothingSpent);
+    expect(result.ruleHit).not.toBe("off_request");
   });
 });

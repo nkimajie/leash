@@ -23,8 +23,11 @@ export type PurchaseToCheck = {
   currency: string;
   merchant: string;
   category: string;
-  /** Your own words for this request, e.g. "Restock my coffee, under $60". */
-  whatYouAskedFor: string;
+  /**
+   * Your own words for this request, e.g. "Restock my coffee, under $60". Null for an outside agent's
+   * request (the Leash API): its text is the agent's, so there are no words of yours to compare with.
+   */
+  whatYouAskedFor: string | null;
 };
 export type PaymentToCheck = {
   personName: string;
@@ -38,38 +41,40 @@ export type PaymentToCheck = {
 export function checkPurchase(purchase: PurchaseToCheck, rules: SpendingRules, soFar: SpendingSoFar): RuleCheck {
   const formatMoney = moneyFormatter(rules.currency);
 
-  const hardRuleProblem =
-    findAmountProblem(purchase.amount, purchase.currency, rules) ??
-    (isListed(rules.blockedMerchants, purchase.merchant)
-      ? blocked("blocked_merchant", `You blocked the merchant "${purchase.merchant}".`)
-      : null) ??
-    (rules.allowedMerchants.length > 0 && !isListed(rules.allowedMerchants, purchase.merchant)
-      ? blocked("merchant_not_allowed", `"${purchase.merchant}" is not on your list of allowed merchants.`)
-      : null) ??
-    (isListed(rules.blockedCategories, purchase.category)
-      ? blocked("blocked_category", `You blocked the category "${purchase.category}".`)
-      : null) ??
-    (rules.allowedCategories.length > 0 && !isListed(rules.allowedCategories, purchase.category)
-      ? blocked("category_not_allowed", `"${purchase.category}" is not one of your allowed categories.`)
-      : null) ??
-    (purchase.amount > rules.maxItemPrice
-      ? blocked(
-          "max_item_price",
-          `${formatMoney(purchase.amount)} is over your ${formatMoney(rules.maxItemPrice)} per-item maximum.`,
-        )
-      : null) ??
-    findSpendingCapProblem(purchase.amount, rules, soFar);
+  const amountProblem = findAmountProblem(purchase.amount, purchase.currency, rules);
+  if (amountProblem) return amountProblem;
 
-  if (hardRuleProblem) return hardRuleProblem;
+  // Every hard rule it breaks, so raising one limit doesn't just reveal the next.
+  const hardRuleProblems = [
+    isListed(rules.blockedMerchants, purchase.merchant) &&
+      blocked("blocked_merchant", `You blocked the merchant "${purchase.merchant}".`),
+    rules.allowedMerchants.length > 0 &&
+      !isListed(rules.allowedMerchants, purchase.merchant) &&
+      blocked("merchant_not_allowed", `"${purchase.merchant}" is not on your list of allowed merchants.`),
+    isListed(rules.blockedCategories, purchase.category) &&
+      blocked("blocked_category", `You blocked the category "${purchase.category}".`),
+    rules.allowedCategories.length > 0 &&
+      !isListed(rules.allowedCategories, purchase.category) &&
+      blocked("category_not_allowed", `"${purchase.category}" is not one of your allowed categories.`),
+    purchase.amount > rules.maxItemPrice &&
+      blocked(
+        "max_item_price",
+        `${formatMoney(purchase.amount)} is over your ${formatMoney(rules.maxItemPrice)} hard limit for one item.`,
+      ),
+    ...findSpendingCapProblems(purchase.amount, rules, soFar),
+  ];
+  const blockedBy = allProblems(hardRuleProblems);
+  if (blockedBy) return blockedBy;
 
   const reasonsToAsk = [
-    !isWhatYouAskedFor(purchase) && {
-      rule: "off_request" as const,
-      text: `Your request ("${purchase.whatYouAskedFor}") doesn't mention anything like this, so I'm asking first.`,
-    },
+    purchase.whatYouAskedFor !== null &&
+      !isWhatYouAskedFor({ ...purchase, whatYouAskedFor: purchase.whatYouAskedFor }) && {
+        rule: "off_request" as const,
+        text: `Your request ("${purchase.whatYouAskedFor}") doesn't mention anything like this, so I'm asking first.`,
+      },
     purchase.amount > rules.autoApproveLimit && {
       rule: "auto_approve_limit" as const,
-      text: `${formatMoney(purchase.amount)} is over your ${formatMoney(rules.autoApproveLimit)} auto-approve limit.`,
+      text: `${formatMoney(purchase.amount)} is over your ${formatMoney(rules.autoApproveLimit)} pay-without-asking limit.`,
     },
     soFar.spentOnRequest + purchase.amount > soFar.requestBudget && {
       rule: "request_budget" as const,
@@ -85,17 +90,18 @@ export function checkPurchase(purchase: PurchaseToCheck, rules: SpendingRules, s
 export function checkPayment(payment: PaymentToCheck, rules: SpendingRules, soFar: SpendingSoFar): RuleCheck {
   const formatMoney = moneyFormatter(rules.currency);
 
-  const hardRuleProblem =
-    findAmountProblem(payment.amount, payment.currency, rules) ??
-    (payment.amount > rules.maxPaymentPerPerson
-      ? blocked(
-          "max_payment_per_person",
-          `${formatMoney(payment.amount)} is over your ${formatMoney(rules.maxPaymentPerPerson)} limit for paying one person.`,
-        )
-      : null) ??
-    findSpendingCapProblem(payment.amount, rules, soFar);
+  const amountProblem = findAmountProblem(payment.amount, payment.currency, rules);
+  if (amountProblem) return amountProblem;
 
-  if (hardRuleProblem) return hardRuleProblem;
+  const blockedBy = allProblems([
+    payment.amount > rules.maxPaymentPerPerson &&
+      blocked(
+        "max_payment_per_person",
+        `${formatMoney(payment.amount)} is over your ${formatMoney(rules.maxPaymentPerPerson)} hard limit for paying one person.`,
+      ),
+    ...findSpendingCapProblems(payment.amount, rules, soFar),
+  ]);
+  if (blockedBy) return blockedBy;
 
   const reasonsToAsk = [
     rules.newPeopleNeedApproval &&
@@ -109,7 +115,7 @@ export function checkPayment(payment: PaymentToCheck, rules: SpendingRules, soFa
     },
     payment.amount > rules.autoApproveLimit && {
       rule: "auto_approve_limit" as const,
-      text: `${formatMoney(payment.amount)} is over your ${formatMoney(rules.autoApproveLimit)} auto-approve limit.`,
+      text: `${formatMoney(payment.amount)} is over your ${formatMoney(rules.autoApproveLimit)} pay-without-asking limit.`,
     },
     soFar.spentOnRequest + payment.amount > soFar.requestBudget && {
       rule: "request_budget" as const,
@@ -149,7 +155,7 @@ export function calculateSpendingSoFar(
  * no longer slip unrelated things into your order, however cheap each one is: they wait for you.
  * A request with no specific words ("surprise me") can't be checked, so it passes.
  */
-export function isWhatYouAskedFor(purchase: Pick<PurchaseToCheck, "title" | "category" | "whatYouAskedFor">): boolean {
+export function isWhatYouAskedFor(purchase: { title: string; category: string; whatYouAskedFor: string }): boolean {
   const askedFor = meaningfulWords(purchase.whatYouAskedFor).flatMap((word) => [word, ...(RELATED_WORDS[word] ?? [])]);
   if (askedFor.length === 0) return true;
   const productWords = meaningfulWords(`${purchase.title} ${purchase.category}`);
@@ -197,21 +203,28 @@ function findAmountProblem(amount: number, currency: string, rules: SpendingRule
   return null;
 }
 
-function findSpendingCapProblem(amount: number, rules: SpendingRules, soFar: SpendingSoFar): RuleCheck | null {
+/** Money reserved for your okay counts toward the caps too, so denying something waiting frees it. */
+function findSpendingCapProblems(amount: number, rules: SpendingRules, soFar: SpendingSoFar): (RuleCheck | false)[] {
   const formatMoney = moneyFormatter(rules.currency);
-  if (soFar.spentThisWeek + amount > rules.weeklyCap) {
-    return blocked(
-      "weekly_cap",
-      `It would bring this week's spending to ${formatMoney(soFar.spentThisWeek + amount)}, over your ${formatMoney(rules.weeklyCap)} weekly cap.`,
-    );
-  }
-  if (soFar.spentToday + amount > rules.dailyCap) {
-    return blocked(
-      "daily_cap",
-      `It would bring today's spending to ${formatMoney(soFar.spentToday + amount)}, over your ${formatMoney(rules.dailyCap)} daily cap.`,
-    );
-  }
-  return null;
+  return [
+    soFar.spentThisWeek + amount > rules.weeklyCap &&
+      blocked(
+        "weekly_cap",
+        `It would bring this week's spending to ${formatMoney(soFar.spentThisWeek + amount)}, over your ${formatMoney(rules.weeklyCap)} weekly cap.`,
+      ),
+    soFar.spentToday + amount > rules.dailyCap &&
+      blocked(
+        "daily_cap",
+        `It would bring today's spending to ${formatMoney(soFar.spentToday + amount)}, over your ${formatMoney(rules.dailyCap)} daily cap.`,
+      ),
+  ];
+}
+
+/** All the hard rules something breaks, as one: the first names the rule, the explanation lists them all. */
+function allProblems(problems: (RuleCheck | false)[]): RuleCheck | null {
+  const found = problems.filter((problem): problem is RuleCheck => Boolean(problem));
+  if (found.length === 0) return null;
+  return { ...found[0], explanation: found.map((problem) => problem.explanation).join(" ") };
 }
 
 function askOrAllow(reasons: (false | { rule: RuleName; text: string })[], allowedText: string): RuleCheck {

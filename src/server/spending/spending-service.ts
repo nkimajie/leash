@@ -40,7 +40,8 @@ export async function checkPurchaseRules(request: AssistantRequest, product: Pro
       currency: product.currency,
       merchant: product.merchant,
       category: product.category,
-      whatYouAskedFor: request.prompt,
+      // An outside agent's request text is its own, not yours: there's nothing of yours to compare with.
+      whatYouAskedFor: request.source === "agent" ? null : request.prompt,
     },
     rules,
     soFar,

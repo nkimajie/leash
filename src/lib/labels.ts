@@ -70,14 +70,14 @@ export const OUTCOME_COLOR: Record<Outcome, string> = {
 
 export const RULE_LABEL: Record<RuleName, string> = {
   within_rules: "Within rules",
-  auto_approve_limit: "Over auto-approve limit",
+  auto_approve_limit: "Over your pay-without-asking limit",
   request_budget: "Over request budget",
   off_request: "Not what you asked for",
   new_person: "New person",
   no_paypal_email: "No PayPal email yet",
   scheduled_restock: "Scheduled restock",
-  max_item_price: "Over max item price",
-  max_payment_per_person: "Over per-person limit",
+  max_item_price: "Over your hard limit",
+  max_payment_per_person: "Over your limit for one person",
   daily_cap: "Daily cap reached",
   weekly_cap: "Weekly cap reached",
   blocked_category: "Blocked category",
