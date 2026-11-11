@@ -24,9 +24,10 @@ export const channel3ApiKey = env.CHANNEL3_API_KEY ?? "";
 
 /**
  * The public address of the app, e.g. https://leash.onrender.com. PayPal sends you back here
- * after you connect your account. Optional: without it, the address of the current request is used.
+ * after you connect your account. Render sets RENDER_EXTERNAL_URL by itself; without either, the
+ * address of the current request is used.
  */
-export const appUrl = env.APP_URL?.replace(/\/$/, "") ?? "";
+export const appUrl = (env.APP_URL || env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
 
 /** Shared secret the daily Render Cron Job sends to /api/keepalive. */
 export const cronSecret = env.CRON_SECRET ?? "";
