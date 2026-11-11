@@ -167,6 +167,11 @@ schemas, served at `/api/v1/openapi.json`, and saved as [`leash-api/src/spec/ope
 where APIMatic's tools look for it (see [leash-api/README.md](leash-api/README.md)). A unit test fails if the saved
 file falls behind the code.
 
+Leash's own endpoints (approve, deny, your rules, your people) only accept changes that come from Leash's pages
+(`src/proxy.ts`), so another website, or an agent browsing one, can't approve anything there either. This hackathon
+build has no accounts, so that's a guard against other sites rather than real security: a real deployment would sign
+you in and give each agent its own key.
+
 ## Run it locally (no keys needed)
 
 Requires Node.js 22+.
@@ -212,7 +217,8 @@ fill in the keys you have (leave the rest blank for mock mode). It creates:
 - **leash-daily**: a cron job that calls `/api/keepalive` once a day, to keep the database awake and run due
   restocks
 
-After the first deploy, set `APP_URL` to the app's address (e.g. `https://leash.onrender.com`). Use a paid
+After the first deploy, set `APP_URL` to the app's address (e.g. `https://leash.onrender.com`): PayPal sends you
+back there after you sign in, and the daily job calls it. Use a paid
 instance for a public demo: the free one sleeps when idle and takes up to a minute to wake. Connect Supabase too,
 because memory mode forgets the connected PayPal account whenever the app restarts.
 

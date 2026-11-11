@@ -11,10 +11,13 @@ function check(description, condition, details = "") {
   if (!condition) failures++;
 }
 
+/** Leash's own API only takes changes from Leash's pages (src/proxy.ts), so the test says it's the app. */
+const AS_THE_APP = { Origin: new URL(BASE_URL).origin };
+
 async function call(method, path, body) {
   const response = await fetch(BASE_URL + path, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers: body ? { "Content-Type": "application/json", ...AS_THE_APP } : AS_THE_APP,
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await response.text();
@@ -25,7 +28,7 @@ async function call(method, path, body) {
 async function ask(prompt, spoken = false) {
   const response = await fetch(`${BASE_URL}/api/assistant`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...AS_THE_APP },
     body: JSON.stringify({ prompt, spoken }),
   });
   const events = (await response.text())
@@ -221,7 +224,7 @@ check(
 
 // 7. Try to break the leash: a hijacked assistant still can't get past the rules
 async function attack(id) {
-  const response = await fetch(`${BASE_URL}/api/attacks/${id}`, { method: "POST" });
+  const response = await fetch(`${BASE_URL}/api/attacks/${id}`, { method: "POST", headers: AS_THE_APP });
   const events = (await response.text())
     .trim()
     .split("\n")
@@ -295,6 +298,11 @@ const agentLooksUp = await call("GET", `/api/v1/decisions/${agentPayment.body.id
 check("the agent can check on it later", agentLooksUp.status === 200 && agentLooksUp.body.id === agentPayment.body.id);
 const agentApproves = await fetch(`${BASE_URL}/api/v1/decisions/${agentPayment.body.id}/approve`, { method: "POST" });
 check("and the Leash API has no way to approve it", agentApproves.status === 404 || agentApproves.status === 405);
+const otherSiteApproves = await fetch(`${BASE_URL}/api/decisions/${agentPayment.body.id}/approve`, {
+  method: "POST",
+  headers: { Origin: "https://somewhere-else.example" },
+});
+check("and another site can't approve it through Leash's own API either (403)", otherSiteApproves.status === 403);
 const badPurchase = await call("POST", "/api/v1/purchases", { productId: "nope", reasoning: "short" });
 check("a bad request gets a clear 400", badPurchase.status === 400 && typeof badPurchase.body.error === "string");
 
