@@ -97,7 +97,11 @@ export function Limits() {
                 <Segmented
                   label="Pay without asking up to"
                   options={WITHOUT_ASKING_CHOICES}
-                  value={WITHOUT_ASKING_CHOICES.some((c) => c.value === rules.autoApproveLimit) ? rules.autoApproveLimit : null}
+                  value={
+                    WITHOUT_ASKING_CHOICES.some((c) => c.value === rules.autoApproveLimit)
+                      ? rules.autoApproveLimit
+                      : null
+                  }
                   onChange={(autoApproveLimit) => change({ autoApproveLimit })}
                   mono
                 />
@@ -105,8 +109,8 @@ export function Limits() {
                   <LeashMeter withoutAsking={rules.autoApproveLimit} hardLimit={rules.maxItemPrice} />
                 </div>
                 <p className="mt-3 font-mono text-sm">
-                  {formatShortMoney(rules.autoApproveLimit)} without asking · {formatShortMoney(rules.maxItemPrice)} hard
-                  limit
+                  {formatShortMoney(rules.autoApproveLimit)} without asking · {formatShortMoney(rules.maxItemPrice)}{" "}
+                  hard limit
                 </p>
                 <p className="mt-5 text-sm text-ink-soft">
                   Small, expected purchases go through. Anything else waits for your okay.
@@ -157,11 +161,17 @@ export function Limits() {
             <CardHeader title="Never buy" />
             <div className="flex flex-wrap gap-2">
               {neverBuy.map((category) => (
-                <Chip key={category} on={rules.blockedCategories.includes(category)} onClick={() => toggleNeverBuy(category)}>
+                <Chip
+                  key={category}
+                  on={rules.blockedCategories.includes(category)}
+                  onClick={() => toggleNeverBuy(category)}
+                >
                   {category[0].toUpperCase() + category.slice(1)}
                 </Chip>
               ))}
-              <AddCategoryChip onAdd={(category) => change({ blockedCategories: [...rules.blockedCategories, category] })} />
+              <AddCategoryChip
+                onAdd={(category) => change({ blockedCategories: [...rules.blockedCategories, category] })}
+              />
             </div>
           </Card>
           <WashCard>
@@ -188,7 +198,9 @@ export function Limits() {
         </div>
       </div>
 
-      {problem && <p className="rounded-xl bg-failed-wash px-4 py-3 text-sm whitespace-pre-line text-failed">{problem}</p>}
+      {problem && (
+        <p className="rounded-xl bg-failed-wash px-4 py-3 text-sm whitespace-pre-line text-failed">{problem}</p>
+      )}
 
       {hasChanges && (
         <div className="sticky bottom-28 z-10 flex items-center justify-between gap-3 rounded-[20px] border border-hairline bg-white p-3 pl-5 shadow-[0_8px_24px_rgba(20,19,15,0.08)] lg:bottom-6">

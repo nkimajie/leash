@@ -14,6 +14,7 @@ import { fetchPreferences } from "@/lib/api-client";
 import { OUTCOME_SENTENCE } from "@/lib/labels";
 import { loadNotificationPreferences } from "@/lib/notification-preferences";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
+import { inSentence } from "@/lib/format";
 
 const COUNT_WORDS = ["Nothing", "One thing", "Two things", "Three things", "Four things", "Five things"];
 
@@ -24,11 +25,17 @@ export function NotificationsSheet({ open, onClose }: { open: boolean; onClose: 
   const show = open ? loadNotificationPreferences() : null;
 
   useEffect(() => {
-    if (open && show?.twinLessons) fetchPreferences().then((lessons) => setLesson(lessons.at(-1) ?? null), () => {});
+    if (open && show?.twinLessons)
+      fetchPreferences().then(
+        (lessons) => setLesson(lessons.at(-1) ?? null),
+        () => {},
+      );
   }, [open, show?.twinLessons]);
 
   const waiting = decisions.filter((d) => d.outcome === "held").sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  const latest = decisions.filter((d) => d.outcome !== "held").sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  const latest = decisions
+    .filter((d) => d.outcome !== "held")
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
   const newest = waiting.at(-1);
   const summary = `${COUNT_WORDS[waiting.length] ?? `${waiting.length} things`} ${waiting.length === 1 ? "needs" : "need"} your okay.`;
 
@@ -46,7 +53,7 @@ export function NotificationsSheet({ open, onClose }: { open: boolean; onClose: 
               </div>
             </Card>
             {newest && (
-              <Button onClick={() => router.push(`/approve/${newest.id}`)}>Review {newest.title.toLowerCase()}</Button>
+              <Button onClick={() => router.push(`/approve/${newest.id}`)}>Review {inSentence(newest.title)}</Button>
             )}
           </>
         )}

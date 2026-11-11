@@ -11,6 +11,7 @@ import { Illustration, type IllustrationName } from "@/components/ui/illustratio
 import { PageHeader } from "@/components/ui/page-header";
 import { useAccount } from "@/lib/use-account";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
+import { inSentence } from "@/lib/format";
 
 /** How long "All paid" stays after you approve something. */
 const JUST_NOW_MS = 10 * 60_000;
@@ -57,16 +58,22 @@ export function AskHero({ onOpenOnPhone }: { onOpenOnPhone: () => void }) {
   );
 }
 
-function greeting(decisions: Decision[], name: string): { title: string; subtitle: string; illustration: IllustrationName } {
+function greeting(
+  decisions: Decision[],
+  name: string,
+): { title: string; subtitle: string; illustration: IllustrationName } {
   const stillWaiting = decisions.find((d) => d.outcome === "held");
   const youJustDecided = decisions
-    .filter((d) => (d.outcome === "approved" || d.outcome === "denied") && Date.now() - Date.parse(d.updatedAt) < JUST_NOW_MS)
+    .filter(
+      (d) => (d.outcome === "approved" || d.outcome === "denied") && Date.now() - Date.parse(d.updatedAt) < JUST_NOW_MS,
+    )
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
 
-  if (!youJustDecided) return { title: `Welcome${name}`, subtitle: "What can I take off your list?", illustration: "boundary-held" };
+  if (!youJustDecided)
+    return { title: `Welcome${name}`, subtitle: "What can I take off your list?", illustration: "boundary-held" };
 
   const subtitle = stillWaiting
-    ? `Your ${stillWaiting.title.toLowerCase()} is still waiting for your okay.`
+    ? `Your ${inSentence(stillWaiting.title)} is still waiting for your okay.`
     : "Nothing else needs your okay.";
   return youJustDecided.outcome === "approved"
     ? { title: `All paid${name}.`, subtitle, illustration: "all-set" }

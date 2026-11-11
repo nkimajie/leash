@@ -20,7 +20,10 @@ export type Product = z.infer<typeof ProductSchema>;
 
 /** A search result, with what your digital twin thinks of it. */
 export const SearchResultSchema = ProductSchema.extend({
-  twinAvoids: z.string().nullable().describe("Why the person's digital twin avoids this product, if it does. Never buy these."),
+  twinAvoids: z
+    .string()
+    .nullable()
+    .describe("Why the person's digital twin avoids this product, if it does. Never buy these."),
   twinLikes: z.string().nullable().describe("What the person likes about it, if anything"),
 });
 

@@ -35,7 +35,12 @@ export const PurchaseBody = z.object({
 });
 
 export const PaymentBody = z.object({
-  personName: z.string().trim().min(1).max(80).describe("Who to pay, e.g. 'Sam'. Paying someone new needs the person's OK."),
+  personName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .describe("Who to pay, e.g. 'Sam'. Paying someone new needs the person's OK."),
   amount: z.number().positive().max(10_000).describe("Amount in USD"),
   note: z.string().trim().max(80).default("").describe("What it's for, e.g. 'dinner'"),
   reasoning,
@@ -57,7 +62,9 @@ export function leashApiDocument() {
     SpendingRules: toOpenApi(SpendingRulesSchema, "output"),
     Error: toOpenApi(ErrorSchema, "output"),
   };
-  const body = (name: keyof typeof schemas) => ({ "application/json": { schema: { $ref: `#/components/schemas/${name}` } } });
+  const body = (name: keyof typeof schemas) => ({
+    "application/json": { schema: { $ref: `#/components/schemas/${name}` } },
+  });
   const failure = (description: string) => ({ description, content: body("Error") });
 
   return {
@@ -86,11 +93,28 @@ export function leashApiDocument() {
           description:
             "Searches real stores (Channel3), or a sample catalog in mock mode. Each result says what the person's digital twin thinks of it.",
           parameters: [
-            { name: "query", in: "query", required: true, description: "What to look for, e.g. 'fair-trade coffee beans'", schema: { type: "string", minLength: 2, maxLength: 200 } },
-            { name: "maxPrice", in: "query", required: false, description: "Only products at or below this price, in USD", schema: { type: "number", minimum: 0, exclusiveMinimum: true } },
+            {
+              name: "query",
+              in: "query",
+              required: true,
+              description: "What to look for, e.g. 'fair-trade coffee beans'",
+              schema: { type: "string", minLength: 2, maxLength: 200 },
+            },
+            {
+              name: "maxPrice",
+              in: "query",
+              required: false,
+              description: "Only products at or below this price, in USD",
+              schema: { type: "number", minimum: 0, exclusiveMinimum: true },
+            },
           ],
           responses: {
-            "200": { description: "Up to four products", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/SearchResult" } } } } },
+            "200": {
+              description: "Up to four products",
+              content: {
+                "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/SearchResult" } } },
+              },
+            },
             "400": failure("The query is missing or too short"),
           },
         },
@@ -127,7 +151,9 @@ export function leashApiDocument() {
           operationId: "getDecision",
           summary: "Check a purchase or payment",
           description: "Shows where a purchase or payment stands, e.g. whether the person approved a held one.",
-          parameters: [{ name: "id", in: "path", required: true, description: "The decision id", schema: { type: "string" } }],
+          parameters: [
+            { name: "id", in: "path", required: true, description: "The decision id", schema: { type: "string" } },
+          ],
           responses: {
             "200": { description: "The purchase or payment", content: body("Decision") },
             "404": failure("No decision with that id"),

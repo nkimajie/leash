@@ -22,7 +22,9 @@ export function LeashTabs() {
           aria-current={pathname === href ? "page" : undefined}
           className={classNames(
             "flex h-12 shrink-0 items-center rounded-xl border px-5 text-base transition-colors",
-            pathname === href ? "border-leash-rim bg-leash-wash text-leash" : "border-transparent text-ink hover:bg-white",
+            pathname === href
+              ? "border-leash-rim bg-leash-wash text-leash"
+              : "border-transparent text-ink hover:bg-white",
           )}
         >
           {label}

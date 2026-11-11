@@ -12,7 +12,9 @@ describe("the Leash API's OpenAPI document", () => {
     const operations = Object.values(document.paths).flatMap((path) => Object.values(path));
     expect(operations.every((operation) => /^[a-z][A-Za-z]+$/.test(operation.operationId))).toBe(true);
 
-    const references = [...JSON.stringify(document).matchAll(/"\$ref":"#\/components\/schemas\/(\w+)"/g)].map((m) => m[1]);
+    const references = [...JSON.stringify(document).matchAll(/"\$ref":"#\/components\/schemas\/(\w+)"/g)].map(
+      (m) => m[1],
+    );
     expect(references.length).toBeGreaterThan(0);
     for (const name of references) expect(document.components.schemas).toHaveProperty(name);
   });

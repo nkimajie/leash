@@ -113,7 +113,9 @@ export function DecisionsGrid({
         tooltipValueGetter: (p) => p.data?.aiReasoning,
         getQuickFilterText: (p) =>
           `${p.data?.title} ${p.data?.counterparty} ${p.data?.category ?? ""} ${p.data?.aiReasoning} ${
-            p.data ? `${OUTCOME_STYLE[p.data.outcome].label} ${RULE_LABEL[p.data.ruleHit]} ${paypalStatusInWords(p.data)}` : ""
+            p.data
+              ? `${OUTCOME_STYLE[p.data.outcome].label} ${RULE_LABEL[p.data.ruleHit]} ${paypalStatusInWords(p.data)}`
+              : ""
           }`,
       },
       {

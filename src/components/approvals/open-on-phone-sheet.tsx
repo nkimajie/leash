@@ -7,6 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import type { Decision } from "@/schemas";
 import { Illustration } from "@/components/ui/illustration";
 import { Sheet } from "@/components/ui/sheet";
+import { inSentence } from "@/lib/format";
 
 export function OpenOnPhoneSheet({
   open,
@@ -33,7 +34,7 @@ export function OpenOnPhoneSheet({
       </div>
       <p className="mt-5 text-center text-sm text-ink-soft">
         {decision
-          ? `Scan with your phone's camera to review the ${decision.title.toLowerCase()}. Only your tap can release money.`
+          ? `Scan with your phone's camera to review the ${inSentence(decision.title)}. Only your tap can release money.`
           : "Scan with your phone's camera to open Leash. Only your tap can release money."}
       </p>
       {isLocal && (

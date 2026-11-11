@@ -100,9 +100,21 @@ export function ConnectPayPal() {
         <Card>
           <CardHeader title="How the leash works with PayPal" />
           <ul className="flex flex-col gap-4">
-            <HowItWorks tone="paid" stamp="Paid" text="Within your rules: PayPal reserves the money, then takes it straight away." />
-            <HowItWorks tone="reserved" stamp="Reserved" text="Bigger, or someone new: PayPal reserves it and waits for your okay." />
-            <HowItWorks tone="released" stamp="Released" text="You say no: PayPal releases it. You are never charged." />
+            <HowItWorks
+              tone="paid"
+              stamp="Paid"
+              text="Within your rules: PayPal reserves the money, then takes it straight away."
+            />
+            <HowItWorks
+              tone="reserved"
+              stamp="Reserved"
+              text="Bigger, or someone new: PayPal reserves it and waits for your okay."
+            />
+            <HowItWorks
+              tone="released"
+              stamp="Released"
+              text="You say no: PayPal releases it. You are never charged."
+            />
             <HowItWorks tone="blocked" stamp="Blocked" text="Over a hard limit: PayPal is never called at all." />
           </ul>
         </Card>
@@ -111,7 +123,15 @@ export function ConnectPayPal() {
   );
 }
 
-function HowItWorks({ tone, stamp, text }: { tone: "paid" | "reserved" | "released" | "blocked"; stamp: string; text: string }) {
+function HowItWorks({
+  tone,
+  stamp,
+  text,
+}: {
+  tone: "paid" | "reserved" | "released" | "blocked";
+  stamp: string;
+  text: string;
+}) {
   return (
     <li className="grid grid-cols-[96px_1fr] items-start gap-3">
       <span>

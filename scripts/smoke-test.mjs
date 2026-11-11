@@ -261,7 +261,10 @@ check("the daily job refuses callers without the cron secret", keepaliveWithoutS
 
 // 9. The Leash API: any outside AI agent shops through the same rules, and can't approve anything
 const openApi = await call("GET", "/api/v1/openapi.json");
-check("the Leash API describes itself with OpenAPI", openApi.status === 200 && Boolean(openApi.body.paths?.["/purchases"]));
+check(
+  "the Leash API describes itself with OpenAPI",
+  openApi.status === 200 && Boolean(openApi.body.paths?.["/purchases"]),
+);
 const agentSearch = await call("GET", "/api/v1/products?query=coffee%20beans&maxPrice=20");
 check("an outside agent can search products", agentSearch.status === 200 && agentSearch.body.length > 0);
 const agentPurchase = await call("POST", "/api/v1/purchases", {

@@ -104,7 +104,9 @@ function HowItWorks({ cancelled }: { cancelled: boolean }) {
           </ul>
         </Card>
         <p className="mt-6 text-base">Leash can say no for you. Only you can say yes.</p>
-        {cancelled && <p className="mt-4 text-sm text-reserved">PayPal didn&apos;t finish, so nothing was connected.</p>}
+        {cancelled && (
+          <p className="mt-4 text-sm text-reserved">PayPal didn&apos;t finish, so nothing was connected.</p>
+        )}
         {problem && <p className="mt-4 text-sm text-failed">{problem}</p>}
       </div>
       <Footer>
@@ -189,9 +191,12 @@ function SetYourLeash({ onNext }: { onNext: () => void }) {
             <LeashMeter withoutAsking={rules.autoApproveLimit} hardLimit={rules.maxItemPrice} />
           </div>
           <p className="mt-3 font-mono text-sm">
-            {formatShortMoney(rules.autoApproveLimit)} without asking · {formatShortMoney(rules.maxItemPrice)} hard limit
+            {formatShortMoney(rules.autoApproveLimit)} without asking · {formatShortMoney(rules.maxItemPrice)} hard
+            limit
           </p>
-          <p className="mt-5 text-sm text-ink-soft">Small, expected purchases go through. Anything else waits for your okay.</p>
+          <p className="mt-5 text-sm text-ink-soft">
+            Small, expected purchases go through. Anything else waits for your okay.
+          </p>
         </Card>
         <Card className="mt-5 p-4">
           <h2 className="text-xl font-semibold">Never buy</h2>
@@ -235,7 +240,9 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
     setIsSaving(true);
     await Promise.all(
       QUESTIONS.map(({ sentiment, lesson }, index) =>
-        answers[index].trim() ? addPreference({ sentiment, statement: lesson(answers[index].trim()), category: null }) : null,
+        answers[index].trim()
+          ? addPreference({ sentiment, statement: lesson(answers[index].trim()), category: null })
+          : null,
       ),
     ).catch(() => {});
     onDone();

@@ -37,7 +37,11 @@ export function Button({ variant = "primary", size = "md", className, ...props }
 
 /** The same look for a link that acts like a button. */
 export function buttonClasses(variant: keyof typeof VARIANTS = "primary", size: keyof typeof SIZES = "md") {
-  return classNames("inline-flex items-center justify-center font-medium transition-colors", VARIANTS[variant], SIZES[size]);
+  return classNames(
+    "inline-flex items-center justify-center font-medium transition-colors",
+    VARIANTS[variant],
+    SIZES[size],
+  );
 }
 
 /** Square icon buttons in the top bar: bell, profile, settings. */

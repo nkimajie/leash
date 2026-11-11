@@ -16,6 +16,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { addPreference, fetchPreferences, removePreference } from "@/lib/api-client";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
 import { useVoiceInput } from "@/lib/use-voice-input";
+import { inSentence } from "@/lib/format";
 
 type Sentiment = Preference["sentiment"];
 
@@ -126,7 +127,7 @@ function whereItCameFrom(lesson: Preference, decisions: Decision[]): string {
   if (lesson.source === "you") return "You said this.";
   const decision = decisions.find((d) => d.id === lesson.learnedFromDecisionId);
   if (!decision) return "Learned from one of your decisions.";
-  const what = decision.title.toLowerCase();
+  const what = inSentence(decision.title);
   if (decision.outcome === "denied") return `You denied the ${what}.`;
   if (decision.outcome === "refunded") return `You refunded the ${what}.`;
   return `You approved the ${what}.`;
@@ -167,7 +168,12 @@ function TeachYourTwin({ onTeach }: { onTeach: (sentiment: Sentiment, statement:
           className="h-14 min-w-0 flex-1 rounded-xl bg-paper px-5 text-base outline-none placeholder:text-ink-soft focus:ring-2 focus:ring-leash-wash"
         />
         {voice.isSupported && (
-          <Button type="button" variant="secondary" className="lg:hidden" onClick={voice.isListening ? voice.stop : voice.start}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="lg:hidden"
+            onClick={voice.isListening ? voice.stop : voice.start}
+          >
             {voice.isListening ? <Square className="h-4 w-4" /> : <Mic className="h-5 w-5" strokeWidth={1.5} />}
             {voice.isListening ? "Stop listening" : "Say it instead"}
           </Button>

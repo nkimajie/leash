@@ -18,7 +18,13 @@ export async function buyForAgent({ productId, reasoning, agentName }: PurchaseR
   return result.decision;
 }
 
-export async function payForAgent({ personName, amount, note, reasoning, agentName }: PaymentRequest): Promise<Decision> {
+export async function payForAgent({
+  personName,
+  amount,
+  note,
+  reasoning,
+  agentName,
+}: PaymentRequest): Promise<Decision> {
   const result = await runAsAgent(agentName, `pay ${personName} $${amount}`, (context) =>
     runTool("pay_person", { personName, amount, note, reasoning: signedBy(agentName, reasoning) }, context),
   );

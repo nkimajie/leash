@@ -52,7 +52,8 @@ export function ReservationsTimeline(props: { decisions: Decision[]; onSelect?: 
     };
   }, [onSelect, isEmpty]); // isEmpty: the scheduler only exists once there's something to show
 
-  if (isEmpty) return <p className="px-4 py-6 text-sm text-ink-soft sm:px-6">Nothing has been reserved at PayPal yet.</p>;
+  if (isEmpty)
+    return <p className="px-4 py-6 text-sm text-ink-soft sm:px-6">Nothing has been reserved at PayPal yet.</p>;
   return <BryntumScheduler ref={scheduler} {...settings} {...rowsAndBars} />;
 }
 

@@ -25,8 +25,14 @@ export function LeashMeter({
 
   return (
     <div>
-      <div className="relative h-6" role="img" aria-label={`${formatShortMoney(withoutAsking)} without asking, ${formatShortMoney(hardLimit)} hard limit`}>
-        <div className={classNames("absolute inset-y-0 left-0 right-0", tone === "blue" ? "bg-leash-wash" : "bg-hairline")} />
+      <div
+        className="relative h-6"
+        role="img"
+        aria-label={`${formatShortMoney(withoutAsking)} without asking, ${formatShortMoney(hardLimit)} hard limit`}
+      >
+        <div
+          className={classNames("absolute inset-y-0 left-0 right-0", tone === "blue" ? "bg-leash-wash" : "bg-hairline")}
+        />
         <div
           className="absolute inset-y-0 right-0"
           style={{
@@ -35,7 +41,10 @@ export function LeashMeter({
             backgroundImage: "repeating-linear-gradient(135deg, #c9c3b5 0 1.5px, transparent 1.5px 6px)",
           }}
         />
-        <div className={classNames("absolute inset-y-0 left-0", tone === "blue" ? "bg-leash" : "bg-ink")} style={{ width: at(withoutAsking) }} />
+        <div
+          className={classNames("absolute inset-y-0 left-0", tone === "blue" ? "bg-leash" : "bg-ink")}
+          style={{ width: at(withoutAsking) }}
+        />
         {pin !== undefined && <div className="absolute -inset-y-1.5 w-0.5 bg-ink" style={{ left: at(pin) }} />}
       </div>
       <div className="mt-2 flex justify-between font-mono text-xs text-ink-soft">

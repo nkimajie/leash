@@ -36,7 +36,16 @@ export default function OpenGraphImage() {
         <div style={{ fontSize: 64, fontWeight: 600, letterSpacing: -2 }}>Leash</div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", fontSize: 60, fontWeight: 600, lineHeight: 1.1, letterSpacing: -1.5 }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            fontSize: 60,
+            fontWeight: 600,
+            lineHeight: 1.1,
+            letterSpacing: -1.5,
+          }}
+        >
           <span style={{ marginRight: 16 }}>Your errands. Your rules.</span>
           <span style={{ color: "#1552f0" }}>You hold the leash.</span>
         </div>

@@ -16,7 +16,7 @@ import { LeashMeter } from "@/components/ui/leash-meter";
 import { FoundWith, ProductPhoto, StoreLink } from "@/components/ui/product-photo";
 import { OutcomeStamp } from "@/components/ui/stamp";
 import { approveDecision, fetchDecision, fetchDecisions, fetchPreferences, fetchSpendingRules } from "@/lib/api-client";
-import { classNames, formatMoney, formatShortMoney } from "@/lib/format";
+import { classNames, formatMoney, formatShortMoney, inSentence } from "@/lib/format";
 import { WhyNotSheet } from "./why-not-sheet";
 
 export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) {
@@ -37,7 +37,11 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
   // After you decide, mention anything else that still waits for you.
   const decided = decision !== null && decision.outcome !== "held";
   useEffect(() => {
-    if (decided) fetchDecisions().then((all) => setStillWaiting(all.filter((d) => d.outcome === "held")), () => {});
+    if (decided)
+      fetchDecisions().then(
+        (all) => setStillWaiting(all.filter((d) => d.outcome === "held")),
+        () => {},
+      );
   }, [decided]);
 
   async function approve() {
@@ -100,7 +104,7 @@ export function ApprovalScreen({ params }: { params: Promise<{ id: string }> }) 
           </Link>
           <p className="mt-3 text-center text-xs text-ink-soft">
             {stillWaiting[0]
-              ? `Your ${stillWaiting[0].title.toLowerCase()} is still waiting for you.`
+              ? `Your ${inSentence(stillWaiting[0].title)} is still waiting for you.`
               : "Nothing else needs your okay."}
           </p>
         </footer>
@@ -128,7 +132,9 @@ function Waiting({ decision, rules }: { decision: Decision; rules: SpendingRules
         <h1 className="text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
           {decision.kind === "payment" ? "Leash wants to pay" : "Leash wants to buy"}
         </h1>
-        <p className="mt-3 font-mono text-[40px] leading-[44px] font-medium tabular-nums">{formatMoney(decision.amount)}</p>
+        <p className="mt-3 font-mono text-[40px] leading-[44px] font-medium tabular-nums">
+          {formatMoney(decision.amount)}
+        </p>
         <div className="mt-4">
           <OutcomeStamp outcome="held" size="large" />
         </div>

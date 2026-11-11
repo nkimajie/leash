@@ -99,7 +99,9 @@ function StepBody({ step, context }: { step: AssistantEvent; context: StepContex
       );
     case "tool_finished":
       if (step.products?.length) return <SearchResults products={step.products} />;
-      return <p className="rounded-xl bg-white/60 px-4 py-3 text-sm whitespace-pre-line text-ink-soft">{step.summary}</p>;
+      return (
+        <p className="rounded-xl bg-white/60 px-4 py-3 text-sm whitespace-pre-line text-ink-soft">{step.summary}</p>
+      );
     case "decision_made":
       return (
         <ReceiptCard decision={step.decision}>

@@ -76,7 +76,9 @@ export function ReceiptSheet({
                 variant="secondary"
                 className="mt-6 w-full"
                 disabled={isBusy}
-                onClick={() => window.confirm("Refund this purchase with PayPal?") && act(() => refundDecision(decision.id))}
+                onClick={() =>
+                  window.confirm("Refund this purchase with PayPal?") && act(() => refundDecision(decision.id))
+                }
               >
                 {isBusy ? "Refunding…" : "Refund"}
               </Button>
@@ -99,17 +101,16 @@ export function ReceiptSheet({
 /** Statuses PayPal reports for money sent on to a person. */
 const PAYOUT_RESULTS = ["SUCCESS", "UNCLAIMED", "FAILED", "RETURNED", "BLOCKED"];
 
-/** Each step the money went through, from the rule check to PayPal's last word. */
+/** Each step the money went through at PayPal, after the rules (on the receipt above) let it through. */
 function paypalSteps(decision: Decision): Step[] {
   const { paypal, outcome } = decision;
   const when = formatReceiptTime(decision.createdAt);
-  const rules: Step = { label: "Rules checked", detail: decision.ruleExplanation };
-  if (outcome === "blocked") return [rules, { label: "PayPal never called", detail: "Nothing was reserved or taken." }];
+  if (outcome === "blocked") return [{ label: "PayPal never called", detail: "Nothing was reserved or taken." }];
   if (isSampleHistory(decision)) {
-    return [rules, { label: "Sample history", detail: "It shows how Leash works, but was never sent to PayPal." }];
+    return [{ label: "Sample history", detail: "It shows how Leash works, but was never sent to PayPal." }];
   }
 
-  const steps: Step[] = [rules];
+  const steps: Step[] = [];
   if (paypal.authorizationId) {
     steps.push({
       label: "Authorized",
@@ -140,7 +141,9 @@ function paypalSteps(decision: Decision): Step[] {
       { label: "Waiting for your approval", detail: "Nothing has been taken." },
       { label: "Capture", detail: "Only after your tap." },
     ],
-    auto_approved: [{ label: "Captured", detail: "Within your rules, so it was paid straight away.", id: paypal.captureId }],
+    auto_approved: [
+      { label: "Captured", detail: "Within your rules, so it was paid straight away.", id: paypal.captureId },
+    ],
     approved: [{ label: "Captured", detail: "You approved it.", id: paypal.captureId }],
     denied: [{ label: "Released", detail: "You denied it. PayPal voided the reservation: you weren't charged." }],
     refunded: [

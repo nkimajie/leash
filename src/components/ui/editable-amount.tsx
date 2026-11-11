@@ -6,7 +6,15 @@ import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { formatShortMoney } from "@/lib/format";
 
-export function EditableAmount({ value, label, onChange }: { value: number; label: string; onChange: (value: number) => void }) {
+export function EditableAmount({
+  value,
+  label,
+  onChange,
+}: {
+  value: number;
+  label: string;
+  onChange: (value: number) => void;
+}) {
   const [editing, setEditing] = useState(false);
 
   if (editing) {

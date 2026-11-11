@@ -55,7 +55,10 @@ export function PeopleManager() {
                 <div className="text-xs text-ink-soft">
                   {person.note ?? (person.trusted ? "A familiar face" : "New person")}
                   {" · "}
-                  <EmailEditor email={person.email} onSave={(email) => attempt(() => updatePayee(person.id, { email }))} />
+                  <EmailEditor
+                    email={person.email}
+                    onSave={(email) => attempt(() => updatePayee(person.id, { email }))}
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -118,7 +121,13 @@ function AddSomeoneSheet({
         }}
       >
         <Field label="Name">
-          <TextInput required value={name} onChange={(e) => setName(e.target.value)} placeholder="Sam Rivera" className="bg-white" />
+          <TextInput
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Sam Rivera"
+            className="bg-white"
+          />
         </Field>
         <Field label="PayPal email" hint="Needed before real money can be sent.">
           <TextInput
@@ -130,7 +139,12 @@ function AddSomeoneSheet({
           />
         </Field>
         <Field label="Who they are">
-          <TextInput value={note} onChange={(e) => setNote(e.target.value)} placeholder="Roommate" className="bg-white" />
+          <TextInput
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Roommate"
+            className="bg-white"
+          />
         </Field>
         <Segmented
           label="Pay without asking?"

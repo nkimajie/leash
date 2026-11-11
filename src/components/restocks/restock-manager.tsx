@@ -76,7 +76,10 @@ export function RestockManager() {
 
       {restocks.length > 0 && (
         <Card>
-          <CardHeader title="Coming up" description="Each mark is a day a restock runs. Drag the next one to move it." />
+          <CardHeader
+            title="Coming up"
+            description="Each mark is a day a restock runs. Drag the next one to move it."
+          />
           <div className="-mx-4 sm:-mx-6">
             <RestocksTimeline
               restocks={restocks}
@@ -107,7 +110,13 @@ export function RestockManager() {
                     <div className="text-base">{restock.prompt}</div>
                     <div className="mt-1 font-mono text-xs text-ink-soft">
                       every {restock.everyDays} {restock.everyDays === 1 ? "day" : "days"} ·{" "}
-                      {!restock.active ? "paused" : isDue ? <span className="text-reserved">due now</span> : `next ${formatDaysAway(restock.nextRunAt)}`}
+                      {!restock.active ? (
+                        "paused"
+                      ) : isDue ? (
+                        <span className="text-reserved">due now</span>
+                      ) : (
+                        `next ${formatDaysAway(restock.nextRunAt)}`
+                      )}
                       {restock.lastRunAt && ` · last ran ${formatDaysAway(restock.lastRunAt)}`}
                     </div>
                   </div>
@@ -123,7 +132,9 @@ export function RestockManager() {
                     </Button>
                     <button
                       aria-label={`Remove ${restock.prompt}`}
-                      onClick={() => window.confirm(`Remove "${restock.prompt}"?`) && attempt(() => removeRestock(restock.id))}
+                      onClick={() =>
+                        window.confirm(`Remove "${restock.prompt}"?`) && attempt(() => removeRestock(restock.id))
+                      }
                       className="grid h-9 w-9 place-items-center rounded-lg text-ink-soft hover:bg-paper hover:text-ink"
                     >
                       <Trash2 className="h-4 w-4" strokeWidth={1.5} />
@@ -180,7 +191,14 @@ function AddRestockForm({ onAdd }: { onAdd: (prompt: string, everyDays: number) 
           />
         </Field>
         <Field label="Every how many days">
-          <TextInput type="number" min={1} max={365} required value={everyDays} onChange={(e) => setEveryDays(e.target.value)} />
+          <TextInput
+            type="number"
+            min={1}
+            max={365}
+            required
+            value={everyDays}
+            onChange={(e) => setEveryDays(e.target.value)}
+          />
         </Field>
         <Button type="submit" disabled={prompt.trim().length < 3}>
           <Plus className="h-4 w-4" strokeWidth={1.75} />

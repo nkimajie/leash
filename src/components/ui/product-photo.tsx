@@ -11,11 +11,7 @@ export function ProductPhoto({ decision, size = "md" }: { decision: Decision; si
     return (
       // Photos come from many different stores, so a plain <img> is simpler than configuring next/image for each.
       // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={imageUrl}
-        alt=""
-        className={classNames(box, "shrink-0 bg-white object-contain ring-1 ring-hairline")}
-      />
+      <img src={imageUrl} alt="" className={classNames(box, "shrink-0 bg-white object-contain ring-1 ring-hairline")} />
     );
   }
   const Icon = decision.kind === "payment" ? UserRound : ShoppingBag;
@@ -31,12 +27,7 @@ export function StoreLink({ decision }: { decision: Decision }) {
   const url = decision.product?.url;
   if (!url || url.includes("example.com")) return null;
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      className="text-xs text-leash"
-    >
+    <a href={url} target="_blank" rel="noreferrer" className="text-xs text-leash">
       View at {decision.counterparty}
     </a>
   );

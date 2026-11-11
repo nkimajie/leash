@@ -12,7 +12,8 @@ export const formatShortMoney = (amount: number) =>
 export function formatReceiptTime(isoDate: string) {
   const date = new Date(isoDate);
   const daysAgo = Math.round((startOfDay(new Date()) - startOfDay(date)) / 86_400_000);
-  if (daysAgo === 0) return `Today, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: false })}`;
+  if (daysAgo === 0)
+    return `Today, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: false })}`;
   if (daysAgo === 1) return "Yesterday";
   if (daysAgo > 1 && daysAgo < 7) return date.toLocaleDateString([], { weekday: "long" });
   return date.toLocaleDateString([], { month: "short", day: "numeric" });
@@ -35,6 +36,9 @@ export function formatDaysAway(isoDate: string) {
   if (days > 0) return days === 1 ? "tomorrow" : `in ${days} days`;
   return days === -1 ? "yesterday" : `${-days} days ago`;
 }
+
+/** A title inside a sentence: "Your orthopedic dog bed…", "Review payment to Casey". Only the first letter changes. */
+export const inSentence = (title: string) => title.charAt(0).toLowerCase() + title.slice(1);
 
 /** Joins class names, skipping empty ones. */
 export function classNames(...names: (string | false | null | undefined)[]) {

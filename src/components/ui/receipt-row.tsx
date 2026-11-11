@@ -25,7 +25,12 @@ export function ReceiptRow({
           {formatReceiptTime(decision.createdAt)}
         </div>
       </div>
-      <div className={classNames("flex shrink-0 items-end gap-2", wide ? "flex-col sm:flex-row sm:items-center sm:gap-8" : "flex-col")}>
+      <div
+        className={classNames(
+          "flex shrink-0 items-end gap-2",
+          wide ? "flex-col sm:flex-row sm:items-center sm:gap-8" : "flex-col",
+        )}
+      >
         <Amount decision={decision} />
         <span className={wide ? "hidden sm:inline-flex" : "hidden"}>
           <OutcomeStamp outcome={decision.outcome} />
@@ -48,7 +53,13 @@ export function ReceiptRow({
 }
 
 /** Amounts are mono with tabular figures. A released amount is struck through: it was never taken. */
-export function Amount({ decision, className }: { decision: Pick<Decision, "amount" | "outcome">; className?: string }) {
+export function Amount({
+  decision,
+  className,
+}: {
+  decision: Pick<Decision, "amount" | "outcome">;
+  className?: string;
+}) {
   return (
     <span
       className={classNames(

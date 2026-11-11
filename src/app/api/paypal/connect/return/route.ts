@@ -9,7 +9,8 @@ import { finishConnectingPayPal, pageAfterPayPal } from "@/server/payments/paypa
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const then = ConnectPayPalBody.parse({ then: url.searchParams.get("then") ?? undefined }).then;
-  const goBack = (result: string) => Response.redirect(`${appUrl || url.origin}${pageAfterPayPal(then)}?result=${result}`);
+  const goBack = (result: string) =>
+    Response.redirect(`${appUrl || url.origin}${pageAfterPayPal(then)}?result=${result}`);
 
   const setupTokenId = url.searchParams.get("approval_token_id") ?? url.searchParams.get("token");
   if (!setupTokenId) return goBack("missing-approval");

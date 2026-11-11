@@ -35,8 +35,27 @@ export function readPaymentInstruction(prompt: string): PaymentInstruction | nul
 
 export type RestockSchedule = { prompt: string; everyDays: number };
 
-const DAYS_PER: Record<string, number> = { day: 1, week: 7, fortnight: 14, month: 30, daily: 1, weekly: 7, fortnightly: 14, monthly: 30 };
-const COUNT_WORDS: Record<string, number> = { a: 1, an: 1, one: 1, other: 2, two: 2, three: 3, four: 4, five: 5, six: 6 };
+const DAYS_PER: Record<string, number> = {
+  day: 1,
+  week: 7,
+  fortnight: 14,
+  month: 30,
+  daily: 1,
+  weekly: 7,
+  fortnightly: 14,
+  monthly: 30,
+};
+const COUNT_WORDS: Record<string, number> = {
+  a: 1,
+  an: 1,
+  one: 1,
+  other: 2,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+};
 
 /**
  * "Restock dog food every 30 days" -> { prompt: "Restock dog food", everyDays: 30 }.
@@ -45,8 +64,9 @@ const COUNT_WORDS: Record<string, number> = { a: 1, an: 1, one: 1, other: 2, two
  */
 export function readRestockSchedule(prompt: string): RestockSchedule | null {
   const match =
-    prompt.match(/,?\s*\b(?:once\s+)?every\s+(?:(\d+|an?|one|other|two|three|four|five|six)\s+)?(day|week|fortnight|month)s?\b/i) ??
-    prompt.match(/,?\s*\b(daily|weekly|fortnightly|monthly)\b/i);
+    prompt.match(
+      /,?\s*\b(?:once\s+)?every\s+(?:(\d+|an?|one|other|two|three|four|five|six)\s+)?(day|week|fortnight|month)s?\b/i,
+    ) ?? prompt.match(/,?\s*\b(daily|weekly|fortnightly|monthly)\b/i);
   if (!match) return null;
 
   const [phrase, countOrUnit, unit] = match;

@@ -19,7 +19,11 @@ export function Segmented<T extends string | number>({
   className?: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={classNames("flex gap-1 rounded-xl bg-hairline p-1", className)}>
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={classNames("flex gap-1 rounded-xl bg-hairline p-1", className)}
+    >
       {options.map((option) => {
         const selected = option.value === value;
         return (
