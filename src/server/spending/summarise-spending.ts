@@ -16,10 +16,14 @@ export type SpendingSummary = {
   paid: number;
   /** Money PayPal reserved, waiting for you. */
   waiting: number;
-  items: Pick<Decision, "title" | "amount" | "outcome" | "createdAt">[];
+  /** The newest few, with the store and the rule's reason, so "why was that blocked?" can be answered. */
+  items: Pick<Decision, "id" | "title" | "counterparty" | "amount" | "outcome" | "ruleExplanation" | "createdAt">[];
   /** The answer in one or two plain sentences. */
   answer: string;
 };
+
+/** Enough to answer a question, without flooding the assistant. The totals always count everything. */
+const MOST_ITEMS = 15;
 
 export function summariseSpending(
   decisions: Decision[],
@@ -58,7 +62,18 @@ export function summariseSpending(
   return {
     paid,
     waiting,
-    items: matching.map(({ title, amount, outcome, createdAt }) => ({ title, amount, outcome, createdAt })),
+    items: [...matching]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, MOST_ITEMS)
+      .map(({ id, title, counterparty, amount, outcome, ruleExplanation, createdAt }) => ({
+        id,
+        title,
+        counterparty,
+        amount,
+        outcome,
+        ruleExplanation,
+        createdAt,
+      })),
     answer,
   };
 }

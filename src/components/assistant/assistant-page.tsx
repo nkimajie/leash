@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AssistantEvent, EarlierTurn, Restock } from "@/schemas";
 import { Page } from "@/components/ui/page";
 import { askAssistant, runAttack, runRestockNow } from "@/lib/api-client";
+import { loadConversation, rememberExchange } from "@/lib/conversation";
 import { TOOL_LABEL } from "@/lib/labels";
 import { speak, stopSpeaking } from "@/lib/speak";
 import { APlaceToStart } from "./a-place-to-start";
@@ -25,7 +26,7 @@ export function AssistantPage() {
   const [wasSpoken, setWasSpoken] = useState(false);
   const [readAloud, setReadAloud] = useState(false);
   // The last few exchanges, sent with each request so Leash understands "yes, do that".
-  const [conversation, setConversation] = useState<EarlierTurn[]>([]);
+  const [conversation, setConversation] = useState<EarlierTurn[]>(loadConversation);
   const endOfTimeline = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,8 +66,7 @@ export function AssistantPage() {
       };
       await askAssistant(text, remember, spoken, conversation);
       if (leashSaid) {
-        const turn = { you: text.trim().slice(0, 500), leash: leashSaid.slice(0, 2000) };
-        setConversation((turns) => [...turns, turn].slice(-3));
+        setConversation((turns) => rememberExchange(turns, text, leashSaid));
       }
     }, spoken || readAloud);
   }
