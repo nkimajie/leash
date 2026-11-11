@@ -17,6 +17,13 @@ export async function readJsonBody<T>(request: Request, schema: z.ZodType<T>): P
   return parsed.data;
 }
 
+/** Reads the URL's query string and checks it against a schema. Throws a 400 error if it doesn't fit. */
+export function readSearchParams<T>(request: Request, schema: z.ZodType<T>): T {
+  const parsed = schema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!parsed.success) throw new BadRequestError(z.prettifyError(parsed.error));
+  return parsed.data;
+}
+
 /** Streams assistant steps to the browser as they happen, one JSON object per line. */
 export function streamEvents(events: AsyncIterable<AssistantEvent>): Response {
   const encoder = new TextEncoder();

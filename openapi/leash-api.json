@@ -1,0 +1,675 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Leash API",
+    "version": "1.0.0",
+    "description": "Put any AI agent on a leash. Your agent searches products and asks Leash to buy them or pay people; Leash applies the person's spending rules and pays with their PayPal. Within the rules it's paid at once; otherwise PayPal reserves the money and the person approves or denies it in Leash. Agents can never approve anything. This hackathon build has no accounts: a real deployment would give each agent its own key."
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}/api/v1",
+      "description": "Your Leash app",
+      "variables": {
+        "baseUrl": {
+          "default": "http://localhost:3000",
+          "description": "Where Leash runs"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/products": {
+      "get": {
+        "operationId": "searchProducts",
+        "summary": "Search products",
+        "description": "Searches real stores (Channel3), or a sample catalog in mock mode. Each result says what the person's digital twin thinks of it.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "description": "What to look for, e.g. 'fair-trade coffee beans'",
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "required": false,
+            "description": "Only products at or below this price, in USD",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Up to four products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchResult"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query is missing or too short",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/purchases": {
+      "post": {
+        "operationId": "buyProduct",
+        "summary": "Buy a product",
+        "description": "Asks Leash to buy a product found with GET /products. The outcome says what happened: auto_approved (paid), held (PayPal reserved the money and the person decides), blocked (a rule said no) or failed.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurchaseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "What happened to the money",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Decision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request doesn't fit the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No product with that id: search first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments": {
+      "post": {
+        "operationId": "payPerson",
+        "summary": "Pay a person",
+        "description": "Asks Leash to send money to a person with PayPal. Someone new is added to the person's contacts as not trusted, so the payment waits for their OK.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "What happened to the money",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Decision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request doesn't fit the schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/decisions/{id}": {
+      "get": {
+        "operationId": "getDecision",
+        "summary": "Check a purchase or payment",
+        "description": "Shows where a purchase or payment stands, e.g. whether the person approved a held one.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The decision id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The purchase or payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Decision"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No decision with that id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rules": {
+      "get": {
+        "operationId": "getRules",
+        "summary": "Read the spending rules",
+        "description": "The person's limits, so an agent can plan within them.",
+        "responses": {
+          "200": {
+            "description": "The spending rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendingRules"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "merchant": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "channel3",
+              "sample"
+            ]
+          },
+          "storesCompared": {
+            "type": "number"
+          },
+          "twinAvoids": {
+            "nullable": true,
+            "description": "Why the person's digital twin avoids this product, if it does. Never buy these.",
+            "type": "string"
+          },
+          "twinLikes": {
+            "nullable": true,
+            "description": "What the person likes about it, if anything",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "price",
+          "currency",
+          "merchant",
+          "category",
+          "source",
+          "twinAvoids",
+          "twinLikes"
+        ],
+        "additionalProperties": false
+      },
+      "PurchaseRequest": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The id of a product from GET /products"
+          },
+          "reasoning": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500,
+            "description": "Why, in one or two plain sentences. The person sees this in their control room."
+          },
+          "agentName": {
+            "description": "Who is asking, e.g. 'Claude Desktop'. The person sees this in their control room.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        },
+        "required": [
+          "productId",
+          "reasoning"
+        ]
+      },
+      "PaymentRequest": {
+        "type": "object",
+        "properties": {
+          "personName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Who to pay, e.g. 'Sam'. Paying someone new needs the person's OK."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 10000,
+            "description": "Amount in USD"
+          },
+          "note": {
+            "default": "",
+            "description": "What it's for, e.g. 'dinner'",
+            "type": "string",
+            "maxLength": 80
+          },
+          "reasoning": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500,
+            "description": "Why, in one or two plain sentences. The person sees this in their control room."
+          },
+          "agentName": {
+            "description": "Who is asking, e.g. 'Claude Desktop'. The person sees this in their control room.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        },
+        "required": [
+          "personName",
+          "amount",
+          "reasoning"
+        ]
+      },
+      "Decision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "purchase",
+              "payment"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "counterparty": {
+            "type": "string"
+          },
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "auto_approved",
+              "held",
+              "approved",
+              "denied",
+              "blocked",
+              "refunded",
+              "failed"
+            ]
+          },
+          "ruleHit": {
+            "type": "string",
+            "enum": [
+              "within_rules",
+              "auto_approve_limit",
+              "request_budget",
+              "off_request",
+              "new_person",
+              "no_paypal_email",
+              "scheduled_restock",
+              "max_item_price",
+              "max_payment_per_person",
+              "daily_cap",
+              "weekly_cap",
+              "blocked_category",
+              "category_not_allowed",
+              "blocked_merchant",
+              "merchant_not_allowed",
+              "currency_mismatch",
+              "invalid_amount",
+              "payment_declined",
+              "payment_error",
+              "paypal_not_connected"
+            ]
+          },
+          "ruleExplanation": {
+            "type": "string"
+          },
+          "aiReasoning": {
+            "type": "string"
+          },
+          "product": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "price": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "merchant": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "imageUrl": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "channel3",
+                  "sample"
+                ]
+              },
+              "storesCompared": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "price",
+              "currency",
+              "merchant",
+              "category",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "payee": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "email"
+            ],
+            "additionalProperties": false
+          },
+          "paypal": {
+            "type": "object",
+            "properties": {
+              "orderId": {
+                "nullable": true,
+                "type": "string"
+              },
+              "authorizationId": {
+                "nullable": true,
+                "type": "string"
+              },
+              "captureId": {
+                "nullable": true,
+                "type": "string"
+              },
+              "status": {
+                "nullable": true,
+                "type": "string"
+              },
+              "debugId": {
+                "nullable": true,
+                "type": "string"
+              },
+              "payoutId": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "orderId",
+              "authorizationId",
+              "captureId",
+              "status",
+              "debugId",
+              "payoutId"
+            ],
+            "additionalProperties": false
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "requestId",
+          "kind",
+          "title",
+          "counterparty",
+          "category",
+          "amount",
+          "currency",
+          "outcome",
+          "ruleHit",
+          "ruleExplanation",
+          "aiReasoning",
+          "product",
+          "payee",
+          "paypal",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "SpendingRules": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "autoApproveLimit": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 100000
+          },
+          "defaultRequestBudget": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 100000
+          },
+          "maxItemPrice": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 100000
+          },
+          "maxPaymentPerPerson": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 100000
+          },
+          "dailyCap": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 100000
+          },
+          "weeklyCap": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMinimum": true,
+            "maximum": 100000
+          },
+          "allowedCategories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "blockedCategories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "allowedMerchants": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "blockedMerchants": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "newPeopleNeedApproval": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "currency",
+          "autoApproveLimit",
+          "defaultRequestBudget",
+          "maxItemPrice",
+          "maxPaymentPerPerson",
+          "dailyCap",
+          "weeklyCap",
+          "allowedCategories",
+          "blockedCategories",
+          "allowedMerchants",
+          "blockedMerchants",
+          "newPeopleNeedApproval"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "What went wrong, in plain words"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

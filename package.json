@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "typecheck": "next typegen && tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm test",
-    "smoke": "node scripts/smoke-test.mjs"
+    "smoke": "node scripts/smoke-test.mjs",
+    "openapi": "vitest run src/schemas/leash-api.test.ts --update"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

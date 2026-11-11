@@ -17,17 +17,8 @@ export const searchProductsTool = defineTool({
     maxPrice: z.number().positive().optional().describe("Only return products at or below this price"),
   }),
   async run({ query, maxPrice }) {
-    const [products, preferences] = await Promise.all([
-      searchProducts(query, { maxPrice, limit: 4 }),
-      database.preferences.listPreferences(),
-    ]);
-    if (products.length === 0) return { summary: "No products found.", data: [] };
-
-    const results: SearchResult[] = products.map((product) => ({
-      ...product,
-      twinAvoids: findReasonToAvoid(product, preferences)?.statement ?? null,
-      twinLikes: findReasonToLike(product, preferences)?.statement ?? null,
-    }));
+    const results = await searchWithTwinNotes(query, maxPrice);
+    if (results.length === 0) return { summary: "No products found.", data: [] };
 
     const found = results
       .map(
@@ -39,6 +30,19 @@ export const searchProductsTool = defineTool({
 });
 
 /** Says where results came from, including when Channel3 didn't answer and the sample catalog stood in. */
+/** Up to four products, each with what your digital twin thinks of it. Also used by the Leash API. */
+export async function searchWithTwinNotes(query: string, maxPrice?: number): Promise<SearchResult[]> {
+  const [products, preferences] = await Promise.all([
+    searchProducts(query, { maxPrice, limit: 4 }),
+    database.preferences.listPreferences(),
+  ]);
+  return products.map((product) => ({
+    ...product,
+    twinAvoids: findReasonToAvoid(product, preferences)?.statement ?? null,
+    twinLikes: findReasonToLike(product, preferences)?.statement ?? null,
+  }));
+}
+
 function whereFrom(results: SearchResult[]): string {
   if (results[0].source === "channel3") return "Found with Channel3";
   return serviceModes().productSearch === "channel3"

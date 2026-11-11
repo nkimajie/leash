@@ -12,8 +12,11 @@ export const AssistantRequestSchema = z.object({
   prompt: z.string(),
   budget: z.number(),
   status: z.enum(["working", "finished", "failed"]),
-  /** "you" typed it; "restock" means a schedule started it while you were away. */
-  source: z.enum(["you", "restock"]),
+  /**
+   * "you" typed it; "restock" means a schedule started it while you were away;
+   * "agent" means an outside AI agent asked through the Leash API (/api/v1).
+   */
+  source: z.enum(["you", "restock", "agent"]),
   createdAt: z.string(),
 });
 export type AssistantRequest = z.infer<typeof AssistantRequestSchema>;

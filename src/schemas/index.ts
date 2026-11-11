@@ -4,6 +4,7 @@
 export * from "./assistant";
 export * from "./control-room";
 export * from "./decision";
+export * from "./leash-api";
 export * from "./payee";
 export * from "./preference";
 export * from "./product";

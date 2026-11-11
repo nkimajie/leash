@@ -259,5 +259,41 @@ check(
 const keepaliveWithoutSecret = await call("GET", "/api/keepalive");
 check("the daily job refuses callers without the cron secret", keepaliveWithoutSecret.status === 401);
 
+// 9. The Leash API: any outside AI agent shops through the same rules, and can't approve anything
+const openApi = await call("GET", "/api/v1/openapi.json");
+check("the Leash API describes itself with OpenAPI", openApi.status === 200 && Boolean(openApi.body.paths?.["/purchases"]));
+const agentSearch = await call("GET", "/api/v1/products?query=coffee%20beans&maxPrice=20");
+check("an outside agent can search products", agentSearch.status === 200 && agentSearch.body.length > 0);
+const agentPurchase = await call("POST", "/api/v1/purchases", {
+  productId: agentSearch.body[0]?.id,
+  reasoning: "Fair-trade beans under $20 for the office.",
+  agentName: "Smoke test agent",
+});
+check(
+  "its purchase goes through the person's rules, signed with the agent's name",
+  agentPurchase.status === 201 &&
+    ["auto_approved", "held", "blocked"].includes(agentPurchase.body.outcome) &&
+    agentPurchase.body.aiReasoning.startsWith("Smoke test agent:"),
+  JSON.stringify(agentPurchase.body),
+);
+const agentPayment = await call("POST", "/api/v1/payments", {
+  personName: "Casey",
+  amount: 40,
+  note: "plants",
+  reasoning: "Casey watered the plants all week.",
+  agentName: "Smoke test agent",
+});
+check(
+  "paying someone new is never automatic: it waits for the person (or a hard rule blocks it)",
+  agentPayment.status === 201 && ["held", "blocked"].includes(agentPayment.body.outcome),
+  JSON.stringify(agentPayment.body),
+);
+const agentLooksUp = await call("GET", `/api/v1/decisions/${agentPayment.body.id}`);
+check("the agent can check on it later", agentLooksUp.status === 200 && agentLooksUp.body.id === agentPayment.body.id);
+const agentApproves = await fetch(`${BASE_URL}/api/v1/decisions/${agentPayment.body.id}/approve`, { method: "POST" });
+check("and the Leash API has no way to approve it", agentApproves.status === 404 || agentApproves.status === 405);
+const badPurchase = await call("POST", "/api/v1/purchases", { productId: "nope", reasoning: "short" });
+check("a bad request gets a clear 400", badPurchase.status === 400 && typeof badPurchase.body.error === "string");
+
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

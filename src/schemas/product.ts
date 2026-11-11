@@ -19,4 +19,9 @@ export const ProductSchema = z.object({
 export type Product = z.infer<typeof ProductSchema>;
 
 /** A search result, with what your digital twin thinks of it. */
-export type SearchResult = Product & { twinAvoids: string | null; twinLikes: string | null };
+export const SearchResultSchema = ProductSchema.extend({
+  twinAvoids: z.string().nullable().describe("Why the person's digital twin avoids this product, if it does. Never buy these."),
+  twinLikes: z.string().nullable().describe("What the person likes about it, if anything"),
+});
+
+export type SearchResult = z.infer<typeof SearchResultSchema>;
