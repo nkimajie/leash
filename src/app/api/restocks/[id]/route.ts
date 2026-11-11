@@ -1,5 +1,5 @@
-// PATCH  /api/restocks/:id  { prompt?, everyDays?, active? }  ->  change or pause a restock
-// DELETE /api/restocks/:id                                      ->  remove it
+// PATCH  /api/restocks/:id  { prompt?, everyDays?, active?, nextRunAt? }  ->  change, pause or move a restock
+// DELETE /api/restocks/:id                                                  ->  remove it
 
 import { UpdateRestockBody } from "@/schemas/api";
 import * as database from "@/server/database";

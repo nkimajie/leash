@@ -23,5 +23,9 @@ export const NewRestockSchema = z.object({
 
 export type NewRestock = z.infer<typeof NewRestockSchema>;
 
-export const RestockChangesSchema = NewRestockSchema.partial().extend({ active: z.boolean().optional() });
+export const RestockChangesSchema = NewRestockSchema.partial().extend({
+  active: z.boolean().optional(),
+  /** Move the next run, e.g. by dragging it on the timeline. Later runs follow on from it. */
+  nextRunAt: z.iso.datetime().optional(),
+});
 export type RestockChanges = z.infer<typeof RestockChangesSchema>;
