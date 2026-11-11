@@ -26,6 +26,10 @@ services:
         sync: false
       - key: PAYPAL_WEBHOOK_ID
         sync: false
+      - key: NEXT_PUBLIC_SANDBOX_TEST_EMAIL # sandbox account shown to testers on the sign-in screen
+        sync: false
+      - key: NEXT_PUBLIC_SANDBOX_TEST_PASSWORD
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: CHANNEL3_API_KEY

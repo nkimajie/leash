@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Stamp } from "@/components/ui/stamp";
 import { PoweredBy } from "@/components/ui/powered-by";
+import { SandboxTestLogin } from "@/components/connect/sandbox-test-login";
 import { disconnectPayPal, startConnectingPayPal } from "@/lib/api-client";
 import { formatReceiptTime } from "@/lib/format";
 import { useAccount } from "@/lib/use-account";
@@ -94,6 +95,7 @@ export function ConnectPayPal() {
               <Button variant="paypal" className="w-full" onClick={connect} disabled={isBusy}>
                 {isBusy ? "Opening PayPal…" : "Continue with PayPal"}
               </Button>
+              <SandboxTestLogin className="mt-4" />
             </>
           )}
         </Card>

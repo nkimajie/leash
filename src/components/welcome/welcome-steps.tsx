@@ -18,6 +18,7 @@ import { LeashMeter } from "@/components/ui/leash-meter";
 import { Segmented } from "@/components/ui/segmented";
 import { Stamp } from "@/components/ui/stamp";
 import { PoweredBy } from "@/components/ui/powered-by";
+import { SandboxTestLogin } from "@/components/connect/sandbox-test-login";
 import { addPreference, fetchSpendingRules, saveSpendingRules, startConnectingPayPal } from "@/lib/api-client";
 import { formatShortMoney } from "@/lib/format";
 import { addWords, useVoiceInput } from "@/lib/use-voice-input";
@@ -114,6 +115,7 @@ function HowItWorks({ cancelled }: { cancelled: boolean }) {
           </p>
         )}
         {problem && <p className="mt-4 text-sm text-failed">{problem}</p>}
+        <SandboxTestLogin className="mt-6 mb-6" />
       </div>
       <Footer>
         <Button variant="paypal" className="w-full" disabled={isOpening} onClick={continueWithPayPal}>
