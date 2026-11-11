@@ -16,7 +16,7 @@ import { useAccount } from "@/lib/use-account";
 const RESULT_MESSAGE: Record<string, { text: string; good: boolean }> = {
   connected: { text: "Your PayPal account is connected.", good: true },
   cancelled: { text: "You cancelled on PayPal, so nothing was connected.", good: false },
-  failed: { text: "PayPal didn't finish connecting. Please try again.", good: false },
+  failed: { text: "Connecting your PayPal didn't finish, so nothing was saved. Please try again.", good: false },
   "missing-approval": { text: "PayPal didn't send an approval back. Please try again.", good: false },
 };
 

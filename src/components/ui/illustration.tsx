@@ -19,7 +19,16 @@ const SIZES = {
 
 export type IllustrationName = keyof typeof SIZES;
 
-export function Illustration({ name, className }: { name: IllustrationName; className?: string }) {
+export function Illustration({
+  name,
+  className,
+  eager = false,
+}: {
+  name: IllustrationName;
+  className?: string;
+  /** The first thing on screen (e.g. the welcome card): load it straight away. */
+  eager?: boolean;
+}) {
   const [width, height] = SIZES[name];
   return (
     <Image
@@ -28,6 +37,7 @@ export function Illustration({ name, className }: { name: IllustrationName; clas
       width={width}
       height={height}
       unoptimized
+      loading={eager ? "eager" : undefined}
       className={classNames("h-auto select-none", className)}
     />
   );

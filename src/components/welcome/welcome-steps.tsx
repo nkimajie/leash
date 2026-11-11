@@ -49,7 +49,7 @@ function Start({ onNext }: { onNext: () => void }) {
       <div className="flex flex-1 flex-col items-center px-5 pt-16">
         <LeashLogo size="large" />
         <WashCard className="mt-10 flex w-full flex-col items-center pb-10">
-          <Illustration name="boundary-held" className="w-56" />
+          <Illustration name="boundary-held" className="w-56" eager />
           <h1 className="text-center text-[28px] leading-[34px] font-semibold tracking-[-0.03em]">
             Your errands.
             <br />
@@ -105,7 +105,9 @@ function HowItWorks({ cancelled }: { cancelled: boolean }) {
         </Card>
         <p className="mt-6 text-base">Leash can say no for you. Only you can say yes.</p>
         {cancelled && (
-          <p className="mt-4 text-sm text-reserved">PayPal didn&apos;t finish, so nothing was connected.</p>
+          <p className="mt-4 text-sm text-reserved">
+            Connecting your PayPal didn&apos;t finish, so nothing was saved. Please try again.
+          </p>
         )}
         {problem && <p className="mt-4 text-sm text-failed">{problem}</p>}
       </div>
