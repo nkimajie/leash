@@ -1,8 +1,11 @@
 "use client";
 
-// The AG Grid table inside the control room.
-// The view (filters + sorting) comes from the filter buttons or from a question you asked;
-// the pinned bottom row adds up exactly the rows you can see.
+// Recent activity on Money: an AG Grid table styled as a list of receipts.
+// What AG Grid does here:
+//   - the view (from a question you asked, e.g. "held payments over $20, biggest first") is an
+//     external filter plus a column sort; the search words are its quick filter
+//   - rows update live, and the money column flashes when a payment's outcome changes
+//   - the pinned bottom row adds up exactly the rows you can see
 
 import {
   AllCommunityModule,
@@ -15,48 +18,53 @@ import {
   type RowClassParams,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import { UserRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isSampleHistory, type Decision, type GridView } from "@/schemas";
-import { formatMoney, formatWhen } from "@/lib/format";
-import { OUTCOME_STYLE, RULE_LABEL, paypalStatusInWords } from "@/lib/labels";
-import { Button } from "@/components/ui/button";
 import { OutcomeStamp } from "@/components/ui/stamp";
-import { ProductPhoto } from "@/components/ui/product-photo";
+import { classNames, formatMoney, formatReceiptTime, formatShortMoney } from "@/lib/format";
+import { OUTCOME_STYLE, RULE_LABEL, paypalStatusInWords } from "@/lib/labels";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+// The design system's paper and ink: no header, no lines, receipts on white.
 const gridTheme = themeQuartz.withParams({
-  accentColor: "#1c1917",
+  accentColor: "#1552f0",
+  backgroundColor: "#ffffff",
+  foregroundColor: "#14130f",
+  borderColor: "#e4e0d6",
   fontFamily: "inherit",
-  fontSize: 13,
-  headerFontWeight: 600,
-  headerTextColor: "#57534e",
-  headerBackgroundColor: "#fafaf9",
-  rowHoverColor: "#f5f5f4",
-  borderColor: "#e7e5e4",
-  wrapperBorderRadius: 16,
-  cellHorizontalPadding: 14,
+  fontSize: 16,
+  headerHeight: 0,
+  wrapperBorder: false,
+  rowBorder: false,
+  columnBorder: false,
+  headerRowBorder: false,
+  cellHorizontalPadding: 0,
+  rowHoverColor: "#f7f5f0",
+  selectedRowBackgroundColor: "#eaf0ff",
+  valueChangeValueHighlightBackgroundColor: "#eaf0ff",
 });
-
-export type DecisionAction = "approve" | "deny" | "refund";
-
-type GridProps = {
-  decisions: Decision[];
-  view: GridView | null;
-  selectedId: string | null;
-  onSelect: (decision: Decision) => void;
-  onAction: (action: DecisionAction, decision: Decision) => Promise<void>;
-};
 
 const PAID: Decision["outcome"][] = ["auto_approved", "approved"];
 
 /** The row the grid pins to the bottom: totals for the rows on screen. */
 type TotalsRow = { id: string; shown: number; paid: number; reserved: number };
 
-export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction }: GridProps) {
+export function DecisionsGrid({
+  decisions,
+  view,
+  selectedId,
+  onSelect,
+}: {
+  decisions: Decision[];
+  view: GridView | null;
+  selectedId: string | null;
+  onSelect: (decision: Decision) => void;
+}) {
   const gridRef = useRef<AgGridReact<Decision>>(null);
   const [totals, setTotals] = useState<TotalsRow>({ id: "totals", shown: 0, paid: 0, reserved: 0 });
+  // Wide screens put the full stamp beside the amount; phones stack a compact one under it.
+  const [isWide] = useState(() => window.matchMedia("(min-width: 640px)").matches);
 
   // Everything in the view except the search words is an AG Grid "external filter".
   const isExternalFilterPresent = useCallback(() => view !== null, [view]);
@@ -91,91 +99,39 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
 
   const columns = useMemo<ColDef<Decision>[]>(
     () => [
+      { field: "createdAt", hide: true, sort: "desc" }, // sorting only: the time shows under the title
       {
-        field: "createdAt",
-        headerName: "When",
-        width: 140,
-        sort: "desc",
-        valueFormatter: (p) => (p.value ? formatWhen(p.value) : ""),
-        cellClass: "text-stone-500",
-      },
-      {
-        field: "title",
-        headerName: "What & why",
+        colId: "receipt",
         flex: 1,
-        minWidth: 260,
+        minWidth: 160,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
           p.node.rowPinned ? (
             <TotalsLabel totals={p.data as unknown as TotalsRow} />
           ) : p.data ? (
-            <WhatAndWhy decision={p.data} />
+            <WhatAndWhen decision={p.data} />
           ) : null,
         tooltipValueGetter: (p) => p.data?.aiReasoning,
-        getQuickFilterText: (p) => `${p.data?.title} ${p.data?.category ?? ""} ${p.data?.aiReasoning}`,
+        getQuickFilterText: (p) =>
+          `${p.data?.title} ${p.data?.counterparty} ${p.data?.category ?? ""} ${p.data?.aiReasoning} ${
+            p.data ? `${OUTCOME_STYLE[p.data.outcome].label} ${RULE_LABEL[p.data.ruleHit]} ${paypalStatusInWords(p.data)}` : ""
+          }`,
       },
-      { field: "counterparty", headerName: "To", width: 150, tooltipField: "counterparty" },
       {
         field: "amount",
-        headerName: "Amount",
-        width: 100,
-        type: "rightAligned",
-        valueFormatter: (p) => (p.node?.rowPinned ? "" : p.value == null ? "" : formatMoney(p.value)),
-        cellClass: "tabular-nums font-medium",
-      },
-      {
-        field: "outcome",
-        headerName: "Outcome & rule",
-        width: 170,
+        width: isWide ? 400 : 128,
+        // Flash when the outcome changes (held → paid), not just the amount.
+        valueGetter: (p) => (p.data ? `${p.data.amount}|${p.data.outcome}` : ""),
+        comparator: (_a, _b, nodeA, nodeB) => (nodeA.data?.amount ?? 0) - (nodeB.data?.amount ?? 0),
         enableCellChangeFlash: true,
         cellRenderer: (p: ICellRendererParams<Decision>) =>
-          p.data && !p.node.rowPinned ? (
-            <div className="flex flex-col items-start gap-1 leading-none">
-              <OutcomeStamp outcome={p.data.outcome} />
-              <span className="text-[11px] text-stone-500">{RULE_LABEL[p.data.ruleHit]}</span>
-            </div>
-          ) : null,
-        getQuickFilterText: (p) =>
-          p.data ? `${OUTCOME_STYLE[p.data.outcome].label} ${RULE_LABEL[p.data.ruleHit]}` : "",
-      },
-      {
-        field: "paypal.status",
-        headerName: "PayPal",
-        width: 150,
-        enableCellChangeFlash: true,
-        cellRenderer: (p: ICellRendererParams<Decision>) =>
-          p.data && !p.node.rowPinned ? (
-            <div className="flex flex-col gap-1 leading-none">
-              <span className="text-stone-800">{paypalStatusInWords(p.data)}</span>
-              {p.data.paypal.status && !isSampleHistory(p.data) && (
-                <span className="truncate font-mono text-[10px] text-stone-400">{p.data.paypal.status}</span>
-              )}
-              {p.data.paypal.debugId && (
-                <span className="truncate font-mono text-[10px] text-rose-700">debug_id {p.data.paypal.debugId}</span>
-              )}
-            </div>
-          ) : null,
-        getQuickFilterText: (p) => (p.data ? paypalStatusInWords(p.data) : ""),
-      },
-      {
-        colId: "actions",
-        headerName: "",
-        width: 156,
-        pinned: "right",
-        sortable: false,
-        cellRenderer: (p: ICellRendererParams<Decision>) =>
-          p.data && !p.node.rowPinned ? <ActionButtons decision={p.data} onAction={onAction} /> : null,
+          p.data && !p.node.rowPinned ? <MoneyAndStamp decision={p.data} wide={isWide} /> : null,
       },
     ],
-    [onAction],
+    [isWide],
   );
 
   const getRowClass = useCallback(
-    (p: RowClassParams<Decision>) => {
-      if (p.node.rowPinned) return "bg-stone-50";
-      if (p.data?.id === selectedId) return "bg-violet-50";
-      if (p.data?.outcome === "held") return "bg-amber-50/70";
-      return undefined;
-    },
+    (p: RowClassParams<Decision>) => (p.data?.id === selectedId ? "!bg-leash-wash" : undefined),
     [selectedId],
   );
   useEffect(() => {
@@ -183,28 +139,28 @@ export function DecisionsGrid({ decisions, view, selectedId, onSelect, onAction 
   }, [selectedId]);
 
   return (
-    <div className="h-[620px] w-full">
-      <AgGridReact<Decision>
-        ref={gridRef}
-        theme={gridTheme}
-        rowData={decisions}
-        columnDefs={columns}
-        defaultColDef={{ sortable: true, resizable: true }}
-        rowHeight={68}
-        getRowId={(p) => p.data.id}
-        quickFilterText={view?.searchText ?? ""}
-        isExternalFilterPresent={isExternalFilterPresent}
-        doesExternalFilterPass={doesExternalFilterPass}
-        onModelUpdated={(event) => countVisibleRows(event.api)}
-        pinnedBottomRowData={[totals]}
-        getRowClass={getRowClass}
-        onRowClicked={(event) => event.data && !event.node.rowPinned && onSelect(event.data)}
-        cellFlashDuration={1500}
-        tooltipShowDelay={400}
-        overlayNoRowsTemplate="Nothing matches. Ask something else, or clear the view."
-        animateRows
-      />
-    </div>
+    <AgGridReact<Decision>
+      ref={gridRef}
+      theme={gridTheme}
+      domLayout="autoHeight"
+      rowData={decisions}
+      columnDefs={columns}
+      defaultColDef={{ sortable: true, suppressMovable: true }}
+      rowHeight={isWide ? 84 : 92}
+      getRowId={(p) => p.data.id}
+      quickFilterText={view?.searchText ?? ""}
+      isExternalFilterPresent={isExternalFilterPresent}
+      doesExternalFilterPass={doesExternalFilterPass}
+      onModelUpdated={(event) => countVisibleRows(event.api)}
+      pinnedBottomRowData={[totals]}
+      getRowClass={getRowClass}
+      rowClass="cursor-pointer"
+      onRowClicked={(event) => event.data && !event.node.rowPinned && onSelect(event.data)}
+      cellFlashDuration={1500}
+      tooltipShowDelay={500}
+      overlayNoRowsTemplate="Nothing matches. Ask something else, or close the filter."
+      animateRows
+    />
   );
 }
 
@@ -222,66 +178,49 @@ function fitsView(decision: Decision | undefined, view: GridView | null): boolea
   return true;
 }
 
-function TotalsLabel({ totals }: { totals: TotalsRow }) {
+function WhatAndWhen({ decision }: { decision: Decision }) {
+  const where = decision.kind === "purchase" ? `${decision.counterparty} · ` : "";
   return (
-    <span className="text-sm">
-      <span className="font-semibold">{totals.shown} shown</span>
-      <span className="text-stone-500">
-        {" "}
-        · {formatMoney(totals.paid)} paid · {formatMoney(totals.reserved)} reserved
+    <div className="flex h-full min-w-0 flex-col justify-center gap-1 pr-4 leading-tight">
+      <span className="truncate text-base sm:text-lg">{decision.title}</span>
+      <span className="truncate text-xs text-ink-soft sm:text-sm">
+        {where}
+        {formatReceiptTime(decision.createdAt)}
+        {isSampleHistory(decision) && " · sample"}
       </span>
-    </span>
-  );
-}
-
-function WhatAndWhy({ decision }: { decision: Decision }) {
-  return (
-    <div className="flex h-full min-w-0 items-center gap-3">
-      {decision.kind === "payment" ? (
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-600">
-          <UserRound className="h-5 w-5" />
-        </span>
-      ) : (
-        <ProductPhoto decision={decision} />
-      )}
-      <div className="flex min-w-0 flex-col gap-0.5 leading-snug">
-        <span className="truncate font-medium text-stone-900">{decision.title}</span>
-        <span className="line-clamp-2 whitespace-normal text-xs text-stone-500">{decision.aiReasoning}</span>
-      </div>
     </div>
   );
 }
 
-function ActionButtons({ decision, onAction }: { decision: Decision; onAction: GridProps["onAction"] }) {
-  const [isBusy, setIsBusy] = useState(false);
-  const run = async (action: DecisionAction) => {
-    setIsBusy(true);
-    await onAction(action, decision);
-    setIsBusy(false);
-  };
+function MoneyAndStamp({ decision, wide }: { decision: Decision; wide: boolean }) {
+  const amount = (
+    <span
+      className={classNames(
+        "font-mono text-lg tabular-nums",
+        !wide && "text-xl font-medium",
+        decision.outcome === "denied" && "line-through",
+      )}
+    >
+      {formatMoney(decision.amount)}
+    </span>
+  );
+  return wide ? (
+    <div className="flex h-full items-center justify-end gap-8">
+      {amount}
+      <OutcomeStamp outcome={decision.outcome} />
+    </div>
+  ) : (
+    <div className="flex h-full flex-col items-end justify-center gap-2 leading-none">
+      {amount}
+      <OutcomeStamp outcome={decision.outcome} size="compact" />
+    </div>
+  );
+}
 
-  if (isSampleHistory(decision)) return null;
-  if (decision.outcome === "held") {
-    return (
-      <div className="flex h-full items-center gap-1.5">
-        <Button size="sm" variant="primary" disabled={isBusy} onClick={() => run("approve")}>
-          Approve
-        </Button>
-        <Button size="sm" variant="secondary" disabled={isBusy} onClick={() => run("deny")}>
-          Deny
-        </Button>
-      </div>
-    );
-  }
-  // Money sent on to a person can't be pulled back, so only purchases can be refunded.
-  if (decision.kind === "purchase" && (decision.outcome === "auto_approved" || decision.outcome === "approved")) {
-    return (
-      <div className="flex h-full items-center">
-        <Button size="sm" variant="text" disabled={isBusy} onClick={() => run("refund")}>
-          Refund
-        </Button>
-      </div>
-    );
-  }
-  return null;
+function TotalsLabel({ totals }: { totals: TotalsRow }) {
+  return (
+    <span className="flex h-full items-center font-mono text-xs text-ink-soft">
+      {totals.shown} shown · {formatShortMoney(totals.paid)} paid · {formatShortMoney(totals.reserved)} reserved
+    </span>
+  );
 }

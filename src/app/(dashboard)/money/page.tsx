@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ControlRoom } from "@/components/money/control-room";
+import { MoneyPage } from "@/components/money/money-page";
 
-export const metadata: Metadata = { title: "Control room" };
+export const metadata: Metadata = { title: "Money" };
 
-export default function ControlRoomPage() {
-  return <ControlRoom />;
+export default function Money() {
+  return <MoneyPage />;
 }

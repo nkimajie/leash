@@ -52,7 +52,7 @@ export function ReservationsTimeline(props: { decisions: Decision[]; onSelect?: 
     };
   }, [onSelect, isEmpty]); // isEmpty: the scheduler only exists once there's something to show
 
-  if (isEmpty) return <p className="px-5 py-6 text-sm text-stone-500">Nothing has been reserved at PayPal yet.</p>;
+  if (isEmpty) return <p className="px-4 py-6 text-sm text-ink-soft sm:px-6">Nothing has been reserved at PayPal yet.</p>;
   return <BryntumScheduler ref={scheduler} {...settings} {...rowsAndBars} />;
 }
 
@@ -177,10 +177,10 @@ function rowCell(record: Model): DomConfig {
   const sample = record.getData("sample") ? " · sample" : "";
   return {
     children: [
-      { tag: "div", className: "truncate font-medium text-stone-900", text: String(record.getData("name")) },
+      { tag: "div", className: "truncate font-medium text-ink", text: String(record.getData("name")) },
       {
         tag: "div",
-        className: "flex items-center gap-1.5 text-xs text-stone-500",
+        className: "flex items-center gap-1.5 text-xs text-ink-soft",
         children: [
           { tag: "span", className: "h-2 w-2 shrink-0 rounded-full", style: { background: OUTCOME_COLOR[outcome] } },
           {

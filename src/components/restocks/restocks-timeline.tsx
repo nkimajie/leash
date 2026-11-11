@@ -16,7 +16,7 @@ import type { Restock } from "@/schemas";
 const WEEKS_BACK = 5; // far enough to show last runs
 const WEEKS_AHEAD = 8;
 
-const COLOR = { next: "#0ea5e9", due: "#f59e0b", later: "#7dd3fc", last: "#a8a29e", paused: "#d6d3d1" }; // sky, amber, sky-300, stone
+const COLOR = { next: "#1552f0", due: "#b7791f", later: "#afc8ff", last: "#7a776f", paused: "#e4e0d6" }; // Leash blue, reserved amber, blue rim, ink, hairline
 
 type RunKind = "last" | "next" | "later";
 
@@ -141,10 +141,10 @@ function restockCell(record: Model): DomConfig {
   const active = Boolean(record.getData("active"));
   return {
     children: [
-      { tag: "div", className: "truncate font-medium text-stone-900", text: String(record.getData("name")) },
+      { tag: "div", className: "truncate font-medium text-ink", text: String(record.getData("name")) },
       {
         tag: "div",
-        className: "text-xs text-stone-500",
+        className: "text-xs text-ink-soft",
         text: active ? `Every ${everyDays} ${everyDays === 1 ? "day" : "days"}` : "Paused",
       },
     ],
