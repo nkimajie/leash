@@ -158,7 +158,7 @@ await call("PATCH", `/api/payees/${morgan.id}`, { email: "morgan@example.com" })
 const morganOnPhone = await call("GET", `/api/decisions/${stranger.decisions[0].id}`);
 const morganApproved = await call("POST", `/api/decisions/${stranger.decisions[0].id}/approve`);
 check(
-  "once Morgan's email is added, the approval screen shows it and approving sends the money there",
+  "once Morgan's email is added, the decision shows it and approving sends the money there",
   morganOnPhone.body?.payee?.email === "morgan@example.com" &&
     morganApproved.body?.outcome === "approved" &&
     morganApproved.body.paypal.payoutId,

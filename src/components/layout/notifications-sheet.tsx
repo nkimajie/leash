@@ -3,10 +3,9 @@
 // The bell: what needs your okay, the latest thing that happened to your money, and (if you want)
 // the latest thing your twin learned.
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Preference } from "@/schemas";
-import { Button } from "@/components/ui/button";
+import { WaitingForYou } from "@/components/assistant/waiting-for-you";
 import { Card } from "@/components/ui/card";
 import { ReceiptRow } from "@/components/ui/receipt-row";
 import { Sheet } from "@/components/ui/sheet";
@@ -14,12 +13,10 @@ import { fetchPreferences } from "@/lib/api-client";
 import { OUTCOME_SENTENCE } from "@/lib/labels";
 import { loadNotificationPreferences } from "@/lib/notification-preferences";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
-import { inSentence } from "@/lib/format";
 
 const COUNT_WORDS = ["Nothing", "One thing", "Two things", "Three things", "Four things", "Five things"];
 
 export function NotificationsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const router = useRouter();
   const { decisions } = useLiveDecisions();
   const [lesson, setLesson] = useState<Preference | null>(null);
   const show = open ? loadNotificationPreferences() : null;
@@ -36,27 +33,12 @@ export function NotificationsSheet({ open, onClose }: { open: boolean; onClose: 
   const latest = decisions
     .filter((d) => d.outcome !== "held")
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-  const newest = waiting.at(-1);
   const summary = `${COUNT_WORDS[waiting.length] ?? `${waiting.length} things`} ${waiting.length === 1 ? "needs" : "need"} your okay.`;
 
   return (
     <Sheet open={open} onClose={onClose} title="Notifications" description={summary}>
       <div className="flex flex-col gap-5">
-        {show?.needsOkay && waiting.length > 0 && (
-          <>
-            <Card className="py-2 sm:py-3">
-              <h3 className="pt-2 text-xl font-semibold">Needs your okay</h3>
-              <div className="divide-y divide-hairline">
-                {waiting.map((decision) => (
-                  <ReceiptRow key={decision.id} decision={decision} />
-                ))}
-              </div>
-            </Card>
-            {newest && (
-              <Button onClick={() => router.push(`/approve/${newest.id}`)}>Review {inSentence(newest.title)}</Button>
-            )}
-          </>
-        )}
+        {show?.needsOkay && waiting.length > 0 && <WaitingForYou title="Needs your okay" />}
         {show?.paymentUpdates && latest && (
           <Card className="py-2 sm:py-3">
             <h3 className="pt-2 text-xl font-semibold">Recent update</h3>

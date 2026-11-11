@@ -1,7 +1,7 @@
 "use client";
 
 // Bottom sheets on phones, centred popovers on desktop: notifications, a receipt, "Why not?",
-// open on phone, help. Built on <dialog>, so Escape, focus and screen readers work for free.
+// help. Built on <dialog>, so Escape, focus and screen readers work for free.
 
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
@@ -20,7 +20,7 @@ export function Sheet({
   onClose: () => void;
   title?: string;
   description?: ReactNode;
-  /** An × button (notifications, profile), or a blue "Close" link (receipt, open on phone). */
+  /** An × button (notifications, profile), or a blue "Close" link (receipt, filter). */
   close?: "icon" | "text" | "none";
   /** Small popovers are white; sheets are paper. */
   white?: boolean;

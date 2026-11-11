@@ -107,7 +107,7 @@ export async function payPerson(
 
 // ---------- you deciding ----------
 
-/** One purchase or payment, as the approval screen shows it: a held payment shows where the money would go now. */
+/** One purchase or payment, ready to decide: a held payment shows where the money would go now. */
 export async function findDecisionToDecide(decisionId: string): Promise<Decision> {
   const decision = await database.decisions.findDecisionById(decisionId);
   if (!decision) throw new NotFoundError("We couldn't find that purchase or payment.");

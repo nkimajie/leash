@@ -1,6 +1,6 @@
 "use client";
 
-// The frame around every page except the phone approval screen and the welcome steps.
+// The frame around every page except the welcome steps.
 //   Desktop: a sidebar (Ask, Money, Your leash, Twin) and a top bar (where you are, settings,
 //            notifications, your profile).
 //   Phone:   the logo with notifications and profile on top, and four tabs at the bottom.
@@ -9,6 +9,7 @@ import { Bell, LinkIcon, MessageSquare, ReceiptText, Settings, UserRound, Users 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { DecisionResultProvider } from "@/components/approvals/decision-result";
 import { IconButton } from "@/components/ui/button";
 import { classNames } from "@/lib/format";
 import { isLookingAround } from "@/lib/looking-around";
@@ -33,7 +34,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <AccountProvider>
       <LiveDecisionsProvider>
-        <Frame>{children}</Frame>
+        <DecisionResultProvider>
+          <Frame>{children}</Frame>
+        </DecisionResultProvider>
       </LiveDecisionsProvider>
     </AccountProvider>
   );

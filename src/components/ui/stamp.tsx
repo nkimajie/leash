@@ -9,7 +9,7 @@ import { OUTCOME_STYLE, STAMP_TONE_CLASSES, type StampTone } from "@/lib/labels"
 const SIZES = {
   compact: "h-6 px-2 text-xs", // "Paid"
   row: "h-8 px-3 text-xs font-medium", // "Paid · PayPal captured"
-  large: "h-11 px-3 text-sm font-medium", // the same, on a receipt or approval screen
+  large: "h-11 px-3 text-sm font-medium", // the same, on a receipt or a result
 } as const;
 
 export type StampSize = keyof typeof SIZES;

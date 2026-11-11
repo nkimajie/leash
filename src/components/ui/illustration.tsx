@@ -14,7 +14,6 @@ const SIZES = {
   released: [320, 240], // you weren't charged
   "all-set": [320, 240], // all paid, settings saved
   "lesson-saved": [320, 240], // your twin learned something
-  "phone-handoff": [320, 240], // open on phone
 } as const;
 
 export type IllustrationName = keyof typeof SIZES;

@@ -5,11 +5,11 @@
 
 import { useState } from "react";
 import { isSampleHistory, type Decision } from "@/schemas";
-import { WhyNotSheet } from "@/components/approvals/why-not-sheet";
+import { DecideButtons } from "@/components/approvals/decide-buttons";
 import { Button } from "@/components/ui/button";
 import { ReceiptCard } from "@/components/ui/receipt-card";
 import { Sheet } from "@/components/ui/sheet";
-import { approveDecision, refundDecision } from "@/lib/api-client";
+import { refundDecision } from "@/lib/api-client";
 import { classNames, formatReceiptTime, formatShortMoney } from "@/lib/format";
 import { paypalStatusInWords } from "@/lib/labels";
 
@@ -24,7 +24,6 @@ export function ReceiptSheet({
   onClose: () => void;
   onChanged: () => Promise<void>;
 }) {
-  const [denying, setDenying] = useState<Decision | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -45,56 +44,39 @@ export function ReceiptSheet({
     decision?.kind === "purchase" && (decision.outcome === "auto_approved" || decision.outcome === "approved");
 
   return (
-    <>
-      <Sheet open={decision !== null && denying === null} onClose={onClose} title="Receipt" close="text">
-        {decision && (
-          <>
-            <ReceiptCard decision={decision} />
-            <h3 className="mt-6 text-xl font-semibold">PayPal trail</h3>
-            <ol className="mt-3 flex flex-col gap-4">
-              {paypalSteps(decision).map((step) => (
-                <li key={step.label}>
-                  <div className={classNames("text-sm", step.stopped && "text-failed")}>{step.label}</div>
-                  {step.detail && <div className="mt-0.5 text-xs text-ink-soft">{step.detail}</div>}
-                  {step.id && <div className="mt-0.5 font-mono text-xs break-all text-ink-soft">{step.id}</div>}
-                </li>
-              ))}
-            </ol>
-            {problem && <p className="mt-4 text-sm text-failed">{problem}</p>}
-            {decision.outcome === "held" && !isSampleHistory(decision) && (
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <Button variant="secondary" disabled={isBusy} onClick={() => setDenying(decision)}>
-                  Deny
-                </Button>
-                <Button disabled={isBusy} onClick={() => act(() => approveDecision(decision.id))}>
-                  {isBusy ? "Paying…" : "Approve"}
-                </Button>
-              </div>
-            )}
-            {canRefund && !isSampleHistory(decision) && (
-              <Button
-                variant="secondary"
-                className="mt-6 w-full"
-                disabled={isBusy}
-                onClick={() =>
-                  window.confirm("Refund this purchase with PayPal?") && act(() => refundDecision(decision.id))
-                }
-              >
-                {isBusy ? "Refunding…" : "Refund"}
-              </Button>
-            )}
-          </>
-        )}
-      </Sheet>
-      <WhyNotSheet
-        decision={denying}
-        onClose={() => setDenying(null)}
-        onDenied={async () => {
-          setDenying(null);
-          await onChanged();
-        }}
-      />
-    </>
+    <Sheet open={decision !== null} onClose={onClose} title="Receipt" close="text">
+      {decision && (
+        <>
+          <ReceiptCard decision={decision} />
+          <h3 className="mt-6 text-xl font-semibold">PayPal trail</h3>
+          <ol className="mt-3 flex flex-col gap-4">
+            {paypalSteps(decision).map((step) => (
+              <li key={step.label}>
+                <div className={classNames("text-sm", step.stopped && "text-failed")}>{step.label}</div>
+                {step.detail && <div className="mt-0.5 text-xs text-ink-soft">{step.detail}</div>}
+                {step.id && <div className="mt-0.5 font-mono text-xs break-all text-ink-soft">{step.id}</div>}
+              </li>
+            ))}
+          </ol>
+          {problem && <p className="mt-4 text-sm text-failed">{problem}</p>}
+          {decision.outcome === "held" && !isSampleHistory(decision) && (
+            <DecideButtons decision={decision} onDecided={onClose} className="mt-6" />
+          )}
+          {canRefund && !isSampleHistory(decision) && (
+            <Button
+              variant="secondary"
+              className="mt-6 w-full"
+              disabled={isBusy}
+              onClick={() =>
+                window.confirm("Refund this purchase with PayPal?") && act(() => refundDecision(decision.id))
+              }
+            >
+              {isBusy ? "Refunding…" : "Refund"}
+            </Button>
+          )}
+        </>
+      )}
+    </Sheet>
   );
 }
 

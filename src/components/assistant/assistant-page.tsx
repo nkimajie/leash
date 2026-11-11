@@ -5,13 +5,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { AssistantEvent, Decision, Restock } from "@/schemas";
-import { OpenOnPhoneSheet } from "@/components/approvals/open-on-phone-sheet";
+import type { AssistantEvent, Restock } from "@/schemas";
 import { Page } from "@/components/ui/page";
 import { askAssistant, runAttack, runRestockNow } from "@/lib/api-client";
 import { TOOL_LABEL } from "@/lib/labels";
 import { speak, stopSpeaking } from "@/lib/speak";
-import { useLiveDecisions } from "@/lib/use-live-decisions";
 import { APlaceToStart } from "./a-place-to-start";
 import { AskHero } from "./ask-hero";
 import { AssistantTimeline } from "./assistant-timeline";
@@ -21,14 +19,11 @@ import { WaitingForYou } from "./waiting-for-you";
 
 export function AssistantPage() {
   const router = useRouter();
-  const { decisions } = useLiveDecisions();
   const [prompt, setPrompt] = useState("");
   const [steps, setSteps] = useState<AssistantEvent[]>([]);
   const [isWorking, setIsWorking] = useState(false);
   const [wasSpoken, setWasSpoken] = useState(false);
   const [readAloud, setReadAloud] = useState(false);
-  // undefined: closed. null: open, showing Leash itself. A decision: open, showing its approval screen.
-  const [onPhone, setOnPhone] = useState<Decision | null | undefined>(undefined);
   const endOfTimeline = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,11 +68,9 @@ export function AssistantPage() {
     }, readAloud);
   }
 
-  const newestHeld = decisions.filter((d) => d.outcome === "held").at(-1) ?? null;
-
   return (
     <Page narrow>
-      <AskHero onOpenOnPhone={() => setOnPhone(newestHeld)} />
+      <AskHero />
       <SignInReminder />
       <Composer
         prompt={prompt}
@@ -89,7 +82,7 @@ export function AssistantPage() {
       />
       {(steps.length > 0 || isWorking) && (
         <div>
-          <AssistantTimeline steps={steps} isWorking={isWorking} wasSpoken={wasSpoken} onReviewOnPhone={setOnPhone} />
+          <AssistantTimeline steps={steps} isWorking={isWorking} wasSpoken={wasSpoken} />
           <div ref={endOfTimeline} />
         </div>
       )}
@@ -106,7 +99,6 @@ export function AssistantPage() {
           show((onStep) => runAttack(id, onStep), readAloud);
         }}
       />
-      <OpenOnPhoneSheet open={onPhone !== undefined} onClose={() => setOnPhone(undefined)} decision={onPhone} />
     </Page>
   );
 }

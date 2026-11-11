@@ -5,9 +5,8 @@
 
 import { Play, Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import type { Restock } from "@/schemas";
+import type { Decision, Restock } from "@/schemas";
 import {
   addRestock,
   fetchRestocks,
@@ -17,6 +16,8 @@ import {
   type RestockRun,
 } from "@/lib/api-client";
 import { formatDaysAway } from "@/lib/format";
+import { useLiveDecisions } from "@/lib/use-live-decisions";
+import { DecideButtons } from "@/components/approvals/decide-buttons";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Field, TextInput, Toggle } from "@/components/ui/form-fields";
@@ -152,15 +153,19 @@ export function RestockManager() {
   );
 }
 
+/** What a restock just bought. Everything waits for your okay, so you can decide right here. */
 function RunResult({ run }: { run: RestockRun }) {
+  const { decisions } = useLiveDecisions();
+  const latest = (decision: Decision) => decisions.find((d) => d.id === decision.id) ?? decision;
   return (
     <Card>
       <CardHeader title={`Ran “${run.restock.prompt}”`} description={run.reply} />
       <div className="flex flex-col divide-y divide-hairline">
-        {run.decisions.map((decision) => (
-          <Link key={decision.id} href={`/approve/${decision.id}`} className="block">
+        {run.decisions.map(latest).map((decision) => (
+          <div key={decision.id} className="pb-3">
             <ReceiptRow decision={decision} />
-          </Link>
+            {decision.outcome === "held" && <DecideButtons decision={decision} />}
+          </div>
         ))}
       </div>
     </Card>

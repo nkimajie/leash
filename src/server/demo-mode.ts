@@ -3,7 +3,7 @@ import "server-only";
 // Demo mode (DEMO_MODE=true) is for the public demo judges use. Everyone shares one account, so:
 //   - anyone can put it back to the sample data, and the daily job does so every night
 //   - it starts fresh when the next person arrives after 30 quiet minutes
-//   - every fresh demo starts with one real purchase waiting for approval, to try on your phone
+//   - every fresh demo starts with one real purchase waiting for your approval
 // The connected PayPal account is kept, and can't be disconnected while demo mode is on.
 
 import { isSampleHistory, type AssistantEvent } from "@/schemas";

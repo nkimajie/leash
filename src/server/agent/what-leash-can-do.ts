@@ -54,14 +54,14 @@ export const WHAT_LEASH_CAN_DO = [
 ];
 
 export const HOW_PAYPAL_KEEPS_YOU_SAFE =
-  "Within your rules, PayPal takes the money straight away. Anything else, PayPal only reserves until you approve it on your phone, and releases it if you say no, so you're never charged. Gift cards, big payments to strangers and anything over your caps never reach PayPal at all. Your rules are code, not a prompt, so a scam can't talk me past them.";
+  "Within your rules, PayPal takes the money straight away. Anything else, PayPal only reserves until you approve it in Leash, and releases it if you say no, so you're never charged. Gift cards, big payments to strangers and anything over your caps never reach PayPal at all. Your rules are code, not a prompt, so a scam can't talk me past them.";
 
 /** How Leash introduces itself out loud: what the AI does first, then how PayPal keeps the money safe. */
 export const INTRODUCTION_ALOUD =
   "I'm Leash. I understand what you need, pick what fits your taste, learn from every no, and pay with your PayPal. Within your rules I pay straight away; anything else, PayPal only reserves until you approve it.";
 
 export const ONLY_YOU_CAN_APPROVE =
-  "I can't approve that: only you can, with a tap on Approve here or on your phone. That way a scam, or a voice on the TV, can never release your money.";
+  "I can't approve that: only you can, with a tap on Approve in Leash. That way a scam, or a voice on the TV, can never release your money.";
 
 /** The built-in answer to "what can you do for me?", ending with where your leash stands right now. */
 export function describeWhatICanDo(status: LeashStatus, spoken: boolean): string {

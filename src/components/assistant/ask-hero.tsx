@@ -3,9 +3,7 @@
 // The top of Ask: a greeting by your PayPal name. Right after you approve or deny something it
 // says so ("All paid, Favor." / "You're in control."), and mentions anything still waiting.
 
-import { Smartphone } from "lucide-react";
 import type { Decision } from "@/schemas";
-import { Button } from "@/components/ui/button";
 import { WashCard } from "@/components/ui/card";
 import { Illustration, type IllustrationName } from "@/components/ui/illustration";
 import { PageHeader } from "@/components/ui/page-header";
@@ -16,7 +14,7 @@ import { inSentence } from "@/lib/format";
 /** How long "All paid" stays after you approve something. */
 const JUST_NOW_MS = 10 * 60_000;
 
-export function AskHero({ onOpenOnPhone }: { onOpenOnPhone: () => void }) {
+export function AskHero() {
   const { firstName } = useAccount();
   const { decisions } = useLiveDecisions();
   const { title, subtitle, illustration } = greeting(decisions, firstName ? `, ${firstName}` : "");
@@ -34,16 +32,7 @@ export function AskHero({ onOpenOnPhone }: { onOpenOnPhone: () => void }) {
 
       {/* Desktop: the greeting, then the promise */}
       <div className="hidden lg:block">
-        <PageHeader
-          title={title}
-          description={subtitle}
-          action={
-            <Button onClick={onOpenOnPhone} className="px-6">
-              <Smartphone className="h-[22px] w-[22px]" strokeWidth={1.375} />
-              Open on phone
-            </Button>
-          }
-        />
+        <PageHeader title={title} description={subtitle} />
       </div>
       <WashCard className="hidden items-center justify-between gap-6 lg:flex">
         <div>

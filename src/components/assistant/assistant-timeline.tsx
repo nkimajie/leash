@@ -3,26 +3,24 @@
 // The assistant's live steps: what it's thinking, the tools it uses, and a receipt for every
 // purchase or payment, stamped with what happened to the money.
 
-import { ArrowRight, Loader2, Smartphone } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import type { AssistantEvent, Decision, SearchResult } from "@/schemas";
+import { isSampleHistory, type AssistantEvent, type Decision, type SearchResult } from "@/schemas";
+import { DecideButtons } from "@/components/approvals/decide-buttons";
 import { LeashMark } from "@/components/layout/leash-logo";
-import { Button } from "@/components/ui/button";
 import { ProductThumbnail } from "@/components/ui/product-photo";
 import { ReceiptCard } from "@/components/ui/receipt-card";
 import { formatMoney } from "@/lib/format";
 import { TOOL_LABEL } from "@/lib/labels";
+import { useLiveDecisions } from "@/lib/use-live-decisions";
 
 /** Tools that spend from the request's budget. Questions and commands have no use for one. */
 const MONEY_TOOLS = ["search_products", "buy_product", "pay_person"];
 
-export function AssistantTimeline(props: {
-  steps: AssistantEvent[];
-  isWorking: boolean;
-  wasSpoken: boolean;
-  onReviewOnPhone: (decision: Decision) => void;
-}) {
+export function AssistantTimeline(props: { steps: AssistantEvent[]; isWorking: boolean; wasSpoken: boolean }) {
   const { steps, isWorking } = props;
+  // Receipts follow the live decision, so approving or denying one updates its stamp right here.
+  const { decisions } = useLiveDecisions();
   if (steps.length === 0 && !isWorking) return null;
   const usedTool = (tools: string[]) => steps.some((step) => step.type === "tool_started" && tools.includes(step.tool));
   const request = steps.find((step) => step.type === "request_started")?.request;
@@ -31,7 +29,7 @@ export function AssistantTimeline(props: {
     showBudget: usedTool(MONEY_TOOLS),
     // A spending answer links to Money, where AG Grid shows the same question as a table.
     moneyLink: request && usedTool(["look_up_spending"]) ? `/money?ask=${encodeURIComponent(request.prompt)}` : null,
-    onReviewOnPhone: props.onReviewOnPhone,
+    latest: (decision) => decisions.find((d) => d.id === decision.id) ?? decision,
   };
 
   return (
@@ -69,7 +67,8 @@ type StepContext = {
   youSaid: string;
   showBudget: boolean;
   moneyLink: string | null;
-  onReviewOnPhone: (decision: Decision) => void;
+  /** The newest version of a decision (after you approve or deny it). */
+  latest: (decision: Decision) => Decision;
 };
 
 function StepBody({ step, context }: { step: AssistantEvent; context: StepContext }) {
@@ -102,17 +101,14 @@ function StepBody({ step, context }: { step: AssistantEvent; context: StepContex
       return (
         <p className="rounded-xl bg-white/60 px-4 py-3 text-sm whitespace-pre-line text-ink-soft">{step.summary}</p>
       );
-    case "decision_made":
+    case "decision_made": {
+      const decision = context.latest(step.decision);
       return (
-        <ReceiptCard decision={step.decision}>
-          {step.decision.outcome === "held" && (
-            <Button variant="secondary" size="sm" onClick={() => context.onReviewOnPhone(step.decision)}>
-              <Smartphone className="h-4 w-4" strokeWidth={1.5} />
-              Review on your phone
-            </Button>
-          )}
+        <ReceiptCard decision={decision}>
+          {decision.outcome === "held" && !isSampleHistory(decision) && <DecideButtons decision={decision} />}
         </ReceiptCard>
       );
+    }
     case "reply":
       return (
         <div className="rounded-[20px] border border-leash-rim bg-leash-wash px-5 py-4">

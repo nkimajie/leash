@@ -22,7 +22,7 @@ export function ReceiptCard({
 }: {
   decision: Decision;
   className?: string;
-  /** Actions under the receipt, e.g. "Review on your phone". */
+  /** Actions under the receipt, e.g. Deny and Approve. */
   children?: ReactNode;
 }) {
   return (
