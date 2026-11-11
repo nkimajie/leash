@@ -77,7 +77,8 @@ anything outside your rules still waits for your tap.
 - **The rule engine and the twin's learning are pure functions** with unit tests: no network, no database.
 - **Channel3** for real product search (we show the cheapest in-stock offer and how many stores it compared),
   **Supabase** (Postgres and Realtime) for storage and live updates, **Next.js 16**, hosted on **Render** with a
-  daily cron job that runs due restocks, releases reservations nobody answered, and resets the public demo.
+  daily job (`/api/keepalive`) that runs due restocks, releases reservations nobody answered, and resets the public
+  demo.
 - **AG Grid** shows your money: every receipt, live, themed to look like a list of receipts. Claude turns a question
   into the grid's external filter and sort, the totals row adds up only the rows you can see, and a cell flashes when
   a payment's outcome changes.

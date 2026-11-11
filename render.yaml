@@ -41,22 +41,8 @@ services:
       - key: DEMO_MODE # public demo: reset button, nightly reset, Claude use capped per visitor
         value: "true"
 
-  # Once a day: keep the database awake and run recurring restocks that are due.
-  - type: cron
-    name: leash-daily
-    runtime: node
-    schedule: "0 7 * * *" # 07:00 UTC
-    buildCommand: echo "nothing to build"
-    # APP_URL is the app's public address (the same value you give the web service).
-    startCommand: 'curl --fail --silent --show-error -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/keepalive"'
-    envVars:
-      - key: CRON_SECRET
-        fromService:
-          type: web
-          name: leash
-          envVarKey: CRON_SECRET
-      - key: APP_URL
-        fromService:
-          type: web
-          name: leash
-          envVarKey: APP_URL
+# The daily job (release reservations nobody answered, run due restocks, keep the database awake)
+# is GET /api/keepalive with the header "Authorization: Bearer <CRON_SECRET>". Render cron jobs are
+# paid, so it isn't here: call it once a day from any scheduler (a Render cron job, GitHub Actions,
+# cron-job.org). Without it, the public demo still resets when someone arrives after a quiet spell,
+# and restocks run from "Run now".

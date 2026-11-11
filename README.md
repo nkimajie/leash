@@ -210,15 +210,16 @@ To show a declined card in a demo, set `DEMO_FORCE_DECLINE=true`. PayPal's sandb
 
 ## Deploy on Render
 
-`render.yaml` describes everything. In the Render dashboard choose **New > Blueprint**, pick this repository, and
-fill in the keys you have (leave the rest blank for mock mode). It creates:
+`render.yaml` describes the web app, on Render's free plan. In the Render dashboard choose **New > Blueprint**, pick
+this repository, and fill in the keys you have (leave the rest blank for mock mode).
 
-- **leash**: the web app
-- **leash-daily**: a cron job that calls `/api/keepalive` once a day, to keep the database awake and run due
-  restocks
+The daily job (release reservations nobody answered for 7 days, run due restocks, keep the database awake) is
+`GET /api/keepalive` with `Authorization: Bearer <CRON_SECRET>`. Render cron jobs are paid, so call it once a day from
+any scheduler you like. Without it the demo still works: it resets when someone arrives after a quiet spell, and
+restocks run from **Run now**.
 
-After the first deploy, set `APP_URL` to the app's address (e.g. `https://leash.onrender.com`): PayPal sends you
-back there after you sign in, and the daily job calls it. Use a paid
+PayPal sends you back to the app's address after you sign in. Render tells the app its own address, so `APP_URL`
+is optional there (set it for a custom domain). Use a paid
 instance for a public demo: the free one sleeps when idle and takes up to a minute to wake. Connect Supabase too,
 because memory mode forgets the connected PayPal account whenever the app restarts.
 
@@ -277,7 +278,7 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
   money reserved at PayPal (each reservation from authorized to decided, and for one still waiting, Leash's 7 days
   then PayPal's own 29-day limit)
 - **Web Speech API**: the browser's own speech recognition and voice, for talking to Leash (Chrome, Edge, Safari)
-- **Render**: hosting and the daily cron job
+- **Render**: hosting
 - Next.js 16, React 19, TypeScript, zod, Tailwind CSS, Vitest, lucide icons
 
 ## License
