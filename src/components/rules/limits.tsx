@@ -4,7 +4,8 @@
 // move any money. Change them by tapping, or in your own words (Claude suggests the change).
 
 import { Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useEffectEvent, useState } from "react";
 import type { RuleSuggestion, SpendingRules } from "@/schemas";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, WashCard } from "@/components/ui/card";
@@ -259,7 +260,9 @@ const EXAMPLE_SENTENCE = "Ask me before anything over $30, never buy alcohol or 
 
 /** Describe a change in your own words; Claude suggests it, and nothing is saved until you do. */
 function RulesInYourWords({ onSuggested }: { onSuggested: (proposed: SpendingRules) => void }) {
-  const [sentence, setSentence] = useState("");
+  // Ask can open this page with a change already written ("?change=Never buy one item over $600").
+  const changeFromAsk = useSearchParams().get("change");
+  const [sentence, setSentence] = useState(changeFromAsk ?? "");
   const [suggestion, setSuggestion] = useState<RuleSuggestion | null>(null);
   const [isThinking, setIsThinking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -275,6 +278,13 @@ function RulesInYourWords({ onSuggested }: { onSuggested: (proposed: SpendingRul
       setIsThinking(false);
     }
   }
+
+  const suggestFromAsk = useEffectEvent((text: string) => suggest(text));
+  useEffect(() => {
+    if (!changeFromAsk) return;
+    const timer = setTimeout(() => suggestFromAsk(changeFromAsk), 0);
+    return () => clearTimeout(timer);
+  }, [changeFromAsk]);
 
   return (
     <div>
