@@ -15,11 +15,15 @@ export async function findConnectedWallet(): Promise<Wallet | null> {
 }
 
 /** Saves your PayPal account, replacing any earlier one. */
-export async function saveConnectedWallet(vaultId: string, payerEmail: string | null): Promise<Wallet> {
+export async function saveConnectedWallet(
+  vaultId: string,
+  payerEmail: string | null,
+  payerName: string | null,
+): Promise<Wallet> {
   const db = await connectToSupabase();
   dataOrThrow(await db.from("wallets").delete().eq("user_id", "demo"), "replace your PayPal account");
   const row = dataOrThrow(
-    await db.from("wallets").insert({ paypal_vault_id: vaultId, payer_email: payerEmail }).select().single(),
+    await db.from("wallets").insert({ paypal_vault_id: vaultId, payer_email: payerEmail, payer_name: payerName }).select().single(),
     "save your PayPal account",
   );
   return toWallet(row);

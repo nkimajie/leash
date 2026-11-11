@@ -3,6 +3,7 @@
 
 import type {
   AssistantEvent,
+  ConnectPayPalThen,
   Decision,
   GridView,
   NewPayee,
@@ -60,7 +61,8 @@ export const runRestockNow = (id: string) => sendJson<RestockRun>("POST", `/api/
 // ---------- your PayPal account ----------
 
 export const fetchPayPalConnection = () => getJson<PayPalConnection>("/api/paypal/connection");
-export const startConnectingPayPal = () => sendJson<{ approvalUrl: string }>("POST", "/api/paypal/connect");
+export const startConnectingPayPal = (then: ConnectPayPalThen) =>
+  sendJson<{ approvalUrl: string }>("POST", "/api/paypal/connect", { then });
 export const disconnectPayPal = () => sendJson<PayPalConnection>("DELETE", "/api/paypal/connection");
 
 // ---------- rules and status ----------

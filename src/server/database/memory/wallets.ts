@@ -9,8 +9,12 @@ export async function findConnectedWallet(): Promise<Wallet | null> {
 }
 
 /** Saves your PayPal account, replacing any earlier one. */
-export async function saveConnectedWallet(vaultId: string, payerEmail: string | null): Promise<Wallet> {
-  memoryTables.wallet = { id: newId(), vaultId, payerEmail, createdAt: timestampNow() };
+export async function saveConnectedWallet(
+  vaultId: string,
+  payerEmail: string | null,
+  payerName: string | null,
+): Promise<Wallet> {
+  memoryTables.wallet = { id: newId(), vaultId, payerEmail, payerName, createdAt: timestampNow() };
   return memoryTables.wallet;
 }
 

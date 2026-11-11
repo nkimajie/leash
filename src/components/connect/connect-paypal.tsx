@@ -38,7 +38,7 @@ export function ConnectPayPal() {
     setBusy(true);
     setError(null);
     try {
-      const { approvalUrl } = await startConnectingPayPal();
+      const { approvalUrl } = await startConnectingPayPal("paypal");
       window.location.href = approvalUrl; // PayPal's own page; it sends you back here afterwards
     } catch (failure) {
       setError((failure as Error).message);

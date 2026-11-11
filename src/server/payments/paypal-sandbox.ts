@@ -70,7 +70,9 @@ export async function finishSavingPayPalAccount(setupTokenId: string) {
     }),
   );
   if (!result.id) throw new PayPalError("NO_VAULT_ID", "", "PayPal didn't return a saved payment method.");
-  return { vaultId: result.id, payerEmail: result.paymentSource?.paypal?.emailAddress ?? null };
+  const payer = result.paymentSource?.paypal;
+  const payerName = [payer?.name?.givenName, payer?.name?.surname].filter(Boolean).join(" ") || null;
+  return { vaultId: result.id, payerEmail: payer?.emailAddress ?? null, payerName };
 }
 
 // ---------- moving money ----------
@@ -82,7 +84,7 @@ export async function finishSavingPayPalAccount(setupTokenId: string) {
 export async function sandboxAuthorizePayment(payment: PaymentRequest): Promise<PaymentAuthorization> {
   const wallet = await database.wallets.findConnectedWallet();
   if (!wallet) {
-    throw new PayPalError("PAYPAL_NOT_CONNECTED", "", "Connect your PayPal account first, on the Connect PayPal page.");
+    throw new PayPalError("PAYPAL_NOT_CONNECTED", "", "Sign in with PayPal first: Your leash, then PayPal.");
   }
 
   const { result: order } = await callPayPal(() =>

@@ -58,6 +58,7 @@ export const toWallet = (row: Row): Wallet => ({
   id: row.id,
   vaultId: row.paypal_vault_id,
   payerEmail: row.payer_email,
+  payerName: row.payer_name ?? null,
   createdAt: row.created_at,
 });
 
