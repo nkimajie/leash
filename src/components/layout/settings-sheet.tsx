@@ -5,8 +5,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
+import { PoweredBy, type Sponsor } from "@/components/ui/powered-by";
 import { NotificationPreferencesSheet } from "./notification-preferences-sheet";
 import { ServiceStatus } from "./service-status";
+
+const SPONSORS: Sponsor[] = ["PayPal", "AG Grid", "Bryntum", "APIMatic", "Channel3", "Render"];
 
 export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [editingNotifications, setEditingNotifications] = useState(false);
@@ -24,6 +27,14 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
             <h3 className="mb-2 text-base font-medium">Services</h3>
             <p className="mb-3 text-sm text-ink-soft">Each one runs in mock mode until its keys are set.</p>
             <ServiceStatus />
+          </section>
+          <section>
+            <h3 className="mb-3 text-base font-medium">Built with our hackathon sponsors</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {SPONSORS.map((sponsor) => (
+                <PoweredBy key={sponsor} sponsor={sponsor} />
+              ))}
+            </div>
           </section>
         </div>
       </Sheet>

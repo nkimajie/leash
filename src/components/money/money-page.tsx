@@ -13,6 +13,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Page } from "@/components/ui/page";
 import { PageHeader } from "@/components/ui/page-header";
 import { Stamp } from "@/components/ui/stamp";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { askControlRoom } from "@/lib/api-client";
 import { formatShortMoney } from "@/lib/format";
 import { OUTCOME_STYLE, type StampTone } from "@/lib/labels";
@@ -104,10 +105,12 @@ export function MoneyPage() {
         <CardHeader
           title={view ? view.summary : "Recent activity"}
           action={
-            view && (
+            view ? (
               <button onClick={() => setView(null)} className="text-base text-leash">
                 Close filter
               </button>
+            ) : (
+              <PoweredBy sponsor="AG Grid" />
             )
           }
         />
@@ -123,6 +126,7 @@ export function MoneyPage() {
       <Card>
         <CardHeader
           title="Money reserved at PayPal"
+          action={<PoweredBy sponsor="Bryntum" />}
           description={`When a payment needs your okay, PayPal reserves the money without taking it. Each bar runs until it was decided. One still waiting shows the ${DAYS_TO_ANSWER} days Leash gives you, then PayPal's own limit. Click a bar to see its receipt.`}
         />
         <div className="-mx-4 sm:-mx-6">

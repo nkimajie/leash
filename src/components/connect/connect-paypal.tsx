@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Stamp } from "@/components/ui/stamp";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { disconnectPayPal, startConnectingPayPal } from "@/lib/api-client";
 import { formatReceiptTime } from "@/lib/format";
 import { useAccount } from "@/lib/use-account";
@@ -99,6 +100,10 @@ export function ConnectPayPal() {
 
         <Card>
           <CardHeader title="How the leash works with PayPal" />
+          <div className="-mt-1 mb-5 flex flex-wrap gap-1.5">
+            <PoweredBy sponsor="PayPal" />
+            <PoweredBy sponsor="APIMatic" />
+          </div>
           <ul className="flex flex-col gap-4">
             <HowItWorks
               tone="paid"

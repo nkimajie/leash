@@ -9,6 +9,7 @@ import { DecideButtons } from "@/components/approvals/decide-buttons";
 import { Button } from "@/components/ui/button";
 import { ReceiptCard } from "@/components/ui/receipt-card";
 import { Sheet } from "@/components/ui/sheet";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { refundDecision } from "@/lib/api-client";
 import { classNames, formatReceiptTime, formatShortMoney } from "@/lib/format";
 import { paypalStatusInWords } from "@/lib/labels";
@@ -48,7 +49,13 @@ export function ReceiptSheet({
       {decision && (
         <>
           <ReceiptCard decision={decision} />
-          <h3 className="mt-6 text-xl font-semibold">PayPal trail</h3>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-xl font-semibold">PayPal trail</h3>
+            <div className="flex flex-wrap gap-1.5">
+              <PoweredBy sponsor="PayPal" />
+              <PoweredBy sponsor="APIMatic" />
+            </div>
+          </div>
           <ol className="mt-3 flex flex-col gap-4">
             {paypalSteps(decision).map((step) => (
               <li key={step.label}>

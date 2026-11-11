@@ -10,6 +10,7 @@ import { DecideButtons } from "@/components/approvals/decide-buttons";
 import { LeashMark } from "@/components/layout/leash-logo";
 import { ProductThumbnail } from "@/components/ui/product-photo";
 import { ReceiptCard } from "@/components/ui/receipt-card";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { formatMoney } from "@/lib/format";
 import { TOOL_LABEL } from "@/lib/labels";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
@@ -136,9 +137,11 @@ function StepBody({ step, context }: { step: AssistantEvent; context: StepContex
 function SearchResults({ products }: { products: SearchResult[] }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="font-mono text-xs text-ink-soft">
-        {products[0].source === "channel3" ? "Found with Channel3" : "From the sample catalog"}
-      </p>
+      {products[0].source === "channel3" ? (
+        <PoweredBy sponsor="Channel3" className="self-start" />
+      ) : (
+        <p className="font-mono text-xs text-ink-soft">From the sample catalog</p>
+      )}
       <ul className="grid gap-2 sm:grid-cols-2">
         {products.map((product) => (
           <li key={product.id} className="flex items-center gap-3 rounded-2xl border border-hairline bg-white p-3">

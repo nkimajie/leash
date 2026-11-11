@@ -17,6 +17,7 @@ import { Illustration } from "@/components/ui/illustration";
 import { LeashMeter } from "@/components/ui/leash-meter";
 import { Segmented } from "@/components/ui/segmented";
 import { Stamp } from "@/components/ui/stamp";
+import { PoweredBy } from "@/components/ui/powered-by";
 import { addPreference, fetchSpendingRules, saveSpendingRules, startConnectingPayPal } from "@/lib/api-client";
 import { formatShortMoney } from "@/lib/format";
 import { addWords, useVoiceInput } from "@/lib/use-voice-input";
@@ -96,7 +97,10 @@ function HowItWorks({ cancelled }: { cancelled: boolean }) {
           Leash buys things and pays people with your PayPal. <span className="text-leash">You hold the leash.</span>
         </h1>
         <Card className="mt-6">
-          <h2 className="text-xl font-semibold">Here&apos;s how it works</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-semibold">Here&apos;s how it works</h2>
+            <PoweredBy sponsor="PayPal" />
+          </div>
           <ul className="mt-5 flex flex-col gap-5">
             <Rule tone="paid" stamp="Paid" text="Small, expected purchases are paid straight away." />
             <Rule tone="reserved" stamp="Reserved" text="Bigger or unusual purchases wait for your okay." />

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Field, TextInput, Toggle } from "@/components/ui/form-fields";
 import { ReceiptRow } from "@/components/ui/receipt-row";
+import { PoweredBy } from "@/components/ui/powered-by";
 
 // The timeline uses Bryntum Scheduler, which needs the browser, so it's only loaded there.
 const RestocksTimeline = dynamic(() => import("./restocks-timeline").then((file) => file.RestocksTimeline), {
@@ -79,6 +80,7 @@ export function RestockManager() {
         <Card>
           <CardHeader
             title="Coming up"
+            action={<PoweredBy sponsor="Bryntum" />}
             description="Each mark is a day a restock runs. Drag the next one to move it."
           />
           <div className="-mx-4 sm:-mx-6">
