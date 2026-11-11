@@ -11,7 +11,7 @@ import { Chip } from "@/components/ui/chip";
 import { Sheet } from "@/components/ui/sheet";
 import { denyDecision } from "@/lib/api-client";
 import { QUICK_REASON_LABEL } from "@/lib/labels";
-import { useVoiceInput } from "@/lib/use-voice-input";
+import { addWords, useVoiceInput } from "@/lib/use-voice-input";
 
 const REASONS: QuickReason[] = ["too_expensive", "not_my_taste", "not_needed", "not_now"];
 
@@ -29,7 +29,11 @@ export function WhyNotSheet({
   const [note, setNote] = useState("");
   const [isDenying, setIsDenying] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  const voice = useVoiceInput(setNote, decision !== null, { holdSpace: false });
+  // Keeps listening through pauses until you tap stop, and adds to what you've already said or typed.
+  const voice = useVoiceInput((heard) => setNote((before) => addWords(before, heard)), decision !== null, {
+    holdSpace: false,
+    untilStopped: true,
+  });
 
   const close = () => {
     setReason(null);
@@ -71,7 +75,7 @@ export function WhyNotSheet({
       </div>
       <div className="mt-6 flex h-16 items-center gap-2 rounded-2xl border border-hairline bg-white pr-2 pl-4">
         <input
-          value={voice.isListening ? voice.heardSoFar : note}
+          value={voice.isListening ? addWords(note, voice.heardSoFar) : note}
           onChange={(event) => setNote(event.target.value)}
           readOnly={voice.isListening}
           placeholder={voice.isListening ? "Listening…" : "Tell me a bit more (optional)"}
@@ -89,7 +93,7 @@ export function WhyNotSheet({
           </button>
         )}
       </div>
-      {problem && <p className="mt-3 text-sm text-failed">{problem}</p>}
+      {(problem || voice.problem) && <p className="mt-3 text-sm text-failed">{problem ?? voice.problem}</p>}
       <Button className="mt-6 w-full" disabled={isDenying} onClick={() => deny(true)}>
         {isDenying ? "Releasing the money…" : "Deny & teach my twin"}
       </Button>

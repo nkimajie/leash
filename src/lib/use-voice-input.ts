@@ -35,11 +35,17 @@ const PROBLEMS: Record<string, string> = {
 };
 
 /**
- * Listen once: call `start`, speak, and when you pause, `onHeard` gets what you said.
+ * Listen: call `start`, speak, and `onHeard` gets what you said.
+ *   Asking (the default): a pause means you're done, so Leash can answer.
+ *   Dictating (`untilStopped`): pauses are fine; it keeps listening until you call `stop`.
  * Holding the space bar does the same, as long as you're not typing in a field or in a sheet.
  * (A sheet's own mic, like "Why not?", passes `holdSpace: false` and listens only when tapped.)
  */
-export function useVoiceInput(onHeard: (text: string) => void, enabled: boolean, { holdSpace = true } = {}) {
+export function useVoiceInput(
+  onHeard: (text: string) => void,
+  enabled: boolean,
+  { holdSpace = true, untilStopped = false } = {},
+) {
   const isSupported = useSyncExternalStore(
     subscribeToNothing,
     () => findRecognition() !== null,
@@ -49,35 +55,49 @@ export function useVoiceInput(onHeard: (text: string) => void, enabled: boolean,
   const [heardSoFar, setHeardSoFar] = useState("");
   const [problem, setProblem] = useState<string | null>(null);
   const listener = useRef<Recognition | null>(null);
+  /** True once you (or a problem) stop it, so a dictation isn't restarted. */
+  const stopped = useRef(false);
 
   function start() {
-    const Recognition = findRecognition();
-    if (!Recognition || listener.current || !enabled) return;
-    const recognition = new Recognition();
+    if (!findRecognition() || listener.current || !enabled) return;
+    stopped.current = false;
+    setProblem(null);
+    setIsListening(true);
+    listen("");
+  }
+
+  /**
+   * One stretch of listening. The browser ends it at a pause (or, when dictating, after a longer
+   * silence). When dictating, a new stretch carries on from what was already heard.
+   */
+  function listen(earlier: string) {
+    const recognition = new (findRecognition()!)();
     recognition.lang = navigator.language || "en-US";
     recognition.interimResults = true; // show the words while you speak
-    recognition.continuous = false; // stop by itself when you pause
-    let heard = "";
+    recognition.continuous = untilStopped;
+    let heard = earlier;
     recognition.onresult = (event) => {
-      heard = Array.from(event.results, (result) => result[0].transcript).join("");
+      heard = addWords(earlier, Array.from(event.results, (result) => result[0].transcript).join(""));
       setHeardSoFar(heard);
     };
     recognition.onerror = (event) => {
+      if (untilStopped && event.error === "no-speech") return; // a long pause while dictating: carry on
       if (event.error !== "aborted") setProblem(PROBLEMS[event.error] ?? "Listening stopped. Please try again.");
+      stopped.current = true;
     };
     recognition.onend = () => {
+      if (untilStopped && !stopped.current) return listen(heard);
       listener.current = null;
       setIsListening(false);
       setHeardSoFar("");
       if (heard.trim()) onHeard(heard.trim());
     };
     listener.current = recognition;
-    setProblem(null);
-    setIsListening(true);
     recognition.start();
   }
 
   function stop() {
+    stopped.current = true;
     listener.current?.stop();
   }
 
@@ -100,7 +120,13 @@ export function useVoiceInput(onHeard: (text: string) => void, enabled: boolean,
   }, []);
 
   // Leaving the page stops listening.
-  useEffect(() => () => listener.current?.abort(), []);
+  useEffect(
+    () => () => {
+      stopped.current = true;
+      listener.current?.abort();
+    },
+    [],
+  );
 
   return { isSupported, isListening, heardSoFar, problem, start, stop };
 }
@@ -111,3 +137,8 @@ function isTypingOrOnAButton(target: EventTarget | null): boolean {
 }
 
 const subscribeToNothing = () => () => {};
+
+/** Adds newly heard words to what's already there: "I like coffee" + "and tea" = "I like coffee and tea". */
+export function addWords(before: string, after: string): string {
+  return [before.trim(), after.trim()].filter(Boolean).join(" ");
+}

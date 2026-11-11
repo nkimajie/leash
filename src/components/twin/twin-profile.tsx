@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Segmented } from "@/components/ui/segmented";
 import { addPreference, fetchPreferences, removePreference } from "@/lib/api-client";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
-import { useVoiceInput } from "@/lib/use-voice-input";
+import { addWords, useVoiceInput } from "@/lib/use-voice-input";
 import { inSentence } from "@/lib/format";
 
 type Sentiment = Preference["sentiment"];
@@ -141,7 +141,11 @@ const SENTIMENTS: { value: Sentiment; label: string }[] = [
 function TeachYourTwin({ onTeach }: { onTeach: (sentiment: Sentiment, statement: string) => Promise<void> }) {
   const [statement, setStatement] = useState("");
   const [sentiment, setSentiment] = useState<Sentiment>("likes");
-  const voice = useVoiceInput(setStatement, true, { holdSpace: false });
+  // Keeps listening through pauses until you tap stop, and adds to what's already in the box.
+  const voice = useVoiceInput((heard) => setStatement((before) => addWords(before, heard)), true, {
+    holdSpace: false,
+    untilStopped: true,
+  });
 
   async function save() {
     await onTeach(sentiment, statement.trim());
@@ -159,7 +163,7 @@ function TeachYourTwin({ onTeach }: { onTeach: (sentiment: Sentiment, statement:
         className="flex flex-col gap-3 lg:flex-row"
       >
         <input
-          value={voice.isListening ? voice.heardSoFar : statement}
+          value={voice.isListening ? addWords(statement, voice.heardSoFar) : statement}
           onChange={(event) => setStatement(event.target.value)}
           readOnly={voice.isListening}
           placeholder={voice.isListening ? "Listening…" : "“I prefer things I can repair.”"}

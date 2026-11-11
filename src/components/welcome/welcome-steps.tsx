@@ -7,7 +7,7 @@
 
 import { Mic, Square } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DEFAULT_SPENDING_RULES, type SpendingRules } from "@/schemas";
 import { LeashLogo } from "@/components/layout/leash-logo";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { Stamp } from "@/components/ui/stamp";
 import { addPreference, fetchSpendingRules, saveSpendingRules, startConnectingPayPal } from "@/lib/api-client";
 import { formatShortMoney } from "@/lib/format";
-import { useVoiceInput } from "@/lib/use-voice-input";
+import { addWords, useVoiceInput } from "@/lib/use-voice-input";
 import { startLookingAround } from "@/lib/looking-around";
 
 const STEPS = ["start", "how", "leash", "twin"] as const;
@@ -235,8 +235,21 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
   const [open, setOpen] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const answer = (index: number, text: string) => setAnswers((all) => all.map((a, i) => (i === index ? text : a)));
-  // "Or just say it" answers the open question, or the first one.
-  const voice = useVoiceInput((heard) => answer(open ?? 0, heard), true, { holdSpace: false });
+
+  // "Or just say it" answers the open question (or the first one without an answer). It keeps
+  // listening through pauses until you tap stop, and adds to what's already there.
+  const listeningFor = useRef(0);
+  const voice = useVoiceInput(
+    (heard) => setAnswers((all) => all.map((a, i) => (i === listeningFor.current ? addWords(a, heard) : a))),
+    true,
+    { holdSpace: false, untilStopped: true },
+  );
+  function startListening() {
+    const unanswered = answers.findIndex((a) => !a.trim());
+    listeningFor.current = open ?? (unanswered === -1 ? 0 : unanswered);
+    setOpen(listeningFor.current);
+    voice.start();
+  }
 
   async function done() {
     setIsSaving(true);
@@ -269,15 +282,20 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
                 <input
                   key={question}
                   autoFocus
-                  value={voice.isListening ? voice.heardSoFar : answers[index]}
+                  value={voice.isListening ? addWords(answers[index], voice.heardSoFar) : answers[index]}
+                  readOnly={voice.isListening}
                   onChange={(event) => answer(index, event.target.value)}
-                  onBlur={() => setOpen(null)}
+                  onBlur={() => !voice.isListening && setOpen(null)}
                   placeholder={question}
                   maxLength={120}
                   className="h-11 rounded-full border border-leash-rim bg-white px-4 text-sm outline-none"
                 />
               ) : (
-                <Chip key={question} onClick={() => setOpen(index)} className="w-full justify-start">
+                <Chip
+                  key={question}
+                  onClick={() => !voice.isListening && setOpen(index)}
+                  className="w-full justify-start"
+                >
                   {answers[index] ? `${question} ${answers[index]}` : question}
                 </Chip>
               ),
@@ -286,15 +304,16 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
           {voice.isSupported && (
             <button
               onMouseDown={(event) => event.preventDefault()} // keep the open question open
-              onClick={voice.isListening ? voice.stop : voice.start}
+              onClick={voice.isListening ? voice.stop : startListening}
               className="mt-4 flex items-center gap-3 text-base"
             >
               <span className="grid h-14 w-14 place-items-center rounded-full border-[3px] border-leash-rim bg-leash text-white">
                 {voice.isListening ? <Square className="h-5 w-5" /> : <Mic className="h-6 w-6" strokeWidth={1.5} />}
               </span>
-              {voice.isListening ? "Listening…" : "Or just say it"}
+              {voice.isListening ? "Listening… tap to stop" : "Or just say it"}
             </button>
           )}
+          {voice.problem && <p className="mt-3 text-sm text-failed">{voice.problem}</p>}
         </Card>
         <WashCard className="mt-5 flex items-center gap-4 p-4">
           <Illustration name="lesson-saved" className="-my-4 w-24 shrink-0" />
@@ -302,8 +321,8 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
         </WashCard>
       </div>
       <Footer>
-        <Button className="w-full" disabled={isSaving} onClick={done}>
-          {isSaving ? "Saving…" : "Done"}
+        <Button className="w-full" disabled={isSaving || voice.isListening} onClick={done}>
+          {isSaving ? "Saving…" : voice.isListening ? "Tap stop when you're done" : "Done"}
         </Button>
       </Footer>
     </>
