@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 import { classNames } from "@/lib/format";
 
 // Fields sit on white cards, so they're filled with paper. On the paper background, pass "bg-white".
@@ -7,14 +7,6 @@ const fieldStyle =
 
 export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={classNames(fieldStyle, "h-12", className)} />;
-}
-
-export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={classNames(fieldStyle, "py-3", className)} />;
-}
-
-export function SelectInput({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={classNames(fieldStyle, "h-12", className)} />;
 }
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {

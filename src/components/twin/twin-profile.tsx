@@ -22,7 +22,8 @@ type Sentiment = Preference["sentiment"];
 
 export function TwinProfile() {
   const { decisions } = useLiveDecisions();
-  const [lessons, setLessons] = useState<Preference[]>([]);
+  const [loadedLessons, setLessons] = useState<Preference[] | null>(null); // null while loading
+  const lessons = loadedLessons ?? [];
   const [problem, setProblem] = useState<string | null>(null);
   const [justLearned, setJustLearned] = useState<string | null>(null);
 
@@ -36,13 +37,16 @@ export function TwinProfile() {
     };
   }, [reload]);
 
-  async function attempt(work: () => Promise<unknown>) {
+  /** Runs a change and reloads. False when it failed (the problem is shown). */
+  async function attempt(work: () => Promise<unknown>): Promise<boolean> {
     setProblem(null);
     try {
       await work();
       await reload();
+      return true;
     } catch (error) {
       setProblem((error as Error).message);
+      return false;
     }
   }
 
@@ -53,7 +57,11 @@ export function TwinProfile() {
     <Page>
       <PageHeader
         title="Your twin"
-        description={`${lessons.length} ${lessons.length === 1 ? "lesson" : "lessons"}: ${learned} from your decisions, ${lessons.length - learned} you told it.`}
+        description={
+          loadedLessons === null
+            ? "Loading your lessons…"
+            : `${lessons.length} ${lessons.length === 1 ? "lesson" : "lessons"}: ${learned} from your decisions, ${lessons.length - learned} you told it.`
+        }
       />
       <WashCard className="flex items-center justify-between gap-4">
         <div>
@@ -71,9 +79,10 @@ export function TwinProfile() {
       {problem && <p className="rounded-xl bg-failed-wash px-4 py-3 text-sm text-failed">{problem}</p>}
 
       <TeachYourTwin
-        onTeach={(sentiment, statement) =>
-          attempt(() => addPreference({ sentiment, statement, category: null })).then(() => setJustLearned(statement))
-        }
+        onTeach={async (sentiment, statement) => {
+          // Only say "Got it" once it's really saved.
+          if (await attempt(() => addPreference({ sentiment, statement, category: null }))) setJustLearned(statement);
+        }}
       />
       {lessons.length > 0 && (
         <a href="#lessons" className="-mt-2 inline-flex items-center gap-1 text-base text-leash">

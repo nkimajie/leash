@@ -149,7 +149,12 @@ function Frame({ children }: { children: ReactNode }) {
       </nav>
 
       <NotificationsSheet open={panel === "notifications"} onClose={() => setPanel(null)} />
-      <ProfileSheet open={panel === "profile"} onClose={() => setPanel(null)} />
+      <ProfileSheet
+        open={panel === "profile"}
+        onClose={() => setPanel(null)}
+        onOpenSettings={open("settings")}
+        onOpenHelp={open("help")}
+      />
       <SettingsSheet open={panel === "settings"} onClose={() => setPanel(null)} />
       <HelpSheet open={panel === "help"} onClose={() => setPanel(null)} />
     </div>
@@ -195,7 +200,7 @@ function PayPalCard() {
       <div className="mt-0.5 text-sm text-ink-soft">Your rules come first.</div>
     </Link>
   ) : (
-    <Link href="/welcome" className="rounded-2xl bg-paper px-3 py-3">
+    <Link href="/welcome?step=how" className="rounded-2xl bg-paper px-3 py-3">
       <div className="text-sm font-medium">Not signed in</div>
       <div className="mt-0.5 text-sm text-leash">Continue with PayPal</div>
     </Link>

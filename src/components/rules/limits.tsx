@@ -178,7 +178,9 @@ export function Limits() {
           <WashCard>
             <h2 className="text-2xl font-semibold tracking-[-0.02em]">A boundary that stays put.</h2>
             <p className="mt-4 text-base text-ink-soft">
-              Paying someone new always waits for you. Your hard limit still applies.
+              {rules.newPeopleNeedApproval
+                ? "Paying someone new always waits for you. Your hard limits still apply."
+                : "Your hard limits and caps apply to everything, whoever asks."}
             </p>
           </WashCard>
           <Card>

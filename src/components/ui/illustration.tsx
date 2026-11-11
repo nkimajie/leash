@@ -5,9 +5,6 @@ import Image from "next/image";
 import { classNames } from "@/lib/format";
 
 const SIZES = {
-  "held-loop": [208, 189], // welcome moments
-  "bounded-receipt": [218, 176], // room to act, with a clear boundary
-  "learning-pair": [239, 177], // twin introductions
   // The action motifs share one 320 × 240 frame:
   "boundary-held": [320, 240], // limits, blocked explanations, the Ask welcome
   waiting: [320, 240], // approval reminders

@@ -18,7 +18,7 @@ export function SignInReminder() {
           Continue with PayPal so Leash knows who you are and can pay for you.
         </p>
       </div>
-      <Link href="/welcome" className={buttonClasses("paypal")}>
+      <Link href="/welcome?step=how" className={buttonClasses("paypal")}>
         Continue with PayPal
       </Link>
     </Card>

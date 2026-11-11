@@ -62,7 +62,7 @@ export function WhyNotSheet({
     <Sheet
       open={decision !== null}
       onClose={close}
-      close="none"
+      close="text"
       title="Why not?"
       description="A little context helps your twin get to know you. You can skip this."
     >

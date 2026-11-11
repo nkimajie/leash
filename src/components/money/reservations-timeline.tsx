@@ -31,7 +31,7 @@ export function ReservationsTimeline(props: { decisions: Decision[]; onSelect?: 
   // This file only runs in the browser, so the screen size is known up front.
   const [isPhone] = useState(() => window.matchMedia("(max-width: 640px)").matches);
 
-  // The control room re-renders and re-fetches every couple of seconds, and the Bryntum wrapper
+  // Money re-renders and re-fetches every couple of seconds, and the Bryntum wrapper
   // pushes every prop that changes into the scheduler. So the settings are built once, and the
   // rows only when something really changed (compared as text).
   const settings = useMemo(() => schedulerSettings(today, isPhone), [today, isPhone]);

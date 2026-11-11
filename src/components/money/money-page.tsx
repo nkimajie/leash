@@ -32,7 +32,7 @@ const ReservationsTimeline = dynamic(
 );
 
 export function MoneyPage() {
-  const { decisions, connectionProblem, refresh } = useLiveDecisions();
+  const { decisions, isLoading, connectionProblem, refresh } = useLiveDecisions();
   const [view, setView] = useState<GridView | null>(null);
   const [isFiltering, setIsFiltering] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
@@ -84,7 +84,7 @@ export function MoneyPage() {
         <h2 className="text-sm text-ink-soft sm:text-base">This week</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {week.length === 0 ? (
-            <p className="text-sm">Nothing yet this week.</p>
+            <p className="text-sm">{isLoading ? "Loading…" : "Nothing yet this week."}</p>
           ) : (
             week.map(({ tone, total, label }) => (
               <Stamp key={tone} tone={tone}>
@@ -116,6 +116,7 @@ export function MoneyPage() {
         />
         <DecisionsGrid
           decisions={decisions}
+          isLoading={isLoading}
           view={view}
           selectedId={selectedId}
           onSelect={(decision) => setSelectedId(decision.id)}

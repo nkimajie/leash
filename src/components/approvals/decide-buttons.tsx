@@ -4,6 +4,7 @@
 // reserved money. Deny: "Why not?" first (so your twin learns), then PayPal releases it.
 // Only your tap does this: the assistant and outside agents have no way to approve.
 
+import Link from "next/link";
 import { useState } from "react";
 import type { Decision } from "@/schemas";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,16 @@ export function DecideButtons({
           {isApproving ? "Paying…" : "Approve"}
         </Button>
       </div>
-      {problem && <p className="mt-2 text-sm text-failed">{problem}</p>}
+      {problem && (
+        <p className="mt-2 text-sm text-failed">
+          {problem}{" "}
+          {decision.kind === "payment" && (
+            <Link href="/leash/people" className="text-leash">
+              Go to the people you pay
+            </Link>
+          )}
+        </p>
+      )}
       <WhyNotSheet
         decision={isDenying ? decision : null}
         onClose={() => setIsDenying(false)}

@@ -10,7 +10,7 @@
   --color-paper: #f7f5f0; /* page background */
   --color-ink: #14130f; /* text, and the Blocked stamp */
   --color-ink-soft: #6b675e; /* secondary text */
-  --color-ink-faint: #7a776f; /* Released stamp text */
+  --color-ink-faint: #65625a; /* Released stamp text */
   --color-hairline: #e4e0d6; /* borders, chips, segmented controls */
   --color-sand: #eeece6; /* Released stamp */
 
@@ -19,13 +19,13 @@
   --color-leash-wash: #eaf0ff; /* small selected surfaces */
   --color-leash-rim: #afc8ff; /* the soft edge on key controls */
 
-  --color-paid: #1f8a4c;
+  --color-paid: #18733f;
   --color-paid-wash: #e5f3ea;
-  --color-reserved: #b7791f;
+  --color-reserved: #8f5d12;
   --color-reserved-wash: #fbf0da;
   --color-refunded: #2563c9;
   --color-refunded-wash: #e4edfb;
-  --color-failed: #c23a55;
+  --color-failed: #b0304b;
   --color-failed-wash: #fbe6ea;
 
   --color-paypal: #ffc439; /* only for connecting PayPal */

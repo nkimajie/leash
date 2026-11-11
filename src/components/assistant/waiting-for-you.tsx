@@ -11,10 +11,11 @@ import { formatShortMoney } from "@/lib/format";
 import { useLiveDecisions } from "@/lib/use-live-decisions";
 
 export function WaitingForYou({ title = "Waiting for you" }: { title?: string }) {
-  const { decisions } = useLiveDecisions();
+  const { decisions, isLoading } = useLiveDecisions();
   const held = decisions.filter((d) => d.outcome === "held").sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const reserved = held.reduce((sum, d) => sum + d.amount, 0);
 
+  if (isLoading) return null;
   if (held.length === 0) {
     return (
       <Card>

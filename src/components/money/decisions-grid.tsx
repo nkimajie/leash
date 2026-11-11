@@ -52,11 +52,13 @@ type TotalsRow = { id: string; shown: number; paid: number; reserved: number };
 
 export function DecisionsGrid({
   decisions,
+  isLoading,
   view,
   selectedId,
   onSelect,
 }: {
   decisions: Decision[];
+  isLoading: boolean;
   view: GridView | null;
   selectedId: string | null;
   onSelect: (decision: Decision) => void;
@@ -160,7 +162,8 @@ export function DecisionsGrid({
       onRowClicked={(event) => event.data && !event.node.rowPinned && onSelect(event.data)}
       cellFlashDuration={1500}
       tooltipShowDelay={500}
-      overlayNoRowsTemplate="Nothing matches. Ask something else, or close the filter."
+      loading={isLoading}
+      overlayNoRowsTemplate={view ? "Nothing matches. Ask something else, or close the filter." : "Nothing here yet."}
       animateRows
     />
   );

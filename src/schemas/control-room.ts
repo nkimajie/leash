@@ -2,7 +2,7 @@ import { z } from "zod";
 import { DecisionKindSchema, OutcomeSchema } from "./decision";
 
 /**
- * What the control room grid should show, worked out from a question in plain English
+ * What the Money grid should show, worked out from a question in plain English
  * ("held payments over $50, biggest first"). Every field is optional: null means "don't filter".
  */
 export const GridViewSchema = z.object({
@@ -23,5 +23,5 @@ export const GridViewSchema = z.object({
 export type GridView = z.infer<typeof GridViewSchema>;
 
 export const AskControlRoomBody = z.object({
-  question: z.string().trim().min(2, "Ask the control room something.").max(200),
+  question: z.string().trim().min(2, "Ask something about your money.").max(200),
 });

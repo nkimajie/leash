@@ -114,7 +114,7 @@ export const TOOL_LABEL: Record<string, string> = {
   open_page: "Opening the page",
 };
 
-/** Where the money is at PayPal, in plain words. The control room shows PayPal's own status underneath. */
+/** Where the money is at PayPal, in plain words. The receipt shows PayPal's own status underneath. */
 export function paypalStatusInWords(decision: Decision): string {
   if (isSampleHistory(decision)) return "Sample only";
   const status = decision.paypal.status;

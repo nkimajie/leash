@@ -297,10 +297,10 @@
             "type": "string",
             "minLength": 10,
             "maxLength": 500,
-            "description": "Why, in one or two plain sentences. The person sees this in their control room."
+            "description": "Why, in one or two plain sentences. The person sees this on the receipt in Leash."
           },
           "agentName": {
-            "description": "Who is asking, e.g. 'Claude Desktop'. The person sees this in their control room.",
+            "description": "Who is asking, e.g. 'Claude Desktop'. The person sees this on the receipt in Leash.",
             "type": "string",
             "minLength": 1,
             "maxLength": 60
@@ -337,10 +337,10 @@
             "type": "string",
             "minLength": 10,
             "maxLength": 500,
-            "description": "Why, in one or two plain sentences. The person sees this in their control room."
+            "description": "Why, in one or two plain sentences. The person sees this on the receipt in Leash."
           },
           "agentName": {
-            "description": "Who is asking, e.g. 'Claude Desktop'. The person sees this in their control room.",
+            "description": "Who is asking, e.g. 'Claude Desktop'. The person sees this on the receipt in Leash.",
             "type": "string",
             "minLength": 1,
             "maxLength": 60

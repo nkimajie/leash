@@ -33,7 +33,7 @@ export function NotificationsSheet({ open, onClose }: { open: boolean; onClose: 
   const latest = decisions
     .filter((d) => d.outcome !== "held")
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-  const summary = `${COUNT_WORDS[waiting.length] ?? `${waiting.length} things`} ${waiting.length === 1 ? "needs" : "need"} your okay.`;
+  const summary = `${COUNT_WORDS[waiting.length] ?? `${waiting.length} things`} ${waiting.length <= 1 ? "needs" : "need"} your okay.`;
 
   return (
     <Sheet open={open} onClose={onClose} title="Notifications" description={summary}>

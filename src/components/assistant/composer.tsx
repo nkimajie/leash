@@ -4,6 +4,7 @@
 // "Read aloud" makes it talk back when you type too.
 
 import { ArrowUp, Mic, Square, Volume2 } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/card";
 import { Toggle } from "@/components/ui/form-fields";
 import { classNames } from "@/lib/format";
@@ -19,6 +20,11 @@ export function Composer(props: {
   onReadAloudChange: (on: boolean) => void;
 }) {
   const { prompt, onPromptChange, onSend, isWorking } = props;
+  const hasKeyboard = useSyncExternalStore(
+    noChanges,
+    () => window.matchMedia("(pointer: fine)").matches, // a mouse or trackpad: likely a keyboard too
+    () => true,
+  );
   const voice = useVoiceInput((heard) => {
     onPromptChange(heard);
     onSend(heard, true);
@@ -45,7 +51,9 @@ export function Composer(props: {
               }
             }}
             rows={voice.isListening || prompt.length > 60 ? 2 : 1}
-            placeholder={voice.isListening ? "Listening…" : "Ask for something, or hold Space"}
+            placeholder={
+              voice.isListening ? "Listening…" : hasKeyboard ? "Ask for something, or hold Space" : "Ask for something"
+            }
             aria-label="Ask Leash"
             className="block w-full resize-none bg-transparent text-base outline-none placeholder:text-ink-soft"
           />
@@ -104,3 +112,5 @@ export function Composer(props: {
     </Card>
   );
 }
+
+const noChanges = () => () => {};

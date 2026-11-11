@@ -29,13 +29,16 @@ export function PeopleManager() {
     return () => clearTimeout(firstLoad);
   }, [reload]);
 
-  async function attempt(work: () => Promise<unknown>) {
+  /** Runs a change and reloads. False when it failed (the problem is shown). */
+  async function attempt(work: () => Promise<unknown>): Promise<boolean> {
     setProblem(null);
     try {
       await work();
       await reload();
+      return true;
     } catch (error) {
       setProblem((error as Error).message);
+      return false;
     }
   }
 
@@ -57,7 +60,9 @@ export function PeopleManager() {
                   {" · "}
                   <EmailEditor
                     email={person.email}
-                    onSave={(email) => attempt(() => updatePayee(person.id, { email }))}
+                    onSave={async (email) => {
+                      await attempt(() => updatePayee(person.id, { email }));
+                    }}
                   />
                 </div>
               </div>
@@ -87,7 +92,9 @@ export function PeopleManager() {
       <AddSomeoneSheet
         open={isAdding}
         onClose={() => setIsAdding(false)}
-        onAdd={(details) => attempt(() => addPayee(details)).then(() => setIsAdding(false))}
+        onAdd={async (details) => {
+          if (await attempt(() => addPayee(details))) setIsAdding(false); // stays open if it failed
+        }}
       />
     </>
   );

@@ -13,7 +13,7 @@ const reasoning = z
   .trim()
   .min(10)
   .max(500)
-  .describe("Why, in one or two plain sentences. The person sees this in their control room.");
+  .describe("Why, in one or two plain sentences. The person sees this on the receipt in Leash.");
 
 const agentName = z
   .string()
@@ -21,7 +21,7 @@ const agentName = z
   .min(1)
   .max(60)
   .optional()
-  .describe("Who is asking, e.g. 'Claude Desktop'. The person sees this in their control room.");
+  .describe("Who is asking, e.g. 'Claude Desktop'. The person sees this on the receipt in Leash.");
 
 export const ProductSearchQuery = z.object({
   query: z.string().trim().min(2).max(200),

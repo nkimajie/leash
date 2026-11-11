@@ -52,7 +52,7 @@ function Result({ decided, onClose }: { decided: Decision; onClose: () => void }
     decided.outcome === "denied"
       ? `PayPal released the ${amount}. You were never charged.`
       : decided.outcome === "failed"
-        ? "Nothing was charged."
+        ? decided.ruleExplanation
         : `PayPal paid ${amount} to ${decided.counterparty}.`;
 
   return (

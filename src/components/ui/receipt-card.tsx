@@ -20,10 +20,13 @@ import { OutcomeStamp } from "./stamp";
 export function ReceiptCard({
   decision,
   className,
+  showWhereToChange = true,
   children,
 }: {
   decision: Decision;
   className?: string;
+  /** Off for "Try to break the leash": the leash just held, so don't invite loosening it. */
+  showWhereToChange?: boolean;
   /** Actions under the receipt, e.g. Deny and Approve. */
   children?: ReactNode;
 }) {
@@ -46,7 +49,7 @@ export function ReceiptCard({
       </div>
       <div className="mt-4 border-t border-hairline pt-4 text-sm">
         <p>{decision.ruleExplanation}</p>
-        <ChangeTheRule decision={decision} />
+        {showWhereToChange && <ChangeTheRule decision={decision} />}
         {decision.aiReasoning && <p className="mt-2 text-ink-soft">{decision.aiReasoning}</p>}
         <p className="mt-3 font-mono text-xs text-ink-soft">{paypalTrail(decision)}</p>
       </div>

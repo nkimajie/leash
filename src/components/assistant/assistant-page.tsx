@@ -54,7 +54,7 @@ export function AssistantPage() {
   }
 
   function send(text: string, spoken: boolean) {
-    if (!text.trim()) return;
+    if (!text.trim() || isWorking) return; // Enter while Leash works keeps what you typed
     setWasSpoken(spoken);
     setPrompt("");
     show(async (onStep) => {

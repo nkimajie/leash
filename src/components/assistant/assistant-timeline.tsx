@@ -31,6 +31,7 @@ export function AssistantTimeline(props: { steps: AssistantEvent[]; isWorking: b
     // A spending answer links to Money, where AG Grid shows the same question as a table.
     moneyLink: request && usedTool(["look_up_spending"]) ? `/money?ask=${encodeURIComponent(request.prompt)}` : null,
     latest: (decision) => decisions.find((d) => d.id === decision.id) ?? decision,
+    isAttack: steps.some((step) => step.type === "attack"),
   };
 
   return (
@@ -70,6 +71,8 @@ type StepContext = {
   moneyLink: string | null;
   /** The newest version of a decision (after you approve or deny it). */
   latest: (decision: Decision) => Decision;
+  /** A "Try to break the leash" run. */
+  isAttack: boolean;
 };
 
 function StepBody({ step, context }: { step: AssistantEvent; context: StepContext }) {
@@ -105,7 +108,7 @@ function StepBody({ step, context }: { step: AssistantEvent; context: StepContex
     case "decision_made": {
       const decision = context.latest(step.decision);
       return (
-        <ReceiptCard decision={decision}>
+        <ReceiptCard decision={decision} showWhereToChange={!context.isAttack}>
           {decision.outcome === "held" && !isSampleHistory(decision) && <DecideButtons decision={decision} />}
         </ReceiptCard>
       );

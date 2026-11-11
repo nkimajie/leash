@@ -11,7 +11,18 @@ import { disconnectPayPal } from "@/lib/api-client";
 import { useAccount } from "@/lib/use-account";
 import { NotificationPreferencesSheet } from "./notification-preferences-sheet";
 
-export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ProfileSheet({
+  open,
+  onClose,
+  onOpenSettings,
+  onOpenHelp,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** Phones have no sidebar, so Settings (and Reset demo) and Help live here too. */
+  onOpenSettings: () => void;
+  onOpenHelp: () => void;
+}) {
   const router = useRouter();
   const { connection, refresh } = useAccount();
   const [editingNotifications, setEditingNotifications] = useState(false);
@@ -56,12 +67,18 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
           <button onClick={() => setEditingNotifications(true)} className={item}>
             Notification settings
           </button>
+          <button onClick={onOpenSettings} className={item}>
+            Settings
+          </button>
+          <button onClick={onOpenHelp} className={item}>
+            Help &amp; support
+          </button>
           {connection?.signedIn ? (
             <button onClick={signOut} disabled={!connection.canDisconnect} className={`${item} disabled:opacity-50`}>
               Sign out
             </button>
           ) : (
-            <Link href="/welcome" onClick={onClose} className={`${item} text-leash`}>
+            <Link href="/welcome?step=how" onClick={onClose} className={`${item} text-leash`}>
               Continue with PayPal
             </Link>
           )}
