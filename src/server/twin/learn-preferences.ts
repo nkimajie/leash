@@ -23,6 +23,8 @@ export function lessonFromYourDecision(
 
   if (action !== "approved" && why.reason) {
     switch (why.reason) {
+      case "not_now":
+        return null; // timing says nothing about your taste
       case "too_expensive":
         return {
           ...learned,

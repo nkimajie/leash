@@ -36,6 +36,27 @@ export const OUTCOME_SENTENCE: Record<Outcome, string> = {
   failed: "PayPal couldn't finish the payment.",
 };
 
+/** The receipt's last line: what PayPal did, step by step. "PayPal · authorized → awaiting you". */
+export function paypalTrail(decision: Decision): string {
+  if (isSampleHistory(decision)) return "Sample history · never sent to PayPal";
+  const paidOut = decision.paypal.payoutId ? " → paid out" : "";
+  switch (decision.outcome) {
+    case "auto_approved":
+    case "approved":
+      return `PayPal · authorized → captured${paidOut}`;
+    case "held":
+      return "PayPal · authorized → awaiting you";
+    case "denied":
+      return "PayPal · authorized → released";
+    case "blocked":
+      return "PayPal · never called";
+    case "refunded":
+      return "PayPal · captured → refunded";
+    case "failed":
+      return decision.paypal.authorizationId ? "PayPal · authorized → couldn't finish" : "PayPal · declined";
+  }
+}
+
 /** The same colours as plain CSS, for the Bryntum timelines. */
 export const OUTCOME_COLOR: Record<Outcome, string> = {
   auto_approved: "#1f8a4c",
@@ -72,9 +93,10 @@ export const RULE_LABEL: Record<RuleName, string> = {
 
 export const QUICK_REASON_LABEL: Record<QuickReason, string> = {
   too_expensive: "Too expensive",
-  not_needed: "Didn't need it",
+  not_my_taste: "Not quite right",
+  not_needed: "Already have one",
+  not_now: "Not now",
   wrong_store: "Wrong store",
-  not_my_taste: "Not my taste",
 };
 
 export const TOOL_LABEL: Record<string, string> = {

@@ -75,6 +75,10 @@ describe("the twin learns from your decisions", () => {
     expect(findReasonToAvoid({ ...grinder, merchant: "Roastery Row" }, [learned])).toBeNull();
   });
 
+  it("learns nothing when you only said 'not now'", () => {
+    expect(lessonFromYourDecision(decisionFor(grinder), "denied", { reason: "not_now" })).toBeNull();
+  });
+
   it("when you say 'didn't need it', it avoids only that product", () => {
     const learned = asSaved(lessonFromYourDecision(decisionFor(grinder), "denied", { reason: "not_needed" }));
     expect(findReasonToAvoid(grinder, [learned])).not.toBeNull();

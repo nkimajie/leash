@@ -36,9 +36,10 @@ const PROBLEMS: Record<string, string> = {
 
 /**
  * Listen once: call `start`, speak, and when you pause, `onHeard` gets what you said.
- * Holding the space bar does the same, as long as you're not typing in a field.
+ * Holding the space bar does the same, as long as you're not typing in a field or in a sheet.
+ * (A sheet's own mic, like "Why not?", passes `holdSpace: false` and listens only when tapped.)
  */
-export function useVoiceInput(onHeard: (text: string) => void, enabled: boolean) {
+export function useVoiceInput(onHeard: (text: string) => void, enabled: boolean, { holdSpace = true } = {}) {
   const isSupported = useSyncExternalStore(
     subscribeToNothing,
     () => findRecognition() !== null,
@@ -82,7 +83,8 @@ export function useVoiceInput(onHeard: (text: string) => void, enabled: boolean)
 
   // Hold the space bar to talk, unless you're typing or on a button.
   const onSpaceBar = useEffectEvent((event: KeyboardEvent) => {
-    if (event.code !== "Space" || isTypingOrOnAButton(event.target)) return;
+    if (!holdSpace || event.code !== "Space" || isTypingOrOnAButton(event.target)) return;
+    if (document.querySelector("dialog[open]")) return; // a sheet is open
     event.preventDefault();
     if (event.type === "keydown" && !event.repeat) start();
     if (event.type === "keyup") stop();
