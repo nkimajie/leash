@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { RulesForm } from "@/components/rules/rules-form";
+import { Limits } from "@/components/rules/limits";
 
-export const metadata: Metadata = { title: "Rules" };
+export const metadata: Metadata = { title: "Your leash" };
 
-export default function RulesPage() {
-  return <RulesForm />;
+export default function LimitsPage() {
+  return <Limits />;
 }
