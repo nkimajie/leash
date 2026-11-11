@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickWaitingItem, readCommand } from "./read-command";
+import { pickWaitingItem, readCommand, readFollowUp } from "./read-command";
 
 describe("readCommand", () => {
   it.each([
@@ -62,5 +62,24 @@ describe("pickWaitingItem", () => {
 
   it("returns null when nothing matches", () => {
     expect(pickWaitingItem(waiting, "the kettle")).toBeNull();
+  });
+});
+
+describe("following up on Leash's last reply", () => {
+  const offer = "Done: 1 blocked by your rules. Want me to open your limits?";
+
+  it("opens the page Leash offered when you say yes", () => {
+    expect(readFollowUp("yes, do that", offer)).toEqual({ kind: "open_page", page: "limits" });
+    expect(readFollowUp("Ok", offer)).toEqual({ kind: "open_page", page: "limits" });
+    expect(readFollowUp("go ahead", "Want me to open the people you pay?")).toEqual({
+      kind: "open_page",
+      page: "people",
+    });
+  });
+
+  it("ignores anything that isn't a yes to an offer", () => {
+    expect(readFollowUp("buy a PS5", offer)).toBeNull();
+    expect(readFollowUp("yes", "Done: 1 paid automatically.")).toBeNull();
+    expect(readFollowUp("yes", undefined)).toBeNull();
   });
 });

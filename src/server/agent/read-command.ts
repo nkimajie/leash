@@ -71,3 +71,17 @@ export function pickWaitingItem<Item extends { title: string }>(waiting: Item[],
   const best = [...waiting].sort((a, b) => score(b) - score(a))[0];
   return best && score(best) > 0 ? best : null;
 }
+
+/** "Yes", "do that", "ok", "go ahead"... at the start of a message. */
+const SAYS_YES = /^(?:yes|yeah|yep|sure|ok(?:ay)?|please(?: do)?|do (?:it|that)|go ahead|open it)\b/i;
+
+/**
+ * A follow-up to Leash's last reply: "yes, do that" after "Want me to open your limits?" opens them.
+ * Returns null unless you said yes to an offer to open a page.
+ */
+export function readFollowUp(prompt: string, lastReply: string | undefined): Command | null {
+  if (!lastReply || !SAYS_YES.test(prompt.trim())) return null;
+  const offer = lastReply.match(/open (?:your |the |my )?([a-z ]+?)(?: page| tab)?\?/i);
+  const page = offer && PAGE_WORDS.find(([words]) => new RegExp(`^(?:${words.source})\\b`, "i").test(offer[1]))?.[1];
+  return page ? { kind: "open_page", page } : null;
+}

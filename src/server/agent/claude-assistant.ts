@@ -5,7 +5,7 @@ import "server-only";
 // purchase or payment goes through the spending rules, PayPal and the digital twin.
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { AssistantEvent, AssistantRequest } from "@/schemas";
+import type { AssistantEvent, AssistantRequest, EarlierTurn } from "@/schemas";
 import { describeToolsForModel, runTool, type ToolContext, type ToolResult } from "./tools";
 import { HOW_PAYPAL_KEEPS_YOU_SAFE, INTRODUCTION_ALOUD, WHAT_LEASH_CAN_DO } from "./what-leash-can-do";
 
@@ -31,17 +31,32 @@ How to work:
 - "What can you do for me?" or "how does this work?": call read_my_leash, then answer from the list above in your own words. Lead with what you use AI for: understanding what they need, typed or spoken; choosing what fits their taste; learning from the reasons they give; answering questions about their money. Then say how PayPal and their rules keep the money safe, made personal with their numbers: how much you pay without asking, what's waiting for them, and whether PayPal is connected. Always speak as "I". Out loud, it sounds like: "${INTRODUCTION_ALOUD} Right now, the $85 grinder is waiting for you."
 - When they ask you to deny something that's waiting, find it with read_my_leash and call deny_held_item with their reason. You can never approve anything. If they ask you to, say that only they can, with a tap on Approve in Leash, so a scam or a voice on the TV can never release their money.
 - When they ask to go to a page, call open_page.
+- The messages before the latest one are the conversation so far. Use them to understand a follow-up such as "yes, do that", "open it" or "buy the second one", then act on the latest message only.
+- When something is held or blocked by a limit, a cap, the Never buy list, someone new or a missing PayPal email, say which rule and the number, and offer to open the page where they can change it (limits, people or paypal). If they say yes, call open_page. You can never change their rules yourself: only they can, on that page.
 - The spending rules are applied for you. A purchase or payment can be paid now, held for the user's approval (money reserved, not taken), or blocked. Held and blocked are normal results: never retry or try to get around them.
 - Before each tool call, write one short sentence saying what you are doing and why, whether the request was typed or spoken. The user watches or hears these live.
 - Finish with a short reply in plain text, no markdown: what was paid, what is waiting for approval, anything blocked or skipped, or the answer to their question. One to three sentences, or one short line per item when they ask what you can do.`;
 
 const claude = new Anthropic();
 
-/** @param spoken you said the request out loud, so the reply will be read aloud to you. */
-export async function* runClaudeAssistant(request: AssistantRequest, spoken = false): AsyncGenerator<AssistantEvent> {
+/**
+ * @param spoken  you said the request out loud, so the reply will be read aloud to you.
+ * @param earlier the last few exchanges, so Claude understands a follow-up like "yes, do that".
+ */
+export async function* runClaudeAssistant(
+  request: AssistantRequest,
+  spoken = false,
+  earlier: EarlierTurn[] = [],
+): AsyncGenerator<AssistantEvent> {
   const context: ToolContext = { request };
   const tools = describeToolsForModel();
-  const messages: Anthropic.MessageParam[] = [{ role: "user", content: describeRequest(request, spoken) }];
+  const messages: Anthropic.MessageParam[] = [
+    ...earlier.flatMap((turn): Anthropic.MessageParam[] => [
+      { role: "user", content: turn.you },
+      { role: "assistant", content: turn.leash },
+    ]),
+    { role: "user", content: describeRequest(request, spoken) },
+  ];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const response = await claude.messages.create({

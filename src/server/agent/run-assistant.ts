@@ -4,7 +4,7 @@ import "server-only";
 // Uses Claude when ANTHROPIC_API_KEY is set, and the scripted mock assistant otherwise.
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { AssistantEvent, AssistantRequest } from "@/schemas";
+import type { AssistantEvent, AssistantRequest, EarlierTurn } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { startFreshIfQuiet } from "@/server/demo-mode";
@@ -18,12 +18,14 @@ import { readBudget } from "./read-request";
  *                Anything a restock buys is held for your approval.
  * @param visitor who is asking; in demo mode each visitor gets a daily allowance of Claude requests.
  * @param spoken  you said it out loud, so the replies are kept short enough to listen to.
+ * @param earlier the last few exchanges, so a follow-up like "yes, do that" makes sense.
  */
 export async function* runAssistant(
   prompt: string,
   source: AssistantRequest["source"] = "you",
   visitor?: string,
   spoken = false,
+  earlier: EarlierTurn[] = [],
 ): AsyncGenerator<AssistantEvent> {
   if (source === "you") yield* startFreshIfQuiet();
   const rules = await database.spendingRules.loadSpendingRules();
@@ -36,15 +38,15 @@ export async function* runAssistant(
 
   try {
     if (serviceModes().assistant === "claude" && mayUseClaude(visitor)) {
-      yield* runClaudeWithFallback(request, spoken);
+      yield* runClaudeWithFallback(request, spoken, earlier);
     } else if (serviceModes().assistant === "claude") {
       yield {
         type: "thinking",
         text: "You've used today's Claude allowance on this demo, so the built-in assistant takes over.",
       };
-      yield* runMockAssistant(request, spoken);
+      yield* runMockAssistant(request, spoken, earlier);
     } else {
-      yield* runMockAssistant(request, spoken);
+      yield* runMockAssistant(request, spoken, earlier);
     }
     await database.assistantRequests.markAssistantRequest(request.id, "finished");
   } catch (error) {
@@ -60,10 +62,14 @@ export async function* runAssistant(
  * the scripted assistant takes over so the app keeps working. Once a tool has run,
  * errors are not retried, so nothing is ever bought twice.
  */
-async function* runClaudeWithFallback(request: AssistantRequest, spoken: boolean): AsyncGenerator<AssistantEvent> {
+async function* runClaudeWithFallback(
+  request: AssistantRequest,
+  spoken: boolean,
+  earlier: EarlierTurn[],
+): AsyncGenerator<AssistantEvent> {
   let toolsUsed = 0;
   try {
-    for await (const event of runClaudeAssistant(request, spoken)) {
+    for await (const event of runClaudeAssistant(request, spoken, earlier)) {
       if (event.type === "tool_started") toolsUsed++;
       yield event;
     }
@@ -71,6 +77,6 @@ async function* runClaudeWithFallback(request: AssistantRequest, spoken: boolean
     if (!(error instanceof Anthropic.APIError) || toolsUsed > 0) throw error;
     console.warn(`Claude unavailable (${error.status}), using the built-in assistant`, error.message);
     yield { type: "thinking", text: "Claude is unavailable right now, so I'm using the built-in assistant." };
-    yield* runMockAssistant(request, spoken);
+    yield* runMockAssistant(request, spoken, earlier);
   }
 }

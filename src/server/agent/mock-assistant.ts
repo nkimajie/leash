@@ -4,8 +4,16 @@ import "server-only";
 // It calls the same tools as the real agent, so every purchase and payment it makes goes
 // through the real rules, PayPal flow and digital twin. Only the "thinking" is scripted.
 
-import type { AssistantEvent, AssistantRequest, Decision, Product } from "@/schemas";
-import { pickWaitingItem, readCommand, type Command } from "./read-command";
+import {
+  PAGE_FOR_RULE,
+  type AssistantEvent,
+  type AssistantRequest,
+  type Decision,
+  type EarlierTurn,
+  type LeashPage,
+  type Product,
+} from "@/schemas";
+import { pickWaitingItem, readCommand, readFollowUp, type Command } from "./read-command";
 import { readGridQuestion } from "./read-grid-question";
 import { readPaymentInstruction, readRestockSchedule, type PaymentInstruction } from "./read-request";
 import { runTool, type ToolContext, type ToolResult } from "./tools";
@@ -51,9 +59,14 @@ const SHOPPING_PLANS: { matches: RegExp; steps: ShoppingStep[] }[] = [
   },
 ];
 
-export async function* runMockAssistant(request: AssistantRequest, spoken = false): AsyncGenerator<AssistantEvent> {
+export async function* runMockAssistant(
+  request: AssistantRequest,
+  spoken = false,
+  earlier: EarlierTurn[] = [],
+): AsyncGenerator<AssistantEvent> {
   const context: ToolContext = { request };
-  const command = readCommand(request.prompt);
+  // "Yes, do that" answers the last reply; anything else is read on its own.
+  const command = readFollowUp(request.prompt, earlier.at(-1)?.leash) ?? readCommand(request.prompt);
   if (command) {
     yield* followCommand(command, context, spoken);
     return;
@@ -195,7 +208,20 @@ function describeResults(decisions: Decision[]): string {
     count("blocked") && `${count("blocked")} blocked by your rules`,
     count("failed") && `${count("failed")} declined by PayPal, nothing charged`,
   ].filter(Boolean);
-  return `Done: ${parts.join(", ")}.`;
+  return `Done: ${parts.join(", ")}.${offerToChangeTheRule(decisions)}`;
+}
+
+const OFFER: Partial<Record<LeashPage, string>> = {
+  limits: " Want me to open your limits?",
+  people: " Want me to open the people you pay?",
+  paypal: " Want me to open your PayPal?",
+};
+
+/** When a rule held or blocked something, offer to open the page where you can change it. */
+function offerToChangeTheRule(decisions: Decision[]): string {
+  const stopped = decisions.filter((d) => d.outcome === "held" || d.outcome === "blocked");
+  const page = stopped.map((d) => PAGE_FOR_RULE[d.ruleHit]).find(Boolean);
+  return (page && OFFER[page]) ?? "";
 }
 
 const think = (text: string): AssistantEvent => ({ type: "thinking", text });

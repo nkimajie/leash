@@ -1,10 +1,46 @@
 import { z } from "zod";
 import type { Decision } from "./decision";
 import type { SearchResult } from "./product";
+import type { RuleName } from "./spending-rules";
 
-/** The pages the assistant can open for you ("open the control room"). */
+/** The pages the assistant can open for you ("open my limits"). */
 export const LEASH_PAGES = ["ask", "money", "limits", "people", "restocks", "paypal", "twin"] as const;
 export type LeashPage = (typeof LEASH_PAGES)[number];
+
+/** Each page's address, and how Leash names it in a sentence ("Opening your limits."). */
+export const LEASH_PAGE: Record<LeashPage, { path: string; label: string }> = {
+  ask: { path: "/", label: "Ask" },
+  money: { path: "/money", label: "your money" },
+  limits: { path: "/leash", label: "your limits" },
+  people: { path: "/leash/people", label: "the people you pay" },
+  restocks: { path: "/leash/restocks", label: "your restocks" },
+  paypal: { path: "/leash/paypal", label: "your PayPal" },
+  twin: { path: "/twin", label: "your twin" },
+};
+
+/** Where you change the rule that held or blocked something. Only you can: Leash just takes you there. */
+export const PAGE_FOR_RULE: Partial<Record<RuleName, LeashPage>> = {
+  auto_approve_limit: "limits",
+  request_budget: "limits",
+  max_item_price: "limits",
+  max_payment_per_person: "limits",
+  daily_cap: "limits",
+  weekly_cap: "limits",
+  blocked_category: "limits",
+  category_not_allowed: "limits",
+  blocked_merchant: "limits",
+  merchant_not_allowed: "limits",
+  new_person: "people",
+  no_paypal_email: "people",
+  paypal_not_connected: "paypal",
+};
+
+/** One earlier exchange in the conversation, so a follow-up like "yes, do that" makes sense. */
+export const EarlierTurnSchema = z.object({
+  you: z.string().trim().min(1).max(500),
+  leash: z.string().trim().min(1).max(2000),
+});
+export type EarlierTurn = z.infer<typeof EarlierTurnSchema>;
 
 /** One message you send the assistant ("Restock my coffee, under $60"). */
 export const AssistantRequestSchema = z.object({

@@ -5,6 +5,7 @@ import type {
   AssistantEvent,
   ConnectPayPalThen,
   Decision,
+  EarlierTurn,
   GridView,
   NewPayee,
   NewPreference,
@@ -81,16 +82,18 @@ export const resetDemo = () => sendJson<void>("POST", "/api/demo/reset");
 /**
  * Sends a request to the assistant and calls `onStep` for each step as it streams in.
  * `spoken`: you said it out loud, so the assistant keeps its replies short enough to listen to.
+ * `earlier`: the last few exchanges, so a follow-up like "yes, do that" makes sense.
  */
 export async function askAssistant(
   prompt: string,
   onStep: (event: AssistantEvent) => void,
   spoken = false,
+  earlier: EarlierTurn[] = [],
 ): Promise<void> {
   const response = await fetch("/api/assistant", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, spoken }),
+    body: JSON.stringify({ prompt, spoken, earlier }),
   });
   await readSteps(response, onStep);
 }

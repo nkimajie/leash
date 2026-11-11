@@ -5,7 +5,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { AssistantEvent, Restock } from "@/schemas";
+import type { AssistantEvent, EarlierTurn, Restock } from "@/schemas";
 import { Page } from "@/components/ui/page";
 import { askAssistant, runAttack, runRestockNow } from "@/lib/api-client";
 import { TOOL_LABEL } from "@/lib/labels";
@@ -24,6 +24,8 @@ export function AssistantPage() {
   const [isWorking, setIsWorking] = useState(false);
   const [wasSpoken, setWasSpoken] = useState(false);
   const [readAloud, setReadAloud] = useState(false);
+  // The last few exchanges, sent with each request so Leash understands "yes, do that".
+  const [conversation, setConversation] = useState<EarlierTurn[]>([]);
   const endOfTimeline = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,7 +56,19 @@ export function AssistantPage() {
   function send(text: string, spoken: boolean) {
     if (!text.trim()) return;
     setWasSpoken(spoken);
-    show((onStep) => askAssistant(text, onStep, spoken), spoken || readAloud);
+    setPrompt("");
+    show(async (onStep) => {
+      let leashSaid = "";
+      const remember = (step: AssistantEvent) => {
+        if (step.type === "reply") leashSaid = step.text;
+        onStep(step);
+      };
+      await askAssistant(text, remember, spoken, conversation);
+      if (leashSaid) {
+        const turn = { you: text.trim().slice(0, 500), leash: leashSaid.slice(0, 2000) };
+        setConversation((turns) => [...turns, turn].slice(-3));
+      }
+    }, spoken || readAloud);
   }
 
   /** A due restock runs now; anything it buys waits for your okay. */
