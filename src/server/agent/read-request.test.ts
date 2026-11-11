@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readBudget, readPaymentInstruction } from "./read-request";
+import { readBudget, readPaymentInstruction, readRestockSchedule } from "./read-request";
 
 describe("readBudget", () => {
   it.each([
@@ -50,5 +50,26 @@ describe("readPaymentInstruction", () => {
 
   it("ignores shopping requests", () => {
     expect(readPaymentInstruction("Restock my coffee setup, under $60")).toBeNull();
+  });
+});
+
+describe("readRestockSchedule", () => {
+  it.each([
+    ["Restock dog food every 30 days", "Restock dog food", 30],
+    ["restock dog food every 30 days, under $40", "Restock dog food, under $40", 30],
+    ["Order printer paper every week", "Order printer paper", 7],
+    ["buy coffee beans every other week", "Buy coffee beans", 14],
+    ["Every two months, restock the dog's vitamins", "Restock the dog's vitamins", 60],
+    ["please restock my coffee monthly", "Restock my coffee", 30],
+    ["Restock cat litter once every fortnight.", "Restock cat litter", 14],
+  ])("reads %s", (prompt, what, everyDays) => {
+    expect(readRestockSchedule(prompt)).toEqual({ prompt: what, everyDays });
+  });
+
+  it("ignores requests without a schedule, or with one Leash can't keep", () => {
+    expect(readRestockSchedule("Restock my coffee setup, under $60")).toBeNull();
+    expect(readRestockSchedule("Pay Sam $25 for dinner")).toBeNull();
+    expect(readRestockSchedule("Restock dog food every 400 days")).toBeNull();
+    expect(readRestockSchedule("every week")).toBeNull();
   });
 });

@@ -7,7 +7,7 @@ import "server-only";
 import type { AssistantEvent, AssistantRequest, Decision, Product } from "@/schemas";
 import { pickWaitingItem, readCommand, type Command } from "./read-command";
 import { readGridQuestion } from "./read-grid-question";
-import { readPaymentInstruction, type PaymentInstruction } from "./read-request";
+import { readPaymentInstruction, readRestockSchedule, type PaymentInstruction } from "./read-request";
 import { runTool, type ToolContext, type ToolResult } from "./tools";
 import { describeWaiting, describeWhatICanDo, ONLY_YOU_CAN_APPROVE, type LeashStatus } from "./what-leash-can-do";
 
@@ -56,6 +56,12 @@ export async function* runMockAssistant(request: AssistantRequest, spoken = fals
   const command = readCommand(request.prompt);
   if (command) {
     yield* followCommand(command, context, spoken);
+    return;
+  }
+  const schedule = request.source === "you" ? readRestockSchedule(request.prompt) : null;
+  if (schedule) {
+    const scheduled = yield* callTool("schedule_restock", schedule, context);
+    yield reply(scheduled.summary);
     return;
   }
   const payment = readPaymentInstruction(request.prompt);

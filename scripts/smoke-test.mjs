@@ -185,10 +185,18 @@ check("invalid rules are rejected with 400", badRules.status === 400);
 const emptyPrompt = await call("POST", "/api/assistant", { prompt: "" });
 check("an empty request is rejected with 400", emptyPrompt.status === 400);
 
-// 6. Recurring restocks: anything a schedule buys waits for you
-const restock = await call("POST", "/api/restocks", { prompt: "Restock dog food", everyDays: 30 });
-check("a restock can be scheduled", restock.status === 201 && restock.body.everyDays === 30);
-const restockRun = await call("POST", `/api/restocks/${restock.body.id}/run`);
+// 6. Recurring restocks: say it once, and anything a schedule buys waits for you
+const scheduled = await ask("Restock dog food every 30 days", true);
+const restocks = await call("GET", "/api/restocks");
+const restock = restocks.body
+  .filter((r) => r.prompt === "Restock dog food" && r.id !== "restock-dog-food") // not the sample one
+  .at(-1);
+check(
+  "saying 'restock dog food every 30 days' schedules it, and buys nothing now",
+  restock?.everyDays === 30 && scheduled.decisions.length === 0 && /scheduled/i.test(scheduled.reply),
+  scheduled.reply,
+);
+const restockRun = await call("POST", `/api/restocks/${restock?.id}/run`);
 const restockDecisions = restockRun.body?.decisions ?? [];
 check(
   "a restock's purchases are held for approval, even within the rules",

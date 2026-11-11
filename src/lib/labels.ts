@@ -52,6 +52,7 @@ export const TOOL_LABEL: Record<string, string> = {
   check_payment_rules: "Checking your rules",
   buy_product: "Paying with PayPal",
   pay_person: "Sending with PayPal",
+  schedule_restock: "Scheduling a restock",
   recall_preferences: "Recalling what you like",
   remember_preference: "Remembering",
   read_my_leash: "Checking your account",

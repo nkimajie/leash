@@ -33,6 +33,36 @@ export function readPaymentInstruction(prompt: string): PaymentInstruction | nul
   return null;
 }
 
+export type RestockSchedule = { prompt: string; everyDays: number };
+
+const DAYS_PER: Record<string, number> = { day: 1, week: 7, fortnight: 14, month: 30, daily: 1, weekly: 7, fortnightly: 14, monthly: 30 };
+const COUNT_WORDS: Record<string, number> = { a: 1, an: 1, one: 1, other: 2, two: 2, three: 3, four: 4, five: 5, six: 6 };
+
+/**
+ * "Restock dog food every 30 days" -> { prompt: "Restock dog food", everyDays: 30 }.
+ * Also reads "every other week", "every two months", "weekly" and "monthly".
+ * Returns null when the message doesn't ask for a schedule.
+ */
+export function readRestockSchedule(prompt: string): RestockSchedule | null {
+  const match =
+    prompt.match(/,?\s*\b(?:once\s+)?every\s+(?:(\d+|an?|one|other|two|three|four|five|six)\s+)?(day|week|fortnight|month)s?\b/i) ??
+    prompt.match(/,?\s*\b(daily|weekly|fortnightly|monthly)\b/i);
+  if (!match) return null;
+
+  const [phrase, countOrUnit, unit] = match;
+  const count = unit ? Number(countOrUnit ?? 1) || COUNT_WORDS[countOrUnit.toLowerCase()] : 1;
+  const everyDays = count * DAYS_PER[(unit ?? countOrUnit).toLowerCase()];
+  if (everyDays < 1 || everyDays > 365) return null;
+
+  // What to buy each time: your words without the schedule. "Every month, restock paper" -> "Restock paper".
+  const rest = prompt
+    .replace(phrase, "")
+    .replace(/^[\s,.;:-]*(?:please\s+)?/i, "")
+    .replace(/[\s,.;:!-]+$/, "")
+    .replace(/\s{2,}/g, " ");
+  return rest.length < 3 ? null : { prompt: rest[0].toUpperCase() + rest.slice(1), everyDays };
+}
+
 /** Speech recognition may write "25 dollars" or "25 bucks" instead of "$25". */
 export function withDollarSigns(text: string): string {
   return text.replace(/\b(\d+(?:\.\d{1,2})?)\s*(?:dollars?|bucks|usd)\b/gi, "$$$1");
