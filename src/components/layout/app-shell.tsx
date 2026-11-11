@@ -7,10 +7,11 @@
 
 import { Bell, LinkIcon, MessageSquare, ReceiptText, Settings, UserRound, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, type ReactNode } from "react";
 import { IconButton } from "@/components/ui/button";
 import { classNames } from "@/lib/format";
+import { isLookingAround } from "@/lib/looking-around";
 import { AccountProvider, useAccount } from "@/lib/use-account";
 import { LiveDecisionsProvider, useLiveDecisions } from "@/lib/use-live-decisions";
 import { HelpSheet } from "./help-sheet";
@@ -40,8 +41,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 function Frame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { connection } = useAccount();
   const { decisions } = useLiveDecisions();
   const [panel, setPanel] = useState<Panel | null>(null);
+
+  // First visit: welcome, then sign in with PayPal (unless you chose to look around first).
+  const needsWelcome = connection !== null && !connection.signedIn && !isLookingAround();
+  useEffect(() => {
+    if (needsWelcome) router.replace("/welcome");
+  }, [needsWelcome, router]);
 
   const waiting = decisions.filter((d) => d.outcome === "held").length;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));

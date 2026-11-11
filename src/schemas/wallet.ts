@@ -29,6 +29,8 @@ export type PayPalConnection = {
   canDisconnect: boolean;
 };
 
-/** Where PayPal sends you back to: the welcome steps, or the PayPal tab of Your leash. */
-export const ConnectPayPalBody = z.object({ then: z.enum(["welcome", "paypal"]).default("paypal") });
+/** Where PayPal sends you back to: the welcome steps, or the PayPal tab of Your leash. An empty body is fine too. */
+export const ConnectPayPalBody = z
+  .object({ then: z.enum(["welcome", "paypal"]).default("paypal") })
+  .default({ then: "paypal" });
 export type ConnectPayPalThen = z.infer<typeof ConnectPayPalBody>["then"];
