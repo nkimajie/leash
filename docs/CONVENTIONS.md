@@ -9,7 +9,6 @@ src/
   app/                      Routes only. Pages and API endpoints stay thin.
     (dashboard)/            Pages that share the sidebar: Ask, Money, Your leash (tabs: limits, people,
                             restocks, PayPal) and Twin
-    approve/[id]/           Phone-sized approval screen (no sidebar)
     welcome/                First visit: sign in with PayPal, set your leash, meet your twin (no sidebar)
     api/                    HTTP endpoints. Each one: validate input -> call a server function -> return JSON
   components/               React components, grouped by screen

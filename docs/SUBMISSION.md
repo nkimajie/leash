@@ -32,7 +32,7 @@ purchase and payment first passes your spending rules, which are plain code, not
 
 - **Within every rule:** PayPal authorizes and captures. Paid automatically.
 - **Over your limit or budget, someone new, or not what you asked for:** PayPal only authorizes. The money is
-  **reserved, not taken**, and you approve or deny it on your phone (scan the QR code). Deny, and PayPal voids it:
+  **reserved, not taken**, and you approve or deny it with one tap in Leash. Deny, and PayPal voids it:
   you're never charged.
 - **Against a hard rule** (gift cards, a per-person limit, a daily cap): blocked, and PayPal is never called.
 

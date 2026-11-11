@@ -7,8 +7,8 @@ cards or pay a stranger. That's why nobody hands an AI their PayPal today.
 
 Leash lets Claude shop and pay with your PayPal for the boring parts of running a home: restocking coffee and dog
 food, paying the babysitter, settling dinner with a roommate. Claude chooses, but **code decides whether money
-moves**. Anything outside your rules is **reserved, not taken** (a PayPal authorization) until you say yes on your
-phone. Say no, and PayPal releases it: you're never charged. Leash also learns from every yes, no and refund, like a
+moves**. Anything outside your rules is **reserved, not taken** (a PayPal authorization) until you say yes, with
+one tap in Leash. Say no, and PayPal releases it: you're never charged. Leash also learns from every yes, no and refund, like a
 digital twin. And you can just talk to it: say what you need, and it tells you what it's doing and answers out loud.
 
 ## For judges: a 60-second test
@@ -17,8 +17,8 @@ digital twin. And you can just talk to it: say what you need, and it tells you w
    a clean start, open **Settings** (bottom left) and click **Reset demo**.
 2. On **Ask**, tap **Talk** (or hold the space bar) and say _"What can you do for me?"_. Leash checks your account and
    answers out loud. (Or click the same question under **A place to start**.)
-3. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Click **Open on phone**
-   and scan the QR code (or tap **Deny** right there). Pick a reason in **Why not?**, or say it in your own words.
+3. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Tap **Deny** right
+   there. Pick a reason in **Why not?**, or say it in your own words.
    PayPal releases the money, and the screen shows what your twin learned. You can also just say _"Deny the grinder,
    I only want hand grinders"_; try _"Approve it"_ too, and Leash refuses: only you can approve.
 4. Click **"Restock my coffee setup, under $60"**. Watch Claude search real stores (Channel3), check your rules and
@@ -81,10 +81,10 @@ flowchart LR
   rules -->|hard rule| blocked[Blocked<br/>PayPal never called]
   rules -->|within every rule| paid[PayPal: authorize + capture]
   rules -->|needs your OK| held[PayPal: authorize<br/>money reserved]
-  held --> phone[Your phone:<br/>approve or deny + why]
-  phone -->|approve| capture[PayPal: capture]
+  held --> you2[You, in Leash:<br/>approve or deny + why]
+  you2 -->|approve| capture[PayPal: capture]
   capture -->|paying a person| payout[PayPal Payouts<br/>to their email]
-  phone -->|deny| void[PayPal: void]
+  you2 -->|deny| void[PayPal: void]
   void --> twin[Digital twin<br/>Claude turns your reason into a preference]
   twin -.->|next time| claude
 ```
@@ -116,8 +116,9 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
 - **Restock on a schedule.** Say "restock dog food every 30 days" and Leash schedules it (buying nothing now). A
   daily job runs what's due. You aren't there to watch, so everything a restock buys waits for your okay. Your
   restocks sit on a Bryntum timeline: drag the next run to move it.
-- **Approve from your phone.** **Open on phone** shows a QR code. Scan it, approve or deny, and the desktop updates
-  live.
+- **Approve with one tap, right there.** Anything that waits for you has **Approve** and **Deny** wherever you see
+  it: under your request, in Waiting for you, in the notifications and on its receipt. The result ("All paid." or
+  "You weren't charged.") shows what your twin learned.
 - **Ask why, and learn it.** When you deny, say why: "too expensive", "wrong store", or your own words like "I only
   want hand grinders". Claude turns it into a precise preference, and the twin applies it next time.
 - **Stay on what you asked for.** Ask for coffee, and anything that isn't coffee (or close to it: beans, a grinder,
