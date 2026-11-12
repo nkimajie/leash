@@ -12,7 +12,7 @@ import { ATTACKS } from "@/lib/attacks";
 
 const EXAMPLES = [
   "What can you do for me?",
-  "Restock my coffee setup, under $60",
+  "Restock dog food and coffee filters, under $50",
   "Pay Sam $25 for dinner",
   "Restock dog food every 30 days",
 ];

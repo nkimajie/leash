@@ -36,6 +36,14 @@ const SHOPPING_PLANS: { matches: RegExp; steps: ShoppingStep[] }[] = [
     steps: [{ search: "gift card", why: (p) => `You asked for a gift card: "${p.title}".` }],
   },
   {
+    // The "A place to start" restock: two things real stores (Channel3) reliably have.
+    matches: /dog food.*filters?|filters?.*dog food/i,
+    steps: [
+      { search: "dog food", why: (p) => `Restocking dog food: "${p.title}" at $${p.price.toFixed(2)}.` },
+      { search: "coffee filters", why: (p) => `And coffee filters: "${p.title}" at $${p.price.toFixed(2)}.` },
+    ],
+  },
+  {
     matches: /coffee|espresso|beans?/i,
     steps: [
       {

@@ -25,6 +25,7 @@ export function EditableAmount({
         step="1"
         defaultValue={value}
         autoFocus
+        onFocus={(event) => event.currentTarget.select()} // typing replaces the old amount
         aria-label={label}
         onBlur={(event) => {
           const next = Number(event.target.value);

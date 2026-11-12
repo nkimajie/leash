@@ -23,8 +23,8 @@ digital twin. And you can just talk to it: say what you need, and it tells you w
    there. Pick a reason in **Why not?**, or say it in your own words.
    PayPal releases the money, and the screen shows what your twin learned. You can also just say _"Deny the grinder,
    I only want hand grinders"_; try _"Approve it"_ too, and Leash refuses: only you can approve.
-4. Click **"Restock my coffee setup, under $60"**. Watch Claude search real stores (Channel3), check your rules and
-   pay. Every purchase gets a receipt stamped with what happened to the money: **Paid**, **Reserved** or **Blocked**.
+4. Click **"Restock dog food and coffee filters, under $50"**. Watch Claude search real stores (Channel3), check your
+   rules and pay. Every purchase gets a receipt stamped with what happened to the money: **Paid**, **Reserved** or **Blocked**.
 5. Under **Try to break the leash**, pick an attack. A scam "takes over" the assistant, and the rules stop the money
    anyway.
 6. Click **"Pay Sam $25 for dinner"**. PayPal takes the money from your account and **Payouts** sends it on to Sam.
