@@ -46,3 +46,6 @@ next-env.d.ts
 # local assistant config (not part of the project)
 CLAUDE.md
 .claude/
+
+# demo video: voice recordings, screen recordings and edits (kept out of git)
+/video/
