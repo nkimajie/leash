@@ -10,7 +10,7 @@ import { Page } from "@/components/ui/page";
 import { askAssistant, runAttack, runRestockNow } from "@/lib/api-client";
 import { loadConversation, rememberExchange } from "@/lib/conversation";
 import { TOOL_LABEL } from "@/lib/labels";
-import { speak, stopSpeaking } from "@/lib/speak";
+import { speak, stopSpeaking, unlockSpeech } from "@/lib/speak";
 import { APlaceToStart } from "./a-place-to-start";
 import { AskHero } from "./ask-hero";
 import { AssistantTimeline } from "./assistant-timeline";
@@ -37,6 +37,7 @@ export function AssistantPage() {
   async function show(work: (onStep: (step: AssistantEvent) => void) => Promise<void>, aloud: boolean) {
     if (isWorking) return;
     stopSpeaking();
+    if (aloud) unlockSpeech(); // when you typed or tapped an example, so phones read the reply aloud
     setIsWorking(true);
     setSteps([]);
     const pagesToOpen: string[] = [];

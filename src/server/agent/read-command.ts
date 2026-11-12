@@ -55,7 +55,9 @@ export function readCommand(prompt: string): Command | null {
   }
   if (/^(?:undo|refund|reverse|take back)\b/.test(text)) return { kind: "open_page", page: "money" };
 
-  const goTo = text.match(/^(?:please\s+)?(?:open|go to|take me to|show me|switch to)\s+(?:the\s+|my\s+)?(.+)$/);
+  const goTo = text.match(
+    /^(?:please\s+)?(?:open|go to|take me to|show(?: me)?|see|view|switch to)\s+(?:the\s+|my\s+)?(.+)$/,
+  );
   const page = goTo && PAGE_WORDS.find(([words]) => new RegExp(`^(?:${words.source})\\b`).test(goTo[1]))?.[1];
   if (page) return { kind: "open_page", page };
 

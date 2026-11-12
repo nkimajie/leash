@@ -36,6 +36,8 @@ describe("readCommand", () => {
     expect(readCommand("take me to my rules")).toEqual({ kind: "open_page", page: "limits" });
     expect(readCommand("show me my leash")).toEqual({ kind: "open_page", page: "limits" });
     expect(readCommand("go to PayPal")).toEqual({ kind: "open_page", page: "paypal" });
+    expect(readCommand("show my money")).toEqual({ kind: "open_page", page: "money" });
+    expect(readCommand("see my twin")).toEqual({ kind: "open_page", page: "twin" });
   });
 
   it("leaves shopping and payments to the assistant", () => {

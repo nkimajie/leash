@@ -23,6 +23,18 @@ export function stopSpeaking() {
   if (canSpeak()) window.speechSynthesis.cancel();
 }
 
+/**
+ * Phones only let a page talk once it has spoken during a tap (iPhone Safari is the strictest), but
+ * Leash's reply arrives seconds after you tap. So call this from a tap or key press: it says nothing,
+ * silently, and the replies that follow are let through.
+ */
+export function unlockSpeech() {
+  if (!canSpeak()) return;
+  const silence = new SpeechSynthesisUtterance(" ");
+  silence.volume = 0;
+  window.speechSynthesis.speak(silence);
+}
+
 /** "$14.00" sounds better as "$14", and bullets and quote marks aren't read out. */
 function forListening(text: string): string {
   return text
@@ -38,9 +50,17 @@ function forListening(text: string): string {
  *   - neural voices: Edge's "Natural" ones (Ava, Andrew, Emma…), and macOS "Premium" or "Enhanced"
  *     voices (Ava, Zoe, Evan…) once downloaded in System Settings > Accessibility > Spoken Content
  *   - Chrome's online Google voice
+ *   - Samantha, the standard iPhone and Mac voice (Apple also lists novelty voices like "Albert")
  *   - the older built-in voices last
  */
-const MOST_NATURAL_FIRST = [/natural/i, /premium/i, /enhanced/i, /^Google US English/, /^Google UK English Female/];
+const MOST_NATURAL_FIRST = [
+  /natural/i,
+  /premium/i,
+  /enhanced/i,
+  /^Google US English/,
+  /^Google UK English Female/,
+  /^Samantha/,
+];
 
 function pickVoice(): SpeechSynthesisVoice | null {
   const english = window.speechSynthesis.getVoices().filter((voice) => voice.lang.startsWith("en"));

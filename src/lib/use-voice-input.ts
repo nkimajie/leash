@@ -5,6 +5,7 @@
 // the audio to Google to recognise it). Firefox has none, so `isSupported` is false and you type.
 
 import { useEffect, useEffectEvent, useRef, useState, useSyncExternalStore } from "react";
+import { stopSpeaking, unlockSpeech } from "./speak";
 
 /** The parts of the browser's SpeechRecognition we use. TypeScript doesn't ship a type for it yet. */
 type Recognition = {
@@ -73,6 +74,10 @@ export function useVoiceInput(
 
   function start() {
     if (!findRecognition() || listener.current || !enabled) return;
+    // You're about to talk, so Leash stops talking (or the mic would hear it). And because this is
+    // your tap or key press, phones will let Leash say its reply out loud afterwards.
+    stopSpeaking();
+    unlockSpeech();
     stopped.current = false;
     setProblem(null);
     setIsListening(true);
@@ -88,7 +93,9 @@ export function useVoiceInput(
     const recognition = new (findRecognition()!)();
     recognition.lang = navigator.language || "en-US";
     recognition.interimResults = true; // show the words while you speak
-    recognition.continuous = true; // don't stop at the first breath
+    // Don't stop at the first breath. Except on Android, where Chrome repeats your words when it
+    // listens continuously: there it hears one phrase at a time, and onend below carries on.
+    recognition.continuous = !/Android/i.test(navigator.userAgent);
     let heard = earlier;
     recognition.onresult = (event) => {
       heard = addWords(earlier, Array.from(event.results, (result) => result[0].transcript).join(""));
