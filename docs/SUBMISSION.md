@@ -26,8 +26,8 @@ household for whom typing and checkout forms are the hard part.
 
 ### What it does
 
-You tell Leash what you need, typed or out loud: "restock my coffee, under $60", "pay Sam $25 for dinner",
-"restock dog food every 30 days". Claude searches real stores (Channel3), picks what fits your taste, and pays with your PayPal. Every
+You tell Leash what you need, typed or out loud: "restock dog food and coffee filters, under $50", "pay Sam $25 for
+dinner", "restock dog food every 30 days". Claude searches real stores (Channel3), picks what fits your taste, and pays with your PayPal. Every
 purchase and payment first passes your spending rules, which are plain code, not a prompt:
 
 - **Within every rule:** PayPal authorizes and captures. Paid automatically.
@@ -39,8 +39,8 @@ purchase and payment first passes your spending rules, which are plain code, not
 Paying a person works the same way, then PayPal Payouts sends the money on to their email.
 
 After it pays, Leash keeps track. The store ships to the address on your PayPal account, the tracking number goes
-on the PayPal order, and "where are my beans?" gets an answer. "The beans arrived broken, refund them" refunds
-through PayPal. Leash remembers the conversation and what it did, and answers "what's my balance?" with what's
+on the PayPal order, and "where is my dog food?" gets the carrier, the tracking number and the day it arrives. "The dog
+food arrived damaged, refund it" refunds through PayPal. Leash remembers the conversation and what it did, and answers "what's my balance?" with what's
 left to spend under your rules. And any AI agent can shop on the same leash, through the Leash API or as an MCP
 server: Claude in claude.ai can buy for you, but only you can approve.
 
@@ -119,6 +119,9 @@ anything outside your rules still waits for your tap.
 - Keeping the AI from ever being the last line of defence. Claude chooses, but it can't set a price, skip a rule or
   move money directly. The hardest case was the slow drain: many small buys, each under the limit. The answer was a
   rule that compares each purchase with what you actually asked for.
+- Real stores don't label things the way rules expect. Channel3's stores file gift cards under "gift giving", so a
+  "never buy gift cards" rule that only compared categories let one through (held for approval, not blocked). A
+  never-buy rule now also matches the product's own title, with a unit test for that exact case.
 - Learning from a "no" correctly: denying an $85 grinder because it's too expensive and denying it because you only
   want hand grinders should teach different lessons.
 
