@@ -218,7 +218,7 @@ function Dashboard({ decisions }: { decisions: Decision[] }) {
       </div>
       {/* Studio fills the box it's given: tall enough to show the whole dashboard without its own
           scrollbar. Its widgets sit 16 px inside their cells, so the box reaches past the page margin. */}
-      <div className={classNames("-mx-4", isCustomising ? "h-[calc(100dvh-64px)]" : "h-[2000px] sm:h-[1200px]")}>
+      <div className={classNames("-mx-4", isCustomising ? "h-[calc(100dvh-64px)]" : "h-[1960px] sm:h-[1200px]")}>
         <MoneyDashboard decisions={shown} mode={isCustomising ? "edit" : "view"} />
       </div>
     </section>
