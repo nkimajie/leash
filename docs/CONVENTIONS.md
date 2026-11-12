@@ -8,14 +8,14 @@ How Leash is organised, and the rules every change follows. Read this before add
 src/
   app/                      Routes only. Pages and API endpoints stay thin.
     (dashboard)/            Pages that share the sidebar: Ask, Money, Your leash (tabs: limits, people,
-                            restocks, PayPal) and Twin
+                            restocks, PayPal, agents) and Twin
     welcome/                First visit: sign in with PayPal, set your leash, meet your twin (no sidebar)
     api/                    HTTP endpoints. Each one: validate input -> call a server function -> return JSON
   components/               React components, grouped by screen
     ui/                     Shared building blocks from the V2 design system: Button, Card, Stamp, ReceiptCard,
                             LeashMeter, Segmented, Chip, Sheet, Illustration
     layout/                 App shell (sidebar, tabs), logo, notifications, profile, settings, help
-    assistant/ money/ approvals/ people/ twin/ restocks/ rules/ connect/ welcome/
+    assistant/ money/ approvals/ people/ twin/ restocks/ rules/ connect/ agents/ welcome/
   lib/                      Browser-safe helpers: API client, formatting, labels, hooks, the attack scripts,
                             and voice (use-voice-input.ts listens, speak.ts talks back)
   schemas/                  SCHEMA SECTION. Zod schemas + TypeScript types for every kind of data

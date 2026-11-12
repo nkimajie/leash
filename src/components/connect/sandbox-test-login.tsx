@@ -4,8 +4,7 @@
 // test money, never real. It's public on purpose, so it comes from NEXT_PUBLIC_ settings (set in
 // .env.local and on Render), never from the code, and only shows when real PayPal sandbox is on.
 
-import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { CopyButton } from "@/components/ui/copy-button";
 
 const EMAIL = process.env.NEXT_PUBLIC_SANDBOX_TEST_EMAIL;
 const PASSWORD = process.env.NEXT_PUBLIC_SANDBOX_TEST_PASSWORD;
@@ -26,28 +25,11 @@ export function SandboxTestLogin({ className = "" }: { className?: string }) {
 }
 
 function CopyRow({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-center gap-3">
       <dt className="w-[72px] shrink-0 text-xs text-ink-soft">{label}</dt>
       <dd className="min-w-0 flex-1 font-mono text-[13px] break-all">{value}</dd>
-      <button
-        type="button"
-        onClick={() =>
-          navigator.clipboard.writeText(value).then(
-            () => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            },
-            () => {},
-          )
-        }
-        aria-label={`Copy the ${label.toLowerCase()}`}
-        className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-hairline bg-white px-2.5 text-xs hover:bg-paper"
-      >
-        {copied ? <Check className="h-3.5 w-3.5 text-paid" /> : <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />}
-        {copied ? "Copied" : "Copy"}
-      </button>
+      <CopyButton value={value} label={label} />
     </div>
   );
 }

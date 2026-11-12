@@ -196,9 +196,10 @@ The same tools are an MCP server at `/api/v1/mcp` (Streamable HTTP, written by h
 claude mcp add --transport http leash https://leash-rzsu.onrender.com/api/v1/mcp   # Claude Code
 ```
 
-In claude.ai or Claude Desktop, add a custom connector with the same URL. Ask Claude to buy something: within your
-rules it's paid at once; anything else waits for your tap in Leash. Ask it to approve, and it can't: there is no
-tool for that.
+In claude.ai or the Claude app, add a custom connector with the same URL (Customize → Connectors → Add custom
+connector, with no sign-in). Ask Claude to buy something: within your rules it's paid at once; anything else waits
+for your tap in Leash. Ask it to approve, and it can't: there is no tool for that. In Leash, **Your leash → Agents**
+shows your address, these steps and things to try.
 
 Leash's own endpoints (approve, deny, your rules, your people) only accept changes that come from Leash's pages
 (`src/proxy.ts`), so another website, or an agent browsing one, can't approve anything there either. This hackathon

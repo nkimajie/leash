@@ -105,7 +105,7 @@ anything outside your rules still waits for your tap.
   tokens, AUTHORIZE orders, order tracking, errors with `debug_id`).
 - **MCP:** Leash's tools are also an MCP server (`/api/v1/mcp`, Streamable HTTP, written by hand). Add it as a
   connector in claude.ai, Claude Desktop or Claude Code, and Claude shops and pays on your leash. There is no
-  approve tool, so a held purchase always waits for your tap in Leash.
+  approve tool, so a held purchase always waits for your tap in Leash. **Your leash → Agents** shows how to connect.
 - **The design** is our own V2 design system, made in Figma: paper and ink, one electric blue, and a stamp for each
   of the seven things that can happen to money (Paid, Reserved, Released, Blocked, Refunded, Failed, Not sent).
 - **Every outside service has a mock mode**, so anyone can clone the repo and run it with zero keys.

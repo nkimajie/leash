@@ -1,4 +1,4 @@
-// Your leash: the rules Leash shops and pays within, in four tabs.
+// Your leash: the rules Leash shops and pays within, in five tabs.
 
 import { LeashTabs } from "@/components/rules/leash-tabs";
 import { Page } from "@/components/ui/page";
