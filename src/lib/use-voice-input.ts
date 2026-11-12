@@ -97,8 +97,10 @@ export function useVoiceInput(
     // listens continuously: there it hears one phrase at a time, and onend below carries on.
     recognition.continuous = !/Android/i.test(navigator.userAgent);
     let heard = earlier;
+    let transcript: Transcript = { dropped: "", latest: "" };
     recognition.onresult = (event) => {
-      heard = addWords(earlier, Array.from(event.results, (result) => result[0].transcript).join(""));
+      transcript = hearMore(transcript, Array.from(event.results, (result) => result[0].transcript).join(""));
+      heard = addWords(earlier, addWords(transcript.dropped, transcript.latest));
       setHeardSoFar(heard);
       stopAfterQuiet(DONE_AFTER_QUIET_MS);
     };
@@ -167,3 +169,27 @@ const subscribeToNothing = () => () => {};
 export function addWords(before: string, after: string): string {
   return [before.trim(), after.trim()].filter(Boolean).join(" ");
 }
+
+/** One stretch of listening: what the browser shows now, and any words it dropped along the way. */
+export type Transcript = { dropped: string; latest: string };
+
+/**
+ * Follows what the browser heard, without losing words. Chrome keeps every phrase. Safari (on Mac
+ * and iPhone) can start over after a pause: suddenly it shows only the new words. So when the text
+ * shrinks to under half its words, the old words are kept. If Safari later gives the whole thing
+ * back, the kept words aren't added twice.
+ */
+export function hearMore(before: Transcript, now: string): Transcript {
+  if (before.dropped && plainWords(now).startsWith(plainWords(before.dropped))) return { dropped: "", latest: now };
+  const startedOver = wordCount(now) < wordCount(before.latest) / 2;
+  return { dropped: startedOver ? addWords(before.dropped, before.latest) : before.dropped, latest: now };
+}
+
+const plainWords = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(" ");
+const wordCount = (text: string) => plainWords(text).split(" ").filter(Boolean).length;

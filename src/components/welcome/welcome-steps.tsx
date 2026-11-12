@@ -226,9 +226,10 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
   const [isSaving, setIsSaving] = useState(false);
   const answer = (index: number, text: string) => setAnswers((all) => all.map((a, i) => (i === index ? text : a)));
 
-  // "Or just say it" answers the open question (or the first one without an answer). It keeps
-  // listening through pauses until you tap stop, and adds to what's already there.
-  const listeningFor = useRef(0);
+  // "Or just say it" answers the open question, or carries on with the one you were answering, or
+  // starts on the first one without an answer. It keeps listening through pauses until you tap stop,
+  // and adds to what's already there, so stopping and starting again never loses anything.
+  const listeningFor = useRef<number | null>(null);
   const voice = useVoiceInput(
     (heard) => setAnswers((all) => all.map((a, i) => (i === listeningFor.current ? addWords(a, heard) : a))),
     true,
@@ -236,9 +237,14 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
   );
   function startListening() {
     const unanswered = answers.findIndex((a) => !a.trim());
-    listeningFor.current = open ?? (unanswered === -1 ? 0 : unanswered);
+    listeningFor.current = open ?? listeningFor.current ?? (unanswered === -1 ? 0 : unanswered);
     setOpen(listeningFor.current);
     voice.start();
+  }
+  function openQuestion(index: number) {
+    if (voice.isListening) return;
+    listeningFor.current = index;
+    setOpen(index);
   }
 
   async function done() {
@@ -281,11 +287,7 @@ function MeetYourTwin({ onDone }: { onDone: () => void }) {
                   className="h-11 rounded-full border border-leash-rim bg-white px-4 text-sm outline-none"
                 />
               ) : (
-                <Chip
-                  key={question}
-                  onClick={() => !voice.isListening && setOpen(index)}
-                  className="w-full justify-start"
-                >
+                <Chip key={question} onClick={() => openQuestion(index)} className="w-full justify-start">
                   {answers[index] ? `${question} ${answers[index]}` : question}
                 </Chip>
               ),
