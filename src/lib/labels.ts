@@ -111,6 +111,7 @@ export const TOOL_LABEL: Record<string, string> = {
   read_my_leash: "Checking your account",
   look_up_spending: "Adding up your spending",
   deny_held_item: "Denying it with PayPal",
+  refund_purchase: "Refunding with PayPal",
   open_page: "Opening the page",
 };
 

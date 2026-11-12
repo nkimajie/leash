@@ -47,7 +47,7 @@ export const WHAT_LEASH_CAN_DO = [
   },
   {
     title: "Say no for you",
-    text: '"Deny the grinder." PayPal releases the reserved money. I can never approve anything: that is always your tap.',
+    text: '"Deny the grinder", or "refund the beans, they arrived broken". PayPal releases or returns the money. I can never approve anything: that is always your tap.',
   },
   {
     title: "Keep you stocked",

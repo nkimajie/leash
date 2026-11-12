@@ -13,6 +13,7 @@ import { openPageTool } from "./open-page";
 import { payPersonTool } from "./pay-person";
 import { recallPreferencesTool, rememberPreferenceTool } from "./preferences";
 import { readMyLeashTool } from "./read-my-leash";
+import { refundPurchaseTool } from "./refund-purchase";
 import { scheduleRestockTool } from "./schedule-restock";
 import { searchProductsTool } from "./search-products";
 
@@ -30,6 +31,7 @@ export const ASSISTANT_TOOLS = [
   readMyLeashTool,
   lookUpSpendingTool,
   denyHeldItemTool,
+  refundPurchaseTool,
   openPageTool,
 ] as AssistantTool[];
 

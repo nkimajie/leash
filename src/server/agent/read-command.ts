@@ -14,6 +14,7 @@ export type Command =
   | { kind: "approve" }
   | { kind: "my_limits" }
   | { kind: "my_balance" }
+  | { kind: "refund"; what: string; reason: string | null }
   | { kind: "unclear" }
   /** `change`: for limits, a rule change in words the Limits page understands, ready to confirm. */
   | { kind: "open_page"; page: LeashPage; change?: string };
@@ -36,10 +37,10 @@ export function readCommand(prompt: string): Command | null {
   const deny = original.match(
     /^(?:please\s+)?(?:deny|reject|decline|cancel|say no to|no to|don'?t buy|do not buy)\s+(.+)$/i,
   );
-  if (deny) {
-    const [what, ...why] = deny[1].split(/,|;|\.\s|\s+(?:because|since|as)\s+/);
-    return { kind: "deny", what: what.trim(), reason: why.join(" ").trim() || null };
-  }
+  if (deny) return { kind: "deny", ...whatAndWhy(deny[1]) };
+  // "Refund the beans, they arrived broken": a refund only gives money back, so Leash may do it.
+  const refund = original.match(/^(?:please\s+)?(?:refund|return)\s+(.+)$/i);
+  if (refund) return { kind: "refund", ...whatAndWhy(refund[1]) };
   if (
     /^(?:please\s+)?(?:approve|accept|confirm)\b|\b(?:can|could|would|will) you (?:please )?(?:approve|accept)\b/.test(
       text,
@@ -54,7 +55,7 @@ export function readCommand(prompt: string): Command | null {
   ) {
     return { kind: "open_page", page: "limits", change: ruleChangeIn(text) };
   }
-  if (/^(?:undo|refund|reverse|take back)\b/.test(text)) return { kind: "open_page", page: "money" };
+  if (/^(?:undo|reverse|take back)\b/.test(text)) return { kind: "open_page", page: "money" };
 
   const goTo = text.match(
     /^(?:please\s+)?(?:open|go to|take me to|show(?: me)?|see|view|switch to)\s+(?:the\s+|my\s+)?(.+)$/,
@@ -119,7 +120,14 @@ function ruleChangeIn(text: string): string | undefined {
  * Which waiting item you mean: "the grinder" matches "Baratza Encore Grinder".
  * "it" or "that" means the only thing waiting, if there's just one.
  */
-export function pickWaitingItem<Item extends { title: string }>(waiting: Item[], what: string): Item | null {
+/** "the grinder, I only want hand grinders" -> what: "the grinder", reason: "I only want hand grinders". */
+function whatAndWhy(said: string): { what: string; reason: string | null } {
+  const [what, ...why] = said.split(/,|;|\.\s|\s+(?:because|since|as)\s+/);
+  return { what: what.trim(), reason: why.join(" ").trim() || null };
+}
+
+/** The item whose title shares the most words with what you said: "the grinder", "Morgan". */
+export function pickByTitle<Item extends { title: string }>(waiting: Item[], what: string): Item | null {
   const words = what
     .toLowerCase()
     .split(/[^a-z0-9]+/)

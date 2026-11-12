@@ -13,7 +13,7 @@ import {
   type LeashPage,
   type Product,
 } from "@/schemas";
-import { pickWaitingItem, readCommand, readFollowUp, type Command } from "./read-command";
+import { pickByTitle, readCommand, readFollowUp, type Command } from "./read-command";
 import { readGridQuestion } from "./read-grid-question";
 import { readPaymentInstruction, readRestockSchedule, type PaymentInstruction } from "./read-request";
 import { runTool, type ToolContext, type ToolResult } from "./tools";
@@ -111,7 +111,7 @@ async function* followCommand(command: Command, context: ToolContext, spoken: bo
     }
     case "deny": {
       const leash = yield* callTool("read_my_leash", {}, context);
-      const item = pickWaitingItem((leash.data as LeashStatus).waitingForYou, command.what);
+      const item = pickByTitle((leash.data as LeashStatus).waitingForYou, command.what);
       if (!item) {
         yield reply(`Nothing waiting for you matches "${command.what}", so I didn't deny anything.`);
         return;
@@ -130,6 +130,12 @@ async function* followCommand(command: Command, context: ToolContext, spoken: bo
     case "my_limits": {
       const leash = yield* callTool("read_my_leash", {}, context);
       yield reply(describeLimits(leash.data as LeashStatus));
+      return;
+    }
+    case "refund": {
+      const refunded = yield* callTool("refund_purchase", { purchase: command.what, reason: command.reason }, context);
+      const learned = command.reason && refunded.decision ? " Your twin will remember why." : "";
+      yield reply(refunded.summary + learned);
       return;
     }
     case "my_balance": {

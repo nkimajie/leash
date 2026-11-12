@@ -187,6 +187,19 @@ check(
 );
 const refund = await call("POST", `/api/decisions/${beans.id}/refund`);
 check("refunding a paid purchase works", refund.body?.outcome === "refunded");
+const secondBeans = coffeeAgain.decisions[0];
+const refundByVoice = await ask("Refund the beans, they arrived broken", true);
+check(
+  'saying "refund the beans" refunds the newest beans through PayPal, and the twin learns why',
+  refundByVoice.decisions[0]?.id === secondBeans?.id && refundByVoice.decisions[0]?.outcome === "refunded",
+  refundByVoice.reply,
+);
+const refundSamByVoice = await ask("Refund the payment to Sam");
+check(
+  "asked to refund money sent to a person, it explains the money already went on to them",
+  refundSamByVoice.decisions.length === 0 && refundSamByVoice.reply.includes("Sam"),
+  refundSamByVoice.reply,
+);
 const history = await call("GET", "/api/decisions");
 const sampleRow = history.body.find((d) => d.requestId === "sample-history" && d.outcome === "auto_approved");
 const refundSample = await call("POST", `/api/decisions/${sampleRow?.id}/refund`);

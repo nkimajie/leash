@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pickWaitingItem, readCommand, readFollowUp } from "./read-command";
+import { pickByTitle, readCommand, readFollowUp } from "./read-command";
 
 describe("readCommand", () => {
   it.each([
@@ -48,22 +48,22 @@ describe("readCommand", () => {
   });
 });
 
-describe("pickWaitingItem", () => {
+describe("pickByTitle", () => {
   const waiting = [{ title: "Baratza Encore Conical Burr Grinder" }, { title: "Payment to Morgan" }];
 
   it("finds the item you named", () => {
-    expect(pickWaitingItem(waiting, "the grinder")).toBe(waiting[0]);
-    expect(pickWaitingItem(waiting, "the burr grinders")).toBe(waiting[0]);
-    expect(pickWaitingItem(waiting, "Morgan")).toBe(waiting[1]);
+    expect(pickByTitle(waiting, "the grinder")).toBe(waiting[0]);
+    expect(pickByTitle(waiting, "the burr grinders")).toBe(waiting[0]);
+    expect(pickByTitle(waiting, "Morgan")).toBe(waiting[1]);
   });
 
   it("takes 'it' to mean the only thing waiting", () => {
-    expect(pickWaitingItem([waiting[0]], "it")).toBe(waiting[0]);
-    expect(pickWaitingItem(waiting, "it")).toBeNull();
+    expect(pickByTitle([waiting[0]], "it")).toBe(waiting[0]);
+    expect(pickByTitle(waiting, "it")).toBeNull();
   });
 
   it("returns null when nothing matches", () => {
-    expect(pickWaitingItem(waiting, "the kettle")).toBeNull();
+    expect(pickByTitle(waiting, "the kettle")).toBeNull();
   });
 });
 
@@ -114,6 +114,15 @@ describe("the built-in assistant never shops on a question or a no", () => {
       expect(readCommand(prompt)).toEqual({ kind: "unclear" });
     },
   );
+
+  it("reads a refund and its reason", () => {
+    expect(readCommand("Refund the beans, they arrived broken")).toEqual({
+      kind: "refund",
+      what: "the beans",
+      reason: "they arrived broken",
+    });
+    expect(readCommand("return the grinder")).toEqual({ kind: "refund", what: "the grinder", reason: null });
+  });
 
   it("treats 'don't buy' and 'cancel' as a deny, and 'can you approve' as asking it to approve", () => {
     expect(readCommand("Don't buy the grinder")).toEqual({ kind: "deny", what: "the grinder", reason: null });
