@@ -40,6 +40,8 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      - key: NEXT_PUBLIC_AG_GRID_LICENSE_KEY # AG Studio dashboard; without it, a watermark
+        sync: false
       - key: DEMO_FORCE_DECLINE
         value: "false"
       - key: DEMO_MODE # public demo: reset button, nightly reset, Claude use capped per visitor
