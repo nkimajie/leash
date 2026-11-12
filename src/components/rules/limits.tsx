@@ -14,15 +14,11 @@ import { Confirmation } from "@/components/ui/confirmation";
 import { EditableAmount } from "@/components/ui/editable-amount";
 import { Field, TextInput } from "@/components/ui/form-fields";
 import { Illustration } from "@/components/ui/illustration";
-import { LeashMeter } from "@/components/ui/leash-meter";
-import { Segmented } from "@/components/ui/segmented";
+import { WithoutAsking } from "@/components/rules/without-asking";
 import { fetchSpendingRules, saveSpendingRules, suggestRuleChanges } from "@/lib/api-client";
-import { formatShortMoney } from "@/lib/format";
 
 type CapRule = "defaultRequestBudget" | "maxPaymentPerPerson" | "dailyCap" | "weeklyCap";
 type ListRule = "allowedCategories" | "blockedMerchants" | "allowedMerchants";
-
-const WITHOUT_ASKING_CHOICES = [20, 50, 100].map((amount) => ({ value: amount, label: `$${amount}` }));
 
 const CAPS: { key: CapRule; label: string; hint: string }[] = [
   { key: "defaultRequestBudget", label: "Budget per request", hint: 'Unless you say one, like "under $60".' },
@@ -94,47 +90,11 @@ export function Limits() {
           <Card>
             <CardHeader title="Spending rules" />
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]">
-              <div>
-                <Segmented
-                  label="Pay without asking up to"
-                  options={WITHOUT_ASKING_CHOICES}
-                  value={
-                    WITHOUT_ASKING_CHOICES.some((c) => c.value === rules.autoApproveLimit)
-                      ? rules.autoApproveLimit
-                      : null
-                  }
-                  onChange={(autoApproveLimit) => change({ autoApproveLimit })}
-                  mono
-                />
-                <div className="mt-6">
-                  <LeashMeter withoutAsking={rules.autoApproveLimit} hardLimit={rules.maxItemPrice} />
-                </div>
-                <p className="mt-3 font-mono text-sm">
-                  {formatShortMoney(rules.autoApproveLimit)} without asking · {formatShortMoney(rules.maxItemPrice)}{" "}
-                  hard limit
-                </p>
-                <p className="mt-5 text-sm text-ink-soft">
-                  Small, expected purchases go through. Anything else waits for your okay.
-                </p>
-                <div className="mt-5 grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-ink-soft">Without asking</div>
-                    <EditableAmount
-                      label="Without asking"
-                      value={rules.autoApproveLimit}
-                      onChange={(autoApproveLimit) => change({ autoApproveLimit })}
-                    />
-                  </div>
-                  <div>
-                    <div className="text-xs text-ink-soft">Hard limit</div>
-                    <EditableAmount
-                      label="Hard limit"
-                      value={rules.maxItemPrice}
-                      onChange={(maxItemPrice) => change({ maxItemPrice })}
-                    />
-                  </div>
-                </div>
-              </div>
+              <WithoutAsking
+                autoApproveLimit={rules.autoApproveLimit}
+                maxItemPrice={rules.maxItemPrice}
+                onChange={change}
+              />
               <div className="hidden place-items-center rounded-[20px] border border-leash-rim bg-leash-wash lg:grid">
                 <Illustration name="boundary-held" className="w-56" />
               </div>

@@ -14,13 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Card, WashCard } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { Illustration } from "@/components/ui/illustration";
-import { LeashMeter } from "@/components/ui/leash-meter";
-import { Segmented } from "@/components/ui/segmented";
 import { Stamp } from "@/components/ui/stamp";
 import { PoweredBy } from "@/components/ui/powered-by";
 import { SandboxTestLogin } from "@/components/connect/sandbox-test-login";
+import { WithoutAsking } from "@/components/rules/without-asking";
 import { addPreference, fetchSpendingRules, saveSpendingRules, startConnectingPayPal } from "@/lib/api-client";
-import { formatShortMoney } from "@/lib/format";
 import { addWords, useVoiceInput } from "@/lib/use-voice-input";
 import { startLookingAround } from "@/lib/looking-around";
 
@@ -149,8 +147,6 @@ function Rule({ tone, stamp, text }: { tone: "paid" | "reserved" | "blocked"; st
   );
 }
 
-const WITHOUT_ASKING_CHOICES = [20, 50, 100].map((amount) => ({ value: amount, label: `$${amount}` }));
-
 function SetYourLeash({ onNext }: { onNext: () => void }) {
   const [rules, setRules] = useState<SpendingRules>(DEFAULT_SPENDING_RULES);
   const [isSaving, setIsSaving] = useState(false);
@@ -188,23 +184,11 @@ function SetYourLeash({ onNext }: { onNext: () => void }) {
           How much can I spend without asking?
         </h1>
         <Card className="mt-6 p-4">
-          <Segmented
-            label="Pay without asking up to"
-            options={WITHOUT_ASKING_CHOICES}
-            value={rules.autoApproveLimit}
-            onChange={(autoApproveLimit) => setRules({ ...rules, autoApproveLimit })}
-            mono
+          <WithoutAsking
+            autoApproveLimit={rules.autoApproveLimit}
+            maxItemPrice={rules.maxItemPrice}
+            onChange={(changes) => setRules({ ...rules, ...changes })}
           />
-          <div className="mt-6">
-            <LeashMeter withoutAsking={rules.autoApproveLimit} hardLimit={rules.maxItemPrice} />
-          </div>
-          <p className="mt-3 font-mono text-sm">
-            {formatShortMoney(rules.autoApproveLimit)} without asking · {formatShortMoney(rules.maxItemPrice)} hard
-            limit
-          </p>
-          <p className="mt-5 text-sm text-ink-soft">
-            Small, expected purchases go through. Anything else waits for your okay.
-          </p>
         </Card>
         <Card className="mt-5 p-4">
           <h2 className="text-xl font-semibold">Never buy</h2>

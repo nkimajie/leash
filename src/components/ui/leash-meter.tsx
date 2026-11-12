@@ -26,7 +26,8 @@ export function LeashMeter({ withoutAsking, hardLimit }: { withoutAsking: number
             backgroundImage: "repeating-linear-gradient(135deg, #c9c3b5 0 1.5px, transparent 1.5px 6px)",
           }}
         />
-        <div className="absolute inset-y-0 left-0 bg-leash" style={{ width: at(withoutAsking) }} />
+        {/* Above the hard limit is blocked anyway, so the fill stops there. */}
+        <div className="absolute inset-y-0 left-0 bg-leash" style={{ width: at(Math.min(withoutAsking, hardLimit)) }} />
       </div>
       <div className="mt-2 flex justify-between font-mono text-xs text-ink-soft">
         <span>$0</span>
