@@ -7,6 +7,7 @@ const WHAT_IT_DOES = {
   PayPal: "Vault, Orders, authorize, capture, void, refund and Payouts: every payment Leash makes.",
   APIMatic: "Every PayPal call goes through PayPal's Server SDK, which APIMatic generates.",
   "AG Grid": "Your receipts: filters and sorting set by asking, live updates, and the totals row.",
+  "AG Studio": "Your dashboard: live totals, charts and a table that filter each other when you click.",
   Bryntum: "Bryntum Scheduler draws this timeline.",
   Channel3: "Product search across real online stores.",
   Render: "Hosting, and the daily job that runs restocks.",
