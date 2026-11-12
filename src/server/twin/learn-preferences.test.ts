@@ -28,6 +28,7 @@ const decisionFor = (product: Product): Decision => ({
   product,
   payee: null,
   paypal: { orderId: null, authorizationId: null, captureId: null, status: null, debugId: null, payoutId: null },
+  shipping: null,
   createdAt: "",
   updatedAt: "",
 });

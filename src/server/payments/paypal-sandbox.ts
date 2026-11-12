@@ -13,6 +13,7 @@ import {
   PaymentsController,
   PaypalPaymentTokenCustomerType,
   PaypalPaymentTokenUsageType,
+  ShipmentCarrier,
   VaultController,
   VaultTokenRequestType,
   type Order,
@@ -20,7 +21,7 @@ import {
 import { paypalSettings } from "@/server/config/environment";
 import * as database from "@/server/database";
 import { PayPalError } from "./paypal-error";
-import type { PaymentAuthorization, PaymentCapture, PaymentRequest } from "./paypal";
+import type { PaymentAuthorization, PaymentCapture, PaymentRequest, Shipment } from "./paypal";
 
 /** The vault id of the sample person you sign in as in mock mode. */
 export const MOCK_VAULT_ID = "mock-vault";
@@ -162,6 +163,43 @@ export async function sandboxRefundCapture(captureId: string): Promise<{ refundI
     refundId: result.id ?? "",
     status: result.status === "COMPLETED" ? "REFUNDED" : (result.status ?? "PENDING"),
   };
+}
+
+// ---------- shipping ----------
+
+/** Tells PayPal the purchase has shipped: the carrier and tracking number go on the PayPal order. */
+export async function sandboxAddTracking(orderId: string, captureId: string, shipment: Shipment): Promise<void> {
+  await callPayPal(() =>
+    orders.createOrderTracking({
+      id: orderId,
+      body: {
+        captureId,
+        trackingNumber: shipment.trackingNumber,
+        carrier: shipment.carrier as ShipmentCarrier,
+        notifyPayer: false,
+      },
+    }),
+  );
+}
+
+/** The shipping address on your saved PayPal account, in one line: "Sam Lee, 1 Main St, Lisbon, PT". */
+export async function sandboxFindShippingAddress(): Promise<string | null> {
+  const wallet = await findUsableWallet();
+  if (!wallet) return null;
+  const { result } = await callPayPal(() => vault.getPaymentToken(wallet.vaultId));
+  const shipping = result.paymentSource?.paypal?.shipping;
+  const address = shipping?.address;
+  if (!address) return null;
+  return [
+    shipping.name?.fullName,
+    address.addressLine1,
+    address.addressLine2,
+    address.adminArea2,
+    address.postalCode,
+    address.countryCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 // ---------- helpers ----------

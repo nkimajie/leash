@@ -1,28 +1,34 @@
 import "server-only";
 
-// The payments section: the only door to PayPal. The rest of the app calls these five
-// functions and never knows whether PayPal is real (sandbox) or mocked.
+// The payments section: the only door to PayPal. The rest of the app calls these functions
+// and never knows whether PayPal is real (sandbox) or mocked.
 //
-//   authorizePayment   reserve the money (PayPal order with intent AUTHORIZE)
-//   capturePayment     take the reserved money
-//   voidAuthorization  release the reservation; the buyer is never charged
-//   refundCapture      give captured money back
-//   sendToPerson       pass a payment on to a person's PayPal email (Payouts)
+//   authorizePayment     reserve the money (PayPal order with intent AUTHORIZE)
+//   capturePayment       take the reserved money
+//   voidAuthorization    release the reservation; the buyer is never charged
+//   refundCapture        give captured money back
+//   sendToPerson         pass a payment on to a person's PayPal email (Payouts)
+//   addTracking          put a shipment's carrier and tracking number on the PayPal order
+//   findShippingAddress  where your saved PayPal account ships to (PayPal Vault)
 //
 // Real sandbox calls live in ./paypal-sandbox.ts and ./paypal-payouts.ts; the stand-in is ./mock-paypal.ts.
 
 import { serviceModes } from "@/server/config/environment";
 import {
+  mockAddTracking,
   mockAuthorizePayment,
   mockCapturePayment,
+  mockFindShippingAddress,
   mockRefundCapture,
   mockSendToPerson,
   mockVoidAuthorization,
 } from "./mock-paypal";
 import { sandboxSendToPerson } from "./paypal-payouts";
 import {
+  sandboxAddTracking,
   sandboxAuthorizePayment,
   sandboxCapturePayment,
+  sandboxFindShippingAddress,
   sandboxRefundCapture,
   sandboxVoidAuthorization,
 } from "./paypal-sandbox";
@@ -41,6 +47,7 @@ export type PersonPayout = {
   reference: string;
 };
 export type SentPayout = { payoutId: string; status: string };
+export type Shipment = { carrier: string; trackingNumber: string };
 
 const isSandbox = () => serviceModes().payments === "paypal-sandbox";
 
@@ -64,4 +71,12 @@ export async function refundCapture(captureId: string): Promise<{ refundId: stri
 
 export async function sendToPerson(payout: PersonPayout): Promise<SentPayout> {
   return isSandbox() ? sandboxSendToPerson(payout) : mockSendToPerson(payout);
+}
+
+export async function addTracking(orderId: string, captureId: string, shipment: Shipment): Promise<void> {
+  return isSandbox() ? sandboxAddTracking(orderId, captureId, shipment) : mockAddTracking();
+}
+
+export async function findShippingAddress(): Promise<string | null> {
+  return isSandbox() ? sandboxFindShippingAddress() : mockFindShippingAddress();
 }

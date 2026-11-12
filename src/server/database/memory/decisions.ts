@@ -25,7 +25,13 @@ export async function findDecisionByPayPalId(paypalId: string): Promise<Decision
 }
 
 export async function saveNewDecision(details: NewDecision): Promise<Decision> {
-  const decision: Decision = { ...details, id: newId(), createdAt: timestampNow(), updatedAt: timestampNow() };
+  const decision: Decision = {
+    ...details,
+    id: newId(),
+    shipping: null,
+    createdAt: timestampNow(),
+    updatedAt: timestampNow(),
+  };
   memoryTables.decisions.push(decision);
   return decision;
 }

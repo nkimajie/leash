@@ -50,6 +50,10 @@ export const WHAT_LEASH_CAN_DO = [
     text: '"Deny the grinder", or "refund the beans, they arrived broken". PayPal releases or returns the money. I can never approve anything: that is always your tap.',
   },
   {
+    title: "Track your orders",
+    text: '"Where are my beans?" Once paid, the store ships to the address on your PayPal account, and the tracking goes on your PayPal order.',
+  },
+  {
     title: "Keep you stocked",
     text: "Recurring restocks, like dog food every 30 days. Anything a schedule buys waits for your OK.",
   },

@@ -8,6 +8,7 @@ import "server-only";
 //   rules say "allowed"         -> PayPal reserves, then takes the money -> auto_approved
 //
 // Paying a person: once the money is taken, PayPal Payouts sends it on to their PayPal email.
+// Buying something: once the money is taken, the store ships it, and the tracking goes on the PayPal order.
 // Scheduled restocks run while you're away, so anything they buy is held for your OK.
 
 import {
@@ -23,6 +24,7 @@ import {
   type YourReason,
 } from "@/schemas";
 import * as database from "@/server/database";
+import { planShipment } from "@/server/delivery/delivery";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors";
 import * as paypal from "@/server/payments/paypal";
 import type { YourAction } from "@/server/twin/learn-preferences";
@@ -134,9 +136,9 @@ export async function approveHeldDecision(decisionId: string): Promise<Decision>
       await paypal.voidAuthorization(decision.paypal.authorizationId!).catch(() => {});
       return database.decisions.updateDecision(decisionId, paymentFailure(error));
     }
-    // Only once the money is safely taken: a lesson can never undo a payment.
+    // Only once the money is safely taken: a lesson (or shipping) can never undo a payment.
     await rememberLesson(approved, "approved");
-    return approved;
+    return shipIt(approved);
   });
 }
 
@@ -267,9 +269,10 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
   }
 
   // Step 2: within every rule, so take the money now.
+  let paid: Decision;
   try {
     const taken = await takeReservedMoney(details, authorization.authorizationId);
-    return database.decisions.saveNewDecision({
+    paid = await database.decisions.saveNewDecision({
       ...record,
       ...(taken.failure ?? { outcome: "auto_approved" }),
       paypal: { ...reserved, ...taken.paypal },
@@ -278,6 +281,36 @@ async function payIfRulesAllow(ruleCheck: RuleCheck, details: DecisionDetails): 
     await paypal.voidAuthorization(authorization.authorizationId).catch(() => {});
     const failure = paymentFailure(error);
     return database.decisions.saveNewDecision({ ...record, ...failure, paypal: { ...reserved, ...failure.paypal } });
+  }
+  // Step 3: the money is taken, so the store ships it.
+  return paid.outcome === "auto_approved" ? shipIt(paid) : paid;
+}
+
+/**
+ * The store ships what you bought, to the address on your saved PayPal account, and the carrier and
+ * tracking number go on the real PayPal order (Orders v2 tracking), so "where's my order?" has an
+ * answer. The stores in this sandbox demo don't really ship, so Leash plays the store here.
+ * The money is already taken, so a problem is logged, never thrown: shipping can't undo a payment.
+ */
+async function shipIt(decision: Decision): Promise<Decision> {
+  const { orderId, captureId } = decision.paypal;
+  if (decision.kind !== "purchase" || !orderId || !captureId) return decision;
+  try {
+    const shipment = planShipment(decision.id, new Date());
+    const [shipTo, onPayPalOrder] = await Promise.all([
+      paypal.findShippingAddress().catch(() => null),
+      paypal.addTracking(orderId, captureId, shipment).then(
+        () => true,
+        (error) => {
+          console.warn(`PayPal didn't take the tracking for ${decision.id}`, error);
+          return false;
+        },
+      ),
+    ]);
+    return await database.decisions.updateDecision(decision.id, { shipping: { ...shipment, shipTo, onPayPalOrder } });
+  } catch (error) {
+    console.warn(`Couldn't ship ${decision.id}`, error);
+    return decision;
   }
 }
 

@@ -203,6 +203,7 @@ export function sampleDecisions(): Decision[] {
         debugId: null,
         payoutId: null,
       },
+      shipping: null,
       createdAt: at,
       updatedAt: hoursAgo(row.hoursAgo - (row.answeredHoursLater ?? 0)),
     };

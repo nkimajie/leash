@@ -29,6 +29,11 @@ export function formatWhen(isoDate: string) {
   return `${date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
 }
 
+/** "Saturday, Nov 14": a delivery day. */
+export function formatDay(isoDate: string) {
+  return new Date(isoDate).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+}
+
 /** "today", "in 4 days" or "3 days ago". */
 export function formatDaysAway(isoDate: string) {
   const days = Math.round((new Date(isoDate).getTime() - Date.now()) / 86_400_000);

@@ -16,6 +16,7 @@ import { readMyLeashTool } from "./read-my-leash";
 import { refundPurchaseTool } from "./refund-purchase";
 import { scheduleRestockTool } from "./schedule-restock";
 import { searchProductsTool } from "./search-products";
+import { trackOrdersTool } from "./track-orders";
 
 export type { ToolContext, ToolResult } from "./define-tool";
 
@@ -32,6 +33,7 @@ export const ASSISTANT_TOOLS = [
   lookUpSpendingTool,
   denyHeldItemTool,
   refundPurchaseTool,
+  trackOrdersTool,
   openPageTool,
 ] as AssistantTool[];
 

@@ -115,6 +115,14 @@ describe("the built-in assistant never shops on a question or a no", () => {
     },
   );
 
+  it("reads delivery questions", () => {
+    expect(readCommand("Where are my beans?")).toEqual({ kind: "track", what: "beans" });
+    expect(readCommand("where's my order")).toEqual({ kind: "track", what: null });
+    expect(readCommand("How long is the delivery?")).toEqual({ kind: "track", what: null });
+    expect(readCommand("When will it arrive?")).toEqual({ kind: "track", what: null });
+    expect(readCommand("Where's my money?")?.kind).not.toBe("track");
+  });
+
   it("reads a refund and its reason", () => {
     expect(readCommand("Refund the beans, they arrived broken")).toEqual({
       kind: "refund",

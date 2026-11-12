@@ -537,6 +537,40 @@
             ],
             "additionalProperties": false
           },
+          "shipping": {
+            "nullable": true,
+            "type": "object",
+            "properties": {
+              "carrier": {
+                "type": "string"
+              },
+              "trackingNumber": {
+                "type": "string"
+              },
+              "shipTo": {
+                "nullable": true,
+                "type": "string"
+              },
+              "shippedAt": {
+                "type": "string"
+              },
+              "arrivesBy": {
+                "type": "string"
+              },
+              "onPayPalOrder": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "carrier",
+              "trackingNumber",
+              "shipTo",
+              "shippedAt",
+              "arrivesBy",
+              "onPayPalOrder"
+            ],
+            "additionalProperties": false
+          },
           "createdAt": {
             "type": "string"
           },
@@ -560,6 +594,7 @@
           "product",
           "payee",
           "paypal",
+          "shipping",
           "createdAt",
           "updatedAt"
         ],

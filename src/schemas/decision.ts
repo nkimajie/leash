@@ -33,6 +33,22 @@ export const PayPalRecordSchema = z.object({
 });
 export type PayPalRecord = z.infer<typeof PayPalRecordSchema>;
 
+/**
+ * A purchase on its way. The stores in this sandbox demo don't really ship, so a stand-in store
+ * does: it picks the carrier and tracking number, and Leash adds them to the real PayPal order.
+ */
+export const ShippingSchema = z.object({
+  carrier: z.string(),
+  trackingNumber: z.string(),
+  /** From your saved PayPal account, e.g. "Sam Lee, 1 Main St, Lisbon, 1000-001, PT". */
+  shipTo: z.string().nullable(),
+  shippedAt: z.string(),
+  arrivesBy: z.string(),
+  /** True once PayPal has the tracking on its order. */
+  onPayPalOrder: z.boolean(),
+});
+export type Shipping = z.infer<typeof ShippingSchema>;
+
 /** One thing the assistant tried to pay for, and what happened. A row in the control room. */
 export const DecisionSchema = z.object({
   id: z.string(),
@@ -52,6 +68,8 @@ export const DecisionSchema = z.object({
   product: ProductSchema.nullable(),
   payee: z.object({ id: z.string(), name: z.string(), email: z.string().nullable() }).nullable(),
   paypal: PayPalRecordSchema,
+  /** Purchases only, once paid and shipped. */
+  shipping: ShippingSchema.nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -62,7 +80,8 @@ export type Decision = z.infer<typeof DecisionSchema>;
 export const SAMPLE_HISTORY_REQUEST_ID = "sample-history";
 export const isSampleHistory = (decision: Pick<Decision, "requestId">) =>
   decision.requestId === SAMPLE_HISTORY_REQUEST_ID;
-export type NewDecision = Omit<Decision, "id" | "createdAt" | "updatedAt">;
+/** A new decision hasn't shipped yet: shipping is added once the money is taken. */
+export type NewDecision = Omit<Decision, "id" | "createdAt" | "updatedAt" | "shipping">;
 
 /** How long a held purchase or payment waits for you before Leash releases the reserved money. */
 export const DAYS_TO_ANSWER = 7;

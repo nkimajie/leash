@@ -40,10 +40,11 @@ export const OUTCOME_SENTENCE: Record<Outcome, string> = {
 export function paypalTrail(decision: Decision): string {
   if (isSampleHistory(decision)) return "Sample history · never sent to PayPal";
   const paidOut = decision.paypal.payoutId ? " → paid out" : "";
+  const shipped = decision.shipping?.onPayPalOrder ? " → tracking added" : "";
   switch (decision.outcome) {
     case "auto_approved":
     case "approved":
-      return `PayPal · authorized → captured${paidOut}`;
+      return `PayPal · authorized → captured${paidOut}${shipped}`;
     case "held":
       return "PayPal · authorized → awaiting you";
     case "denied":
@@ -112,6 +113,7 @@ export const TOOL_LABEL: Record<string, string> = {
   look_up_spending: "Adding up your spending",
   deny_held_item: "Denying it with PayPal",
   refund_purchase: "Refunding with PayPal",
+  track_orders: "Tracking your orders",
   open_page: "Opening the page",
 };
 

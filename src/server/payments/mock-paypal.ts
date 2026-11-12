@@ -36,6 +36,15 @@ export async function mockSendToPerson(payout: PersonPayout): Promise<SentPayout
   return { payoutId: fakePayPalId().slice(0, 13), status: "PENDING" };
 }
 
+export async function mockAddTracking() {
+  await simulateNetworkDelay();
+}
+
+/** The sample person you sign in as in mock mode lives here. */
+export async function mockFindShippingAddress() {
+  return "Favor, 12 Sample Street, London, E1 6AN, GB";
+}
+
 const ID_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
 const fakePayPalId = () =>
   Array.from({ length: 17 }, () => ID_CHARACTERS[Math.floor(Math.random() * ID_CHARACTERS.length)]).join("");

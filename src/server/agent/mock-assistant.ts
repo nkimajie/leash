@@ -138,6 +138,11 @@ async function* followCommand(command: Command, context: ToolContext, spoken: bo
       yield reply(refunded.summary + learned);
       return;
     }
+    case "track": {
+      const tracked = yield* callTool("track_orders", { purchase: command.what }, context);
+      yield reply(tracked.summary);
+      return;
+    }
     case "my_balance": {
       const leash = yield* callTool("read_my_leash", {}, context);
       yield reply(describeBalance(leash.data as LeashStatus));

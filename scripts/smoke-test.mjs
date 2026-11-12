@@ -68,6 +68,18 @@ check(
   JSON.stringify(grinder),
 );
 
+check(
+  "the paid beans ship: the tracking number goes on the PayPal order",
+  beans?.shipping?.trackingNumber.startsWith("1ZLEASH") && beans.shipping.onPayPalOrder,
+  JSON.stringify(beans?.shipping),
+);
+const whereBeans = await ask("Where are my beans?");
+check(
+  "asked where the beans are, it gives the carrier, the day and the address from PayPal",
+  whereBeans.reply.includes("UPS") && whereBeans.reply.includes("arriving") && whereBeans.reply.includes("London"),
+  whereBeans.reply,
+);
+
 // 1b. Talking to Leash: questions and commands, typed or said out loud
 const capabilities = await ask("What can you do for me?", true);
 check(

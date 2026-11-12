@@ -108,6 +108,7 @@ export const toDecision = (row: Row): Decision => ({
     debugId: row.paypal_debug_id,
     payoutId: row.paypal_payout_id ?? null,
   },
+  shipping: row.shipping ?? null,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -134,6 +135,7 @@ export const fromDecision = (decision: Partial<Omit<Decision, "paypal">> & { pay
     paypal_status: decision.paypal?.status,
     paypal_debug_id: decision.paypal?.debugId,
     paypal_payout_id: decision.paypal?.payoutId,
+    shipping: decision.shipping,
     created_at: decision.createdAt,
     updated_at: decision.updatedAt,
   });

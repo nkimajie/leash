@@ -15,6 +15,7 @@ export type Command =
   | { kind: "my_limits" }
   | { kind: "my_balance" }
   | { kind: "refund"; what: string; reason: string | null }
+  | { kind: "track"; what: string | null }
   | { kind: "unclear" }
   /** `change`: for limits, a rule change in words the Limits page understands, ready to confirm. */
   | { kind: "open_page"; page: LeashPage; change?: string };
@@ -73,6 +74,19 @@ export function readCommand(prompt: string): Command | null {
   // Questions only: "restock my coffee, spend under $60" is still a shopping request.
   if (/\b(?:what(?:'s| is)|anything)\b.*\b(?:waiting|pending|on hold)\b|\bneeds? my (?:ok|approval)\b/.test(text)) {
     return { kind: "whats_waiting" };
+  }
+  // "Where are my beans?", "how long is the delivery?", "when will it arrive?"
+  const where = text.match(/^where(?:'s| is| are)\s+(?:my |the )?(.+?)[?.!]*$/);
+  if (where && !/\b(?:money|balance|cash)\b/.test(where[1]))
+    return {
+      kind: "track",
+      what: /^(?:orders?|package|parcel|delivery|stuff|things?)$/.test(where[1]) ? null : where[1],
+    };
+  if (
+    /\b(?:deliver(?:y|ed)?|arriv(?:e|ing)|tracking|shipp(?:ed|ing))\b/.test(text) &&
+    /^(?:how|when|has|have|is|did|what)\b|\?$/.test(text)
+  ) {
+    return { kind: "track", what: null };
   }
   if (/\bbalance\b|\bhow much (?:money )?(?:do i have|have i got)\b(?! left)/.test(text)) {
     return { kind: "my_balance" };

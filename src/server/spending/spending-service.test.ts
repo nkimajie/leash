@@ -29,6 +29,8 @@ vi.mock("@/server/payments/paypal", async () => ({
   sendToPerson: vi.fn(),
   refundCapture: vi.fn(),
   voidAuthorization: vi.fn(),
+  addTracking: vi.fn(async () => {}),
+  findShippingAddress: vi.fn(async () => null),
 }));
 
 vi.mock("@/server/twin/understand-your-reason", () => ({ lessonFromYourWords: async () => null }));
@@ -59,6 +61,7 @@ const heldPayment = (): Decision => ({
     debugId: null,
     payoutId: null,
   },
+  shipping: null,
   createdAt: "2026-11-09T10:00:00Z",
   updatedAt: "2026-11-09T10:00:00Z",
 });

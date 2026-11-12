@@ -4,14 +4,14 @@
 // so you can trace exactly where it went (or didn't). Held ones can be decided right here.
 
 import { useState } from "react";
-import { isSampleHistory, type Decision } from "@/schemas";
+import { isSampleHistory, type Decision, type Shipping } from "@/schemas";
 import { DecideButtons } from "@/components/approvals/decide-buttons";
 import { Button } from "@/components/ui/button";
 import { ReceiptCard } from "@/components/ui/receipt-card";
 import { Sheet } from "@/components/ui/sheet";
 import { PoweredBy } from "@/components/ui/powered-by";
 import { refundDecision } from "@/lib/api-client";
-import { classNames, formatReceiptTime, formatShortMoney } from "@/lib/format";
+import { classNames, formatDay, formatReceiptTime, formatShortMoney } from "@/lib/format";
 import { paypalStatusInWords } from "@/lib/labels";
 
 type Step = { label: string; detail?: string | null; id?: string | null; stopped?: boolean };
@@ -49,6 +49,9 @@ export function ReceiptSheet({
       {decision && (
         <>
           <ReceiptCard decision={decision} />
+          {decision.shipping && (decision.outcome === "auto_approved" || decision.outcome === "approved") && (
+            <Delivery shipping={decision.shipping} />
+          )}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-xl font-semibold">PayPal trail</h3>
             <div className="flex flex-wrap gap-1.5">
@@ -84,6 +87,29 @@ export function ReceiptSheet({
         </>
       )}
     </Sheet>
+  );
+}
+
+/**
+ * Where it is: shipped by the demo's stand-in store to the address on your PayPal account.
+ * Without a delivery date passed, it's on its way.
+ */
+function Delivery({ shipping }: { shipping: Shipping }) {
+  const [now] = useState(() => Date.now());
+  const arrived = now >= new Date(shipping.arrivesBy).getTime();
+  return (
+    <div className="mt-6">
+      <h3 className="text-xl font-semibold">Delivery</h3>
+      <p className="mt-3 text-sm">
+        {arrived ? "Delivered" : "On its way, arriving"} {formatDay(shipping.arrivesBy)} · {shipping.carrier}
+      </p>
+      {shipping.shipTo && <p className="mt-0.5 text-xs text-ink-soft">To {shipping.shipTo}</p>}
+      <p className="mt-0.5 font-mono text-xs break-all text-ink-soft">{shipping.trackingNumber}</p>
+      <p className="mt-2 text-xs text-ink-soft">
+        Shipped by the demo&apos;s stand-in store
+        {shipping.onPayPalOrder ? ". The tracking is on your PayPal order." : "."}
+      </p>
+    </div>
   );
 }
 
@@ -158,6 +184,13 @@ function paypalSteps(decision: Decision): Step[] {
       detail: reported,
       id: paypal.payoutId,
       stopped: ["FAILED", "RETURNED", "BLOCKED"].includes(paypal.status ?? ""),
+    });
+  }
+  if (decision.shipping?.onPayPalOrder && outcome !== "refunded") {
+    steps.push({
+      label: `Tracking added to the PayPal order (${decision.shipping.carrier})`,
+      detail: "Orders v2 tracking",
+      id: decision.shipping.trackingNumber,
     });
   }
   return steps;
