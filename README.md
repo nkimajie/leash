@@ -110,7 +110,7 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
   real account. A spending answer links to the same question in Money.
 - **Remember the conversation.** Leash keeps your last 10 exchanges and what it really did in each (bought the beans
   for $14, paid; the grinder is waiting for you), so "how long is the delivery?" or "yes, do that" makes sense, even
-  after a reload or on another device. **Start fresh** forgets them; your receipts stay.
+  after a reload or on another device. **Reset demo** forgets them.
 - **Track your orders.** _"Where are my beans?"_ Once paid, the store ships to the address on your PayPal account,
   and the tracking number goes on the real PayPal order. Leash answers with the carrier, the tracking number and
   the day it arrives, and the receipt shows it too.

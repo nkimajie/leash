@@ -20,7 +20,7 @@ const TOOLS = [
 ];
 
 const TRY_ASKING = [
-  "Use Leash to find fair-trade coffee beans under $20 and buy the best one.",
+  "Use Leash to find coffee filters under $15 and buy the best one.",
   "With Leash, pay Sam Rivera $12 for lunch.",
   "What are my Leash limits?",
 ];

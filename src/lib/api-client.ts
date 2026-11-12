@@ -5,7 +5,6 @@ import type {
   AssistantEvent,
   ConnectPayPalThen,
   Decision,
-  EarlierTurn,
   GridView,
   NewPayee,
   NewPreference,
@@ -95,11 +94,6 @@ export async function askAssistant(
   });
   await readSteps(response, onStep);
 }
-
-/** What Leash remembers: your last few exchanges and what it did in them, oldest first. */
-export const fetchConversation = () => getJson<EarlierTurn[]>("/api/conversation");
-/** "Start fresh": Leash forgets the conversation. Your receipts stay. */
-export const forgetConversation = () => sendJson<void>("DELETE", "/api/conversation");
 
 /** "Try to break the leash": plays a hijacked assistant and streams what the leash does. */
 export async function runAttack(attackId: string, onStep: (event: AssistantEvent) => void): Promise<void> {

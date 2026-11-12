@@ -5,16 +5,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { AssistantEvent, EarlierTurn, Restock } from "@/schemas";
+import type { AssistantEvent, Restock } from "@/schemas";
 import { Page } from "@/components/ui/page";
-import { askAssistant, fetchConversation, forgetConversation, runAttack, runRestockNow } from "@/lib/api-client";
+import { askAssistant, runAttack, runRestockNow } from "@/lib/api-client";
 import { TOOL_LABEL } from "@/lib/labels";
 import { speak, stopSpeaking, unlockSpeech } from "@/lib/speak";
 import { APlaceToStart } from "./a-place-to-start";
 import { AskHero } from "./ask-hero";
 import { AssistantTimeline } from "./assistant-timeline";
 import { Composer } from "./composer";
-import { LeashRemembers } from "./leash-remembers";
 import { SignInReminder } from "./sign-in-reminder";
 import { WaitingForYou } from "./waiting-for-you";
 
@@ -25,18 +24,11 @@ export function AssistantPage() {
   const [isWorking, setIsWorking] = useState(false);
   const [wasSpoken, setWasSpoken] = useState(false);
   const [readAloud, setReadAloud] = useState(false);
-  // What Leash remembers from earlier: shown here, and recalled by the server with each request.
-  const [conversation, setConversation] = useState<EarlierTurn[]>([]);
   const endOfTimeline = useRef<HTMLDivElement>(null);
-  const onScreenRequest = steps.find((step) => step.type === "request_started")?.request;
 
   useEffect(() => {
     endOfTimeline.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [steps]);
-
-  useEffect(() => {
-    fetchConversation().then(setConversation, () => {}); // without it, Ask still works
-  }, []);
 
   /** Runs the assistant (or an attack) and shows each step as it arrives, saying it aloud if asked. */
   async function show(work: (onStep: (step: AssistantEvent) => void) => Promise<void>, aloud: boolean) {
@@ -64,16 +56,8 @@ export function AssistantPage() {
     if (!text.trim() || isWorking) return; // Enter while Leash works keeps what you typed
     setWasSpoken(spoken);
     setPrompt("");
-    show(async (onStep) => {
-      await askAssistant(text, onStep, spoken);
-      setConversation(await fetchConversation()); // now including this exchange
-    }, spoken || readAloud);
-  }
-
-  async function startFresh() {
-    await forgetConversation();
-    setConversation([]);
-    setSteps([]);
+    // Leash remembers your last few exchanges on the server, so "yes, buy that one" makes sense.
+    show((onStep) => askAssistant(text, onStep, spoken), spoken || readAloud);
   }
 
   /** A due restock runs now; anything it buys waits for your okay. */
@@ -98,12 +82,6 @@ export function AssistantPage() {
         isWorking={isWorking}
         readAloud={readAloud}
         onReadAloudChange={setReadAloud}
-      />
-      <LeashRemembers
-        conversation={conversation}
-        onScreenRequestId={onScreenRequest?.id}
-        onStartFresh={startFresh}
-        disabled={isWorking}
       />
       {(steps.length > 0 || isWorking) && (
         <div>
