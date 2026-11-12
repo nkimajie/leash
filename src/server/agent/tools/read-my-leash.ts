@@ -11,7 +11,7 @@ import { defineTool } from "./define-tool";
 export const readMyLeashTool = defineTool({
   name: "read_my_leash",
   description:
-    "Read the user's leash as it is right now: their spending rules, what is paid or reserved today and this week (reserved money isn't spent yet), what is waiting for their approval (with ids), whether PayPal is connected, the people they pay, and what their twin remembers. Use it to answer questions about their account or what you can do for them, and to find something they want denied. It changes nothing.",
+    "Read the user's leash as it is right now: their spending rules, what is paid or reserved today and this week (reserved money isn't spent yet), what is left to spend under their caps (their leash balance), what is waiting for their approval (with ids), whether PayPal is connected, the people they pay, and what their twin remembers. Use it to answer questions about their account or what you can do for them, and to find something they want denied. It changes nothing.",
   inputSchema: z.object({}),
   async run() {
     const status = await readMyLeash();
@@ -20,6 +20,7 @@ export const readMyLeashTool = defineTool({
       status.paypal.connected ? "PayPal is connected." : "PayPal isn't connected yet.",
       `I pay up to ${money(status.rules.autoApproveLimit)} without asking.`,
       `${money(status.paidOrReserved.today)} paid or reserved today, of your ${money(status.rules.dailyCap)} daily cap.`,
+      `${money(status.leftToSpend.today)} left to spend today, ${money(status.leftToSpend.thisWeek)} this week.`,
       `${status.waitingForYou.length} waiting for you.`,
     ].join(" ");
     return { summary, data: status };
@@ -49,6 +50,10 @@ async function readMyLeash(): Promise<LeashStatus> {
       newPeopleNeedApproval: rules.newPeopleNeedApproval,
     },
     paidOrReserved: { today: soFar.spentToday, thisWeek: soFar.spentThisWeek },
+    leftToSpend: {
+      today: Math.max(0, rules.dailyCap - soFar.spentToday),
+      thisWeek: Math.max(0, rules.weeklyCap - soFar.spentThisWeek),
+    },
     waitingForYou: decisions
       .filter((d) => d.outcome === "held" && !isSampleHistory(d))
       .map((d) => ({ id: d.id, title: d.title, amount: d.amount, why: d.ruleExplanation })),

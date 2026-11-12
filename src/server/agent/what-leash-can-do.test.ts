@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeWaiting, describeWhatICanDo, type LeashStatus } from "./what-leash-can-do";
+import { describeBalance, describeWaiting, describeWhatICanDo, type LeashStatus } from "./what-leash-can-do";
 
 const status: LeashStatus = {
   paypal: { mode: "paypal-sandbox", connected: true, payerEmail: "you@example.com" },
@@ -13,7 +13,8 @@ const status: LeashStatus = {
     blockedCategories: ["gift cards"],
     newPeopleNeedApproval: true,
   },
-  paidOrReserved: { today: 14, thisWeek: 14 },
+  paidOrReserved: { today: 99, thisWeek: 99 },
+  leftToSpend: { today: 301, thisWeek: 901 },
   waitingForYou: [{ id: "d1", title: "Baratza Encore Grinder", amount: 85, why: "Over your $50 limit." }],
   people: [{ name: "Sam", trusted: true, hasPayPalEmail: true }],
   twinRemembers: [],
@@ -40,6 +41,19 @@ describe("describeWhatICanDo", () => {
   it("says when PayPal isn't connected", () => {
     const answer = describeWhatICanDo({ ...status, paypal: { ...status.paypal, connected: false } }, true);
     expect(answer).toContain("PayPal isn't connected yet");
+  });
+});
+
+describe("describeBalance", () => {
+  it("gives your leash balance, what's reserved, and where to see your PayPal balance", () => {
+    const answer = describeBalance(status);
+    expect(answer).toContain("You have $301.00 left to spend today, of your $400.00 daily cap, and $901.00 this week");
+    expect(answer).toContain("$85.00 of that is reserved, waiting for your okay.");
+    expect(answer).toContain("check it in the PayPal app");
+  });
+
+  it("leaves out the reserved line when nothing is waiting", () => {
+    expect(describeBalance({ ...status, waitingForYou: [] })).not.toContain("reserved");
   });
 });
 

@@ -101,6 +101,13 @@ describe("the built-in assistant never shops on a question or a no", () => {
     },
   );
 
+  it.each(["What's my balance?", "how much money do I have", "Check my PayPal balance"])(
+    "'%s' asks for your balance",
+    (prompt) => {
+      expect(readCommand(prompt)).toEqual({ kind: "my_balance" });
+    },
+  );
+
   it.each(["Why was that blocked?", "Is the PS5 worth it?", "no", "Never mind", "stop"])(
     "'%s' is unclear, so nothing is bought",
     (prompt) => {

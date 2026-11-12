@@ -18,6 +18,7 @@ import { readGridQuestion } from "./read-grid-question";
 import { readPaymentInstruction, readRestockSchedule, type PaymentInstruction } from "./read-request";
 import { runTool, type ToolContext, type ToolResult } from "./tools";
 import {
+  describeBalance,
   describeLimits,
   describeWaiting,
   describeWhatICanDo,
@@ -129,6 +130,11 @@ async function* followCommand(command: Command, context: ToolContext, spoken: bo
     case "my_limits": {
       const leash = yield* callTool("read_my_leash", {}, context);
       yield reply(describeLimits(leash.data as LeashStatus));
+      return;
+    }
+    case "my_balance": {
+      const leash = yield* callTool("read_my_leash", {}, context);
+      yield reply(describeBalance(leash.data as LeashStatus));
       return;
     }
     case "unclear":

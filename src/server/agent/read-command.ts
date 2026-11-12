@@ -13,6 +13,7 @@ export type Command =
   | { kind: "deny"; what: string; reason: string | null }
   | { kind: "approve" }
   | { kind: "my_limits" }
+  | { kind: "my_balance" }
   | { kind: "unclear" }
   /** `change`: for limits, a rule change in words the Limits page understands, ready to confirm. */
   | { kind: "open_page"; page: LeashPage; change?: string };
@@ -71,6 +72,9 @@ export function readCommand(prompt: string): Command | null {
   // Questions only: "restock my coffee, spend under $60" is still a shopping request.
   if (/\b(?:what(?:'s| is)|anything)\b.*\b(?:waiting|pending|on hold)\b|\bneeds? my (?:ok|approval)\b/.test(text)) {
     return { kind: "whats_waiting" };
+  }
+  if (/\bbalance\b|\bhow much (?:money )?(?:do i have|have i got)\b(?! left)/.test(text)) {
+    return { kind: "my_balance" };
   }
   // Your limits before your spending: "how much can you spend?" is about the limit, not the past.
   if (
