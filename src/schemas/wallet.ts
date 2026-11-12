@@ -25,8 +25,6 @@ export type PayPalConnection = {
   payerName: string | null;
   payerEmail: string | null;
   connectedAt: string | null;
-  /** False in demo mode, so one visitor can't sign out the next. */
-  canDisconnect: boolean;
 };
 
 /** Where PayPal sends you back to: the welcome steps, or the PayPal tab of Your leash. An empty body is fine too. */

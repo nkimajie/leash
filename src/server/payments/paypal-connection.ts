@@ -12,7 +12,6 @@ import "server-only";
 import type { ConnectPayPalThen, PayPalConnection } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";
 import * as database from "@/server/database";
-import { BadRequestError } from "@/server/errors";
 import { finishSavingPayPalAccount, findUsableWallet, MOCK_VAULT_ID, startSavingPayPalAccount } from "./paypal-sandbox";
 
 const MOCK_PERSON = { vaultId: MOCK_VAULT_ID, name: "Favor", email: "favor@example.com" };
@@ -28,7 +27,6 @@ export async function getPayPalConnection(): Promise<PayPalConnection> {
     payerName: wallet?.payerName ?? null,
     payerEmail: wallet?.payerEmail ?? null,
     connectedAt: wallet?.createdAt ?? null,
-    canDisconnect: !serviceModes().demoMode,
   };
 }
 
@@ -52,11 +50,11 @@ export async function finishConnectingPayPal(setupTokenId: string): Promise<void
   await database.wallets.saveConnectedWallet(vaultId, payerEmail, payerName);
 }
 
-/** Signing out forgets the saved PayPal account. */
+/**
+ * Signing out forgets the saved PayPal account. On the public demo everyone uses the same sandbox
+ * test account (shown on the sign-in screen), so the next person simply signs in again.
+ */
 export async function disconnectPayPal(): Promise<void> {
-  if (serviceModes().demoMode) {
-    throw new BadRequestError("Signing out is turned off in the demo, so the next person can still try it.");
-  }
   await database.wallets.disconnectWallet();
 }
 

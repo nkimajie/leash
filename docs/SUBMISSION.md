@@ -144,8 +144,9 @@ server on top of it, and spending limits per category.
 
 ## Testing instructions
 
-The live demo is already signed in with a PayPal sandbox account, so there's nothing to log in to. Open **Settings**
-(bottom left) and click **Reset demo**, then follow "For judges: a 60-second test" in the README. To sign in yourself, click
-**Continue with PayPal**: the screen shows a sandbox test account (test money only) with copy buttons.
+Sign in the way a real user would: tap **Continue with PayPal**, and log in on PayPal's page with the sandbox test
+account shown right under the button (copy buttons included; test money only). If the demo is already signed in, sign
+out from your profile (top right) to try it. Then open **Settings** and click **Reset demo**, and follow "For judges: a
+60-second test" in the README.
 
 To run it yourself with zero keys: `npm install && npm run dev`, then open http://localhost:3000.

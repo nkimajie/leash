@@ -4,7 +4,8 @@ import "server-only";
 //   - anyone can put it back to the sample data, and the daily job does so every night
 //   - it starts fresh when the next person arrives after 30 quiet minutes
 //   - every fresh demo starts with one real purchase waiting for your approval
-// The connected PayPal account is kept, and can't be disconnected while demo mode is on.
+// A reset keeps the connected PayPal account. Anyone can sign out and sign in again with the sandbox
+// test account shown on the sign-in screen.
 
 import { isSampleHistory, type AssistantEvent } from "@/schemas";
 import { serviceModes } from "@/server/config/environment";

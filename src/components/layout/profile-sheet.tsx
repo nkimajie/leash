@@ -74,7 +74,7 @@ export function ProfileSheet({
             Help &amp; support
           </button>
           {connection?.signedIn ? (
-            <button onClick={signOut} disabled={!connection.canDisconnect} className={`${item} disabled:opacity-50`}>
+            <button onClick={signOut} className={item}>
               Sign out
             </button>
           ) : (
@@ -83,9 +83,6 @@ export function ProfileSheet({
             </Link>
           )}
         </nav>
-        {connection?.signedIn && !connection.canDisconnect && (
-          <p className="mt-2 text-center text-xs text-ink-soft">Signing out is off in the public demo.</p>
-        )}
         {problem && <p className="mt-2 text-center text-sm text-failed">{problem}</p>}
       </Sheet>
       <NotificationPreferencesSheet open={editingNotifications} onClose={() => setEditingNotifications(false)} />

@@ -13,8 +13,10 @@ digital twin. And you can just talk to it: say what you need, and it tells you w
 
 ## For judges: a 60-second test
 
-1. Open the live demo (link in the Devpost submission). You're signed in with a PayPal sandbox account already. For
-   a clean start, open **Settings** (bottom left) and click **Reset demo**.
+1. Open the live demo (link in the Devpost submission) and sign in: tap **Continue with PayPal**, and log in on
+   PayPal's page with the sandbox test account shown under the button (copy buttons included; test money only).
+   PayPal sends you back to set your leash and meet your twin. If someone left it signed in, sign out from your
+   profile (top right) to try the login yourself. For a clean start, open **Settings** and click **Reset demo**.
 2. On **Ask**, tap **Talk** (or hold the space bar) and say _"What can you do for me?"_. Leash checks your account and
    answers out loud. (Or click the same question under **A place to start**.)
 3. A grinder is already **waiting for you**: PayPal has reserved the money but not taken it. Tap **Deny** right
@@ -203,7 +205,7 @@ Each service switches from mock to real as soon as its keys are in `.env.local`.
 | **Channel3** (product search)  | `CHANNEL3_API_KEY`                                                                       | channel3.ai                                                                                                                                                                                                |
 | **Supabase** (database + live) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Create a project, open the SQL editor and run each file in `supabase/migrations/`, oldest first. The app adds sample data on first start.                                                                  |
 | Daily job                      | `CRON_SECRET`                                                                            | Any long random text.                                                                                                                                                                                      |
-| Public demo                    | `DEMO_MODE=true`                                                                         | For a shared demo: adds **Reset demo** (in Settings), resets every night, turns off **Sign out**, and caps Claude use per visitor (the built-in assistant takes over past the cap).                        |
+| Public demo                    | `DEMO_MODE=true`                                                                         | For a shared demo: adds **Reset demo** (in Settings), resets every night, and caps Claude use per visitor (the built-in assistant takes over past the cap).                                                |
 
 Payments to people use PayPal Payouts, which works with any email. To watch one arrive, set the person's email in
 **Your leash › People** to a sandbox personal account (developer.paypal.com > Sandbox accounts) and log in to it at

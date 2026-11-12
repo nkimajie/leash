@@ -78,13 +78,9 @@ export function ConnectPayPal() {
                   ? "Mock mode · payments are simulated"
                   : `Saved with PayPal Vault${connection.connectedAt ? ` · ${formatReceiptTime(connection.connectedAt)}` : ""}`}
               </p>
-              {connection.canDisconnect ? (
-                <Button variant="secondary" className="mt-6 w-full" onClick={signOut} disabled={isBusy}>
-                  Sign out
-                </Button>
-              ) : (
-                <p className="mt-6 text-xs text-ink-soft">Signing out is off in the public demo.</p>
-              )}
+              <Button variant="secondary" className="mt-6 w-full" onClick={signOut} disabled={isBusy}>
+                Sign out
+              </Button>
             </>
           ) : (
             <>
