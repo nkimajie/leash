@@ -65,12 +65,13 @@ launch would use PayPal's marketplace setup, since Leash would be passing money 
 
 ### What's real and what's simulated
 
-| Real                                                                                                           | Simulated                                                                                     |
-| -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Every PayPal call (sandbox): Vault, Orders, authorize, capture, void, refund, Payouts, webhooks                | One sandbox business account stands in for every store you buy from                           |
-| Claude Haiku choosing products and payments with tools, and turning your words into lessons, filters and rules | The attacks are scripted, and skip the AI on purpose, so only the rules stand in the way      |
-| Channel3 product search across real online stores, with real photos and prices                                 | The history you see on first open is sample data. It has no PayPal ids, and can't be refunded |
-| Supabase storage and live updates                                                                              |                                                                                               |
+| Real                                                                                                            | Simulated                                                                                     |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Every PayPal call (sandbox): Vault, Orders, authorize, capture, void, refund, Payouts, order tracking, webhooks | One sandbox business account stands in for every store you buy from                           |
+| Claude Haiku choosing products and payments with tools, and turning your words into lessons, filters and rules  | The attacks are scripted, and skip the AI on purpose, so only the rules stand in the way      |
+| Channel3 product search across real online stores, with real photos and prices                                  | The history you see on first open is sample data. It has no PayPal ids, and can't be refunded |
+| The tracking number on the PayPal order, and the address from your saved PayPal account                         | Shipping: the stand-in store ships with a made-up UPS number (1ZLEASH…), arriving in 3 days   |
+| Supabase storage and live updates                                                                               |                                                                                               |
 
 ## How it fits together
 
@@ -109,6 +110,14 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
 - **Remember the conversation.** Leash keeps your last 10 exchanges and what it really did in each (bought the beans
   for $14, paid; the grinder is waiting for you), so "how long is the delivery?" or "yes, do that" makes sense, even
   after a reload or on another device. **Start fresh** forgets them; your receipts stay.
+- **Track your orders.** _"Where are my beans?"_ Once paid, the store ships to the address on your PayPal account,
+  and the tracking number goes on the real PayPal order. Leash answers with the carrier, the tracking number and
+  the day it arrives, and the receipt shows it too.
+- **Undo by asking.** _"The beans arrived broken, refund them"_: PayPal refunds it, and your twin learns why. Money
+  already sent on to a person can't come back, and Leash says so.
+- **Know your leash balance.** _"What's my balance?"_ PayPal keeps your PayPal balance private, even from apps
+  you've connected, so Leash tells you what it does know: what's left to spend today and this week under your
+  rules, and what's reserved for your okay.
 - **Say no for you, never yes.** _"Deny the grinder, I only want hand grinders"_: PayPal voids the reservation, and
   your twin learns why. Claude has a tool to deny, and deliberately none to approve, so a scam (or a voice on the TV)
   can never release your money. Only your tap can.
@@ -171,6 +180,20 @@ The API is described once, with zod, in `src/schemas/leash-api.ts`. The OpenAPI 
 schemas, served at `/api/v1/openapi.json`, and saved as [`leash-api/src/spec/openapi.json`](leash-api/src/spec/openapi.json),
 where APIMatic's tools look for it (see [leash-api/README.md](leash-api/README.md)). A unit test fails if the saved
 file falls behind the code.
+
+### Over MCP: Claude shops on your leash
+
+The same tools are an MCP server at `/api/v1/mcp` (Streamable HTTP, written by hand in
+[`src/server/leash-api/mcp.ts`](src/server/leash-api/mcp.ts)): `search_products`, `buy_product`, `pay_person`,
+`check_decision` and `read_rules`. Connect any MCP client to it:
+
+```bash
+claude mcp add --transport http leash https://leash-rzsu.onrender.com/api/v1/mcp   # Claude Code
+```
+
+In claude.ai or Claude Desktop, add a custom connector with the same URL. Ask Claude to buy something: within your
+rules it's paid at once; anything else waits for your tap in Leash. Ask it to approve, and it can't: there is no
+tool for that.
 
 Leash's own endpoints (approve, deny, your rules, your people) only accept changes that come from Leash's pages
 (`src/proxy.ts`), so another website, or an agent browsing one, can't approve anything there either. This hackathon
@@ -268,11 +291,14 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
 ## Built with
 
 - **PayPal**: Orders v2 (authorize), Payments v2 (capture, void, refund), Vault v3 (saved payment method, and
-  signing in with your PayPal name and email), Payouts v1 (paying people), webhooks and negative testing, through
+  signing in with your PayPal name and email), Payouts v1 (paying people), order tracking (Orders v2), webhooks and negative testing, through
   `@paypal/paypal-server-sdk` and the REST API
 - **APIMatic**: PayPal's server SDK, `@paypal/paypal-server-sdk`, is generated by APIMatic, and every payment in
   Leash goes through it. The Leash API's OpenAPI document is kept in APIMatic's project layout, ready for its CLI
-  to generate SDKs, a docs portal and a context plugin for AI coding assistants
+  to generate SDKs, a docs portal and a context plugin for AI coding assistants. We built the PayPal side with
+  APIMatic's PayPal Context Plugin, which kept us on the SDK's current API: Vault tokens, AUTHORIZE orders,
+  order tracking, and errors with PayPal's `debug_id`
+- **MCP** (Model Context Protocol): Leash's tools as an MCP server, so any MCP client can shop on your leash
 - **Claude** (Anthropic): Claude Haiku, through `@anthropic-ai/sdk`. Tool use for the assistant, and structured
   outputs (checked with zod) for the twin's lessons, Money filters and rules in your own words
 - **Channel3**: product search API

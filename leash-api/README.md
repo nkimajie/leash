@@ -20,6 +20,9 @@ Base address: `http://localhost:3000/api/v1` locally, or your Leash app's addres
 | `GET /rules`          | Read the person's limits, to plan within them                   |
 | `GET /openapi.json`   | This description, live                                          |
 
+The same tools are also an MCP server at `/api/v1/mcp`, for Claude Desktop, claude.ai connectors and Claude Code:
+`claude mcp add --transport http leash https://leash-rzsu.onrender.com/api/v1/mcp`.
+
 ```bash
 curl "http://localhost:3000/api/v1/products?query=coffee%20beans&maxPrice=20"
 

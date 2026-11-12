@@ -342,6 +342,32 @@ check("and another site can't approve it through Leash's own API either (403)", 
 const badPurchase = await call("POST", "/api/v1/purchases", { productId: "nope", reasoning: "short" });
 check("a bad request gets a clear 400", badPurchase.status === 400 && typeof badPurchase.body.error === "string");
 
+// 9b. The same tools over MCP, so Claude Desktop, claude.ai or Claude Code can shop on the leash
+const mcp = async (id, method, params) =>
+  (await call("POST", "/api/v1/mcp", { jsonrpc: "2.0", id, method, params })).body;
+const mcpHello = await mcp(1, "initialize", {
+  protocolVersion: "2025-06-18",
+  capabilities: {},
+  clientInfo: { name: "smoke" },
+});
+const mcpTools = (await mcp(2, "tools/list")).result?.tools.map((tool) => tool.name) ?? [];
+check(
+  "MCP: Leash introduces itself and lists its tools, with no way to approve",
+  mcpHello.result?.serverInfo.name === "leash" &&
+    mcpTools.includes("buy_product") &&
+    !mcpTools.some((t) => /approve/.test(t)),
+  JSON.stringify(mcpTools),
+);
+const mcpBuy = await mcp(3, "tools/call", {
+  name: "buy_product",
+  arguments: { productId: "cof-1", reasoning: "Smoke test: fair-trade beans over MCP.", agentName: "Smoke MCP" },
+});
+check(
+  "MCP: an agent's purchase goes through the same rules and PayPal flow",
+  /^Fair-trade whole bean coffee.*: (Paid|Reserved|Blocked)/.test(mcpBuy.result?.content[0].text ?? ""),
+  JSON.stringify(mcpBuy).slice(0, 300),
+);
+
 // 10. Start fresh: Leash forgets the conversation (only from Leash's own pages)
 const otherSiteForgets = await fetch(`${BASE_URL}/api/conversation`, {
   method: "DELETE",

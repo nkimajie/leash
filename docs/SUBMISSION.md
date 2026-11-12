@@ -38,6 +38,12 @@ purchase and payment first passes your spending rules, which are plain code, not
 
 Paying a person works the same way, then PayPal Payouts sends the money on to their email.
 
+After it pays, Leash keeps track. The store ships to the address on your PayPal account, the tracking number goes
+on the PayPal order, and "where are my beans?" gets an answer. "The beans arrived broken, refund them" refunds
+through PayPal. Leash remembers the conversation and what it did, and answers "what's my balance?" with what's
+left to spend under your rules. And any AI agent can shop on the same leash, through the Leash API or as an MCP
+server: Claude in claude.ai can buy for you, but only you can approve.
+
 "Try to break the leash" plays three scams against it: $900 to a stranger, gift cards from a poisoned product page,
 and extra items hidden in your coffee order, each cheap enough to slip under the approval limit. The attacks skip
 the AI entirely, so only the rules stand in the way. They hold: the coffee you asked for is paid, and everything
@@ -89,7 +95,12 @@ anything outside your rules still waits for your tap.
   29-day limit).
 - **APIMatic:** every payment goes through `@paypal/paypal-server-sdk`, PayPal's server SDK, which APIMatic
   generates. The Leash API is described once with zod and published as an OpenAPI 3 document in APIMatic's project
-  layout, so its CLI can generate SDKs, a docs portal and a context plugin for AI coding assistants from it.
+  layout, so its CLI can generate SDKs, a docs portal and a context plugin for AI coding assistants from it. We
+  built the PayPal side with APIMatic's PayPal Context Plugin, which kept us on the SDK's current API (Vault
+  tokens, AUTHORIZE orders, order tracking, errors with `debug_id`).
+- **MCP:** Leash's tools are also an MCP server (`/api/v1/mcp`, Streamable HTTP, written by hand). Add it as a
+  connector in claude.ai, Claude Desktop or Claude Code, and Claude shops and pays on your leash. There is no
+  approve tool, so a held purchase always waits for your tap in Leash.
 - **The design** is our own V2 design system, made in Figma: paper and ink, one electric blue, and a stamp for each
   of the seven things that can happen to money (Paid, Reserved, Released, Blocked, Refunded, Failed, Not sent).
 - **Every outside service has a mock mode**, so anyone can clone the repo and run it with zero keys.
@@ -120,12 +131,12 @@ money is reserved and a human decides", without ever charging and refunding.
 
 ### What's next for Leash
 
-Accounts for several people (a household sharing one leash), a key per outside agent for the Leash API, an MCP
-server on top of it, and spending limits per category.
+Accounts for several people (a household sharing one leash), a key and an allowance per outside agent (MCP sign-in
+with OAuth), real store integrations for shipping, and spending limits per category.
 
 ## Built with
 
-`paypal` `paypal-vault` `paypal-orders-api` `paypal-payouts` `apimatic` `openapi` `claude` `anthropic` `channel3`
+`paypal` `paypal-vault` `paypal-orders-api` `paypal-payouts` `paypal-order-tracking` `apimatic` `openapi` `mcp` `claude` `anthropic` `channel3`
 `ag-grid` `bryntum` `supabase` `render` `next.js` `react` `typescript` `zod` `tailwindcss` `web-speech-api` `figma`
 
 ## Tools: how each AI tool is used
@@ -139,7 +150,7 @@ server on top of it, and spending limits per category.
 
 ## Try it out
 
-- Live demo: `<live Render URL>`
+- Live demo: https://leash-rzsu.onrender.com
 - Code: https://github.com/nkimajie/leash
 
 ## Testing instructions
