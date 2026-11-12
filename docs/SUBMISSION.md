@@ -71,6 +71,8 @@ anything outside your rules still waits for your tap.
   $25"), not PayPal's raw `create_order`/`capture`: every money-moving tool goes through one function that applies
   the rules, calls PayPal, saves the decision and teaches the twin. Read-only tools let it answer questions about
   your account and spending, and it has a tool to deny a held payment but deliberately none to approve one.
+  It remembers your last 10 exchanges, plus Leash's own record of what each one bought or paid (as it stands now),
+  read back from the requests and receipts already in the database.
 - **Voice** uses the browser's own speech recognition and voice (the Web Speech API), so it needs no extra service
   or key. Spoken requests tell Claude to keep its replies short enough to listen to. Claude structured outputs, checked with zod,
   power the smaller features: the twin's lessons, Money filters, and rules in your own words.

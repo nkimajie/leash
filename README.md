@@ -104,6 +104,9 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
   goes and answers out loud, using the browser's own speech recognition and voice, so there's nothing to install.
   Ask it what it can do, what's waiting for you, or what you spent on coffee this week, and Claude answers from your
   real account. A spending answer links to the same question in Money.
+- **Remember the conversation.** Leash keeps your last 10 exchanges and what it really did in each (bought the beans
+  for $14, paid; the grinder is waiting for you), so "how long is the delivery?" or "yes, do that" makes sense, even
+  after a reload or on another device. **Start fresh** forgets them; your receipts stay.
 - **Say no for you, never yes.** _"Deny the grinder, I only want hand grinders"_: PayPal voids the reservation, and
   your twin learns why. Claude has a tool to deny, and deliberately none to approve, so a scam (or a voice on the TV)
   can never release your money. Only your tap can.

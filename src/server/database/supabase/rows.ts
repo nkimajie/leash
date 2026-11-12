@@ -51,6 +51,8 @@ export const toAssistantRequest = (row: Row): AssistantRequest => ({
   budget: Number(row.budget),
   status: row.status,
   source: row.source,
+  reply: row.reply ?? null,
+  remembered: row.remembered ?? true,
   createdAt: row.created_at,
 });
 

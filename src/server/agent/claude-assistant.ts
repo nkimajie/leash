@@ -31,7 +31,7 @@ How to work:
 - "What can you do for me?" or "how does this work?": call read_my_leash, then answer from the list above in your own words. Lead with what you use AI for: understanding what they need, typed or spoken; choosing what fits their taste; learning from the reasons they give; answering questions about their money. Then say how PayPal and their rules keep the money safe, made personal with their numbers: how much you pay without asking, what's waiting for them, and whether PayPal is connected. Always speak as "I". Out loud, it sounds like: "${INTRODUCTION_ALOUD} Right now, the $85 grinder is waiting for you."
 - When they ask you to deny something that's waiting, find it with read_my_leash and call deny_held_item with their reason. You can never approve anything. If they ask you to, say that only they can, with a tap on Approve in Leash, so a scam or a voice on the TV can never release their money.
 - When they ask to go to a page, call open_page.
-- The messages before the latest one are the conversation so far. Use them to understand a follow-up such as "yes, do that", "open it" or "buy the second one", then act on the latest message only. They show only what was said: the tools you used then really ran, so what you said you bought or paid is real and is in their account. Never doubt it out loud; for details, call read_my_leash or look_up_spending.
+- The messages before the latest one are the conversation so far: you remember the last 10 exchanges. Use them to understand a follow-up such as "yes, do that", "open it", "buy the second one" or "how long is the delivery?", then act on the latest message only. The latest message starts with Leash's records of what you really bought or paid in them, as it stands now. Trust those records and never doubt them out loud; for more detail, call read_my_leash or look_up_spending.
 - Something held (money reserved) just needs the user's tap: tell them to Approve or Deny it in Leash. Don't suggest loosening a rule for it.
 - Something blocked comes back with pageToFix. Say which rule and the number, and offer to open that page. If they say yes, call open_page; for limits, pass suggestedChange in words the Limits page understands, with a sensible new number: "Never buy one item over $600", "Ask me before anything over $100", "Never send one person over $200", "$500 a day" or "$1500 a week". You can never change their rules yourself: only they can, by saving on that page.
 - Money reserved for the user's okay counts toward the daily and weekly caps, so denying something waiting frees room.
@@ -59,7 +59,7 @@ export async function* runClaudeAssistant(
       { role: "user", content: turn.you },
       { role: "assistant", content: turn.leash },
     ]),
-    { role: "user", content: describeRequest(request, spoken) },
+    { role: "user", content: recordsOf(earlier) + describeRequest(request, spoken) },
   ];
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
@@ -116,6 +116,18 @@ function describeRequest(request: AssistantRequest, spoken: boolean): string {
     );
   }
   return `${request.prompt}\n\n(${notes.join(". ")}.)`;
+}
+
+/**
+ * The earlier messages only show what was said. These records add what really happened, as it
+ * stands now, so "how long is the delivery?" knows Leash bought the camera.
+ */
+function recordsOf(earlier: EarlierTurn[]): string {
+  const lines = earlier
+    .filter((turn) => turn.did.length > 0)
+    .map((turn) => `- When the user said "${turn.you}": ${turn.did.join("; ")}`);
+  if (lines.length === 0) return "";
+  return `(Leash's records of the conversation above, as things stand now:\n${lines.join("\n")})\n\n`;
 }
 
 /** Claude needs the ids and prices in `data`, not just the readable summary. */

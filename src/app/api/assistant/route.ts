@@ -1,5 +1,6 @@
-// POST /api/assistant  { prompt, spoken?, earlier? }
+// POST /api/assistant  { prompt, spoken? }
 // Runs the assistant and streams each step back as it happens: one JSON object per line.
+// Leash recalls the conversation so far itself (see server/agent/conversation-memory.ts).
 
 import { RunAssistantBody } from "@/schemas/api";
 import { visitorOf } from "@/server/agent/claude-allowance";
@@ -7,6 +8,6 @@ import { runAssistant } from "@/server/agent/run-assistant";
 import { apiRoute, readJsonBody, streamEvents } from "@/server/http";
 
 export const POST = apiRoute(async (request: Request) => {
-  const { prompt, spoken, earlier } = await readJsonBody(request, RunAssistantBody);
-  return streamEvents(runAssistant(prompt, "you", visitorOf(request), spoken, earlier));
+  const { prompt, spoken } = await readJsonBody(request, RunAssistantBody);
+  return streamEvents(runAssistant(prompt, "you", visitorOf(request), spoken));
 });

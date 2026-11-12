@@ -10,6 +10,7 @@ import * as database from "@/server/database";
 import { startFreshIfQuiet } from "@/server/demo-mode";
 import { mayUseClaude } from "./claude-allowance";
 import { runClaudeAssistant } from "./claude-assistant";
+import { recallConversation } from "./conversation-memory";
 import { runMockAssistant } from "./mock-assistant";
 import { readBudget } from "./read-request";
 
@@ -18,16 +19,23 @@ import { readBudget } from "./read-request";
  *                Anything a restock buys is held for your approval.
  * @param visitor who is asking; in demo mode each visitor gets a daily allowance of Claude requests.
  * @param spoken  you said it out loud, so the replies are kept short enough to listen to.
- * @param earlier the last few exchanges, so a follow-up like "yes, do that" makes sense.
  */
 export async function* runAssistant(
   prompt: string,
   source: AssistantRequest["source"] = "you",
   visitor?: string,
   spoken = false,
-  earlier: EarlierTurn[] = [],
 ): AsyncGenerator<AssistantEvent> {
   if (source === "you") yield* startFreshIfQuiet();
+  // Leash remembers your last few exchanges, so "yes, do that" makes sense. Only yours: a restock
+  // or an outside agent starts with a clean slate. If memory can't be read, Leash still answers.
+  const earlier =
+    source === "you"
+      ? await recallConversation().catch((error) => {
+          console.warn("Couldn't recall the conversation, answering without it", error);
+          return [];
+        })
+      : [];
   const rules = await database.spendingRules.loadSpendingRules();
   const request = await database.assistantRequests.startAssistantRequest(
     prompt,
@@ -36,25 +44,40 @@ export async function* runAssistant(
   );
   yield { type: "request_started", request };
 
+  let reply: string | null = null;
   try {
-    if (serviceModes().assistant === "claude" && mayUseClaude(visitor)) {
-      yield* runClaudeWithFallback(request, spoken, earlier);
-    } else if (serviceModes().assistant === "claude") {
-      yield {
-        type: "thinking",
-        text: "You've used today's Claude allowance on this demo, so the built-in assistant takes over.",
-      };
-      yield* runMockAssistant(request, spoken, earlier);
-    } else {
-      yield* runMockAssistant(request, spoken, earlier);
+    for await (const event of answer(request, spoken, earlier, visitor)) {
+      if (event.type === "reply") reply = event.text;
+      yield event;
     }
-    await database.assistantRequests.markAssistantRequest(request.id, "finished");
+    // Saved with the reply, so Leash remembers this exchange next time.
+    await database.assistantRequests.markAssistantRequest(request.id, "finished", reply);
   } catch (error) {
     console.error("Assistant failed", error);
     await database.assistantRequests.markAssistantRequest(request.id, "failed");
     yield { type: "error", message: "Something went wrong, so I stopped. Nothing else was paid." };
   }
   yield { type: "finished" };
+}
+
+/** Claude when it's set up and this visitor still has some allowance; the built-in assistant otherwise. */
+async function* answer(
+  request: AssistantRequest,
+  spoken: boolean,
+  earlier: EarlierTurn[],
+  visitor?: string,
+): AsyncGenerator<AssistantEvent> {
+  if (serviceModes().assistant !== "claude") {
+    yield* runMockAssistant(request, spoken, earlier);
+  } else if (mayUseClaude(visitor)) {
+    yield* runClaudeWithFallback(request, spoken, earlier);
+  } else {
+    yield {
+      type: "thinking",
+      text: "You've used today's Claude allowance on this demo, so the built-in assistant takes over.",
+    };
+    yield* runMockAssistant(request, spoken, earlier);
+  }
 }
 
 /**

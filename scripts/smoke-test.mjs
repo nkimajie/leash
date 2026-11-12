@@ -97,6 +97,17 @@ check(
   openPage.events.some((e) => e.type === "open_page" && e.path === "/money"),
 );
 
+// 1c. Leash remembers the conversation, and what it really did in it
+const memory = await call("GET", "/api/conversation");
+const coffeeTurn = memory.body?.find((turn) => turn.you.startsWith("Restock my coffee setup"));
+check(
+  "Leash remembers the coffee request, its reply, and what it bought (beans paid, grinder waiting)",
+  coffeeTurn?.leash.length > 0 &&
+    coffeeTurn.did.some((line) => line.endsWith(": paid")) &&
+    coffeeTurn.did.some((line) => line.includes("waiting for your okay")),
+  JSON.stringify(coffeeTurn),
+);
+
 // 2. You deny the grinder: PayPal voids it and the twin learns
 const denied = await call("POST", `/api/decisions/${grinder.id}/deny`);
 check(
@@ -305,6 +316,16 @@ const otherSiteApproves = await fetch(`${BASE_URL}/api/decisions/${agentPayment.
 check("and another site can't approve it through Leash's own API either (403)", otherSiteApproves.status === 403);
 const badPurchase = await call("POST", "/api/v1/purchases", { productId: "nope", reasoning: "short" });
 check("a bad request gets a clear 400", badPurchase.status === 400 && typeof badPurchase.body.error === "string");
+
+// 10. Start fresh: Leash forgets the conversation (only from Leash's own pages)
+const otherSiteForgets = await fetch(`${BASE_URL}/api/conversation`, {
+  method: "DELETE",
+  headers: { Origin: "https://somewhere-else.example" },
+});
+check("another site can't wipe Leash's memory (403)", otherSiteForgets.status === 403);
+const startFresh = await call("DELETE", "/api/conversation");
+const afterFresh = await call("GET", "/api/conversation");
+check("Start fresh: Leash forgets the conversation", startFresh.status === 204 && afterFresh.body?.length === 0);
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
 process.exit(failures === 0 ? 0 : 1);

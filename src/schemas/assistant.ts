@@ -47,10 +47,17 @@ export function pageToFix(decision: { outcome: string; ruleHit: RuleName }): Lea
   return null;
 }
 
-/** One earlier exchange in the conversation, so a follow-up like "yes, do that" makes sense. */
+/**
+ * One earlier exchange Leash remembers, so a follow-up like "yes, do that" or "how long is the
+ * delivery?" makes sense: what you asked, what it answered, and what it really did then, with each
+ * purchase or payment as it stands now ("Sony camera from gamestop.com, $14.99: paid").
+ */
 export const EarlierTurnSchema = z.object({
-  you: z.string().trim().min(1).max(500),
-  leash: z.string().trim().min(1).max(2000),
+  requestId: z.string(),
+  you: z.string(),
+  leash: z.string(),
+  did: z.array(z.string()),
+  at: z.string(),
 });
 export type EarlierTurn = z.infer<typeof EarlierTurnSchema>;
 
@@ -65,6 +72,10 @@ export const AssistantRequestSchema = z.object({
    * "agent" means an outside AI agent asked through the Leash API (/api/v1).
    */
   source: z.enum(["you", "restock", "agent"]),
+  /** What Leash answered, saved when it finishes, so it remembers the exchange next time. */
+  reply: z.string().nullable(),
+  /** False once you tap "Start fresh": Leash forgets the exchange (its receipts stay). */
+  remembered: z.boolean(),
   createdAt: z.string(),
 });
 export type AssistantRequest = z.infer<typeof AssistantRequestSchema>;
