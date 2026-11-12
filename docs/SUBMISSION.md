@@ -8,8 +8,8 @@ Leash
 
 ## Elevator pitch
 
-AI agents read untrusted text, so one hidden sentence can make them spend. Leash lets Claude shop and pay with your
-PayPal, but code decides whether money moves: anything outside your rules is reserved, not taken, until you say yes.
+One hidden sentence can make an AI agent spend. Leash lets Claude shop and pay with your PayPal, but your rules decide
+what money moves, and only you can approve.
 
 ## About the project
 
