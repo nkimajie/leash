@@ -90,6 +90,11 @@ anything outside your rules still waits for your tap.
 - **AG Grid** shows your money: every receipt, live, themed to look like a list of receipts. Claude turns a question
   into the grid's external filter and sort, the totals row adds up only the rows you can see, and a cell flashes when
   a payment's outcome changes.
+- **AG Studio** turns the same receipts into a live dashboard on Money. It shows totals for what was paid, what's waiting for your
+  okay, what your leash stopped and what was refunded, plus charts by category, day, rule and payee. Click any bar
+  or row and every other widget filters to match, so "Blocked category" instantly shows the gift card your leash
+  refused. It updates as your assistant spends, uses Leash's receipt stamps, and **Customise** opens AG Studio's
+  drag-and-drop editor.
 - **Bryntum Scheduler** draws two timelines: your restocks (drag the next run to move it), and money reserved at
   PayPal (how long each authorization was held, and for one still waiting, Leash's 7 days and then PayPal's own
   29-day limit).
@@ -137,7 +142,7 @@ with OAuth), real store integrations for shipping, and spending limits per categ
 ## Built with
 
 `paypal` `paypal-vault` `paypal-orders-api` `paypal-payouts` `paypal-order-tracking` `apimatic` `openapi` `mcp` `claude` `anthropic` `channel3`
-`ag-grid` `bryntum` `supabase` `render` `next.js` `react` `typescript` `zod` `tailwindcss` `web-speech-api` `figma`
+`ag-grid` `ag-studio` `bryntum` `supabase` `render` `next.js` `react` `typescript` `zod` `tailwindcss` `web-speech-api` `figma`
 
 ## Tools: how each AI tool is used
 

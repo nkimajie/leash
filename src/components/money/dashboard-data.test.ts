@@ -19,6 +19,7 @@ function decision(details: Partial<Decision>): Decision {
     product: null,
     payee: null,
     paypal: { orderId: null, authorizationId: null, captureId: null, status: null, debugId: null, payoutId: null },
+    shipping: null,
     createdAt: "2026-11-10T09:00:00",
     updatedAt: "2026-11-10T09:00:00",
     ...details,

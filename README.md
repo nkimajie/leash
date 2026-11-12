@@ -30,7 +30,8 @@ digital twin. And you can just talk to it: say what you need, and it tells you w
 6. Click **"Pay Sam $25 for dinner"**. PayPal takes the money from your account and **Payouts** sends it on to Sam.
 7. Ask _"what did I spend on coffee today?"_ and click **See it in Money**: AG Grid filters your receipts to the same
    question. Click any receipt to see its PayPal trail, with every id. The **Money reserved at PayPal** timeline
-   (Bryntum) shows how long each reservation was held.
+   (Bryntum) shows how long each reservation was held. Switch Money to **Dashboard** (AG Studio) and click
+   "Blocked category" in **What your leash stopped**: every chart and the table filter to what the leash refused.
 8. Say _"Restock dog food every 30 days"_, then open **Your leash › Restocks**: it's on the Bryntum timeline. Drag
    its next run to another day.
 
@@ -145,7 +146,11 @@ PayPal behind one rule-checked function the model can't skip, change or see the 
   it by asking ("held payments over $20, biggest first"): Claude turns the question into grid filters and sorting,
   and the totals row adds up exactly what you see. Click a receipt for its PayPal trail: every step and id, the rule
   that applied, the AI's reasoning, and approve, deny or refund. A Bryntum timeline shows how long PayPal held each
-  reservation, and how long it would still wait.
+  reservation, and how long it would still wait. Money also has a live **Dashboard** built with AG Studio: totals for what was paid, what's waiting for your
+  okay, what your leash stopped and what was refunded, plus charts by category, day, rule and payee. Click any bar
+  or row and every other widget filters to match, so "Blocked category" instantly shows the gift card your leash
+  refused. It updates as your assistant spends, uses Leash's receipt stamps, and **Customise** opens AG Studio's
+  drag-and-drop editor.
 - **Let any AI agent shop, on the same leash.** The Leash API (`/api/v1`) lets an outside agent, like Claude Desktop
   or your own script, search products, buy and pay people through your rules. It has no way to approve anything. See
   [The Leash API](#the-leash-api-for-any-ai-agent).
@@ -306,6 +311,9 @@ See [docs/CONVENTIONS.md](docs/CONVENTIONS.md) for the rules every change follow
 - **AG Grid Community**: Money's receipts: external filters and sorting set by Claude (from "Filter by asking", or
   from a spending question you asked out loud), quick filter, a pinned totals row for the rows shown, cell flashing
   when a payment's outcome changes, and themed to look like a list of receipts
+- **AG Studio** (AG Grid's dashboard builder, with AG Grid and AG Charts Enterprise inside it): Money's live
+  dashboard, with cross-filtering, Leash's stamps in its table, a phone layout, and the drag-and-drop editor.
+  `NEXT_PUBLIC_AG_GRID_LICENSE_KEY` removes the trial watermark; it works without one
 - **Bryntum Scheduler**: two timelines. Your restocks (drag the next run to move it, with past days refused), and
   money reserved at PayPal (each reservation from authorized to decided, and for one still waiting, Leash's 7 days
   then PayPal's own 29-day limit)
