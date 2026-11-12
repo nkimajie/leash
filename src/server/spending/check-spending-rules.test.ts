@@ -53,6 +53,16 @@ describe("checkPurchase", () => {
     expect(checkPurchase(coffee({ category: "Gift Cards" }), rules, nothingSpent).ruleHit).toBe("blocked_category");
   });
 
+  it("blocks a never-buy item a store files under another category, by its title", () => {
+    const giftCard = coffee({ title: "Spafinder Gift Card $25", category: "gift giving", amount: 26.99 });
+    const check = checkPurchase(giftCard, rules, nothingSpent);
+    expect(check.ruleHit).toBe("blocked_category");
+    expect(check.explanation).toBe('You blocked the category "gift cards".');
+    expect(
+      checkPurchase(coffee({ title: "Gift wrap, 3 rolls", category: "gift giving" }), rules, nothingSpent).verdict,
+    ).not.toBe("blocked");
+  });
+
   it("blocks categories and merchants outside an allow-list", () => {
     expect(checkPurchase(coffee(), { ...rules, allowedCategories: ["books"] }, nothingSpent).ruleHit).toBe(
       "category_not_allowed",

@@ -45,14 +45,14 @@ export function checkPurchase(purchase: PurchaseToCheck, rules: SpendingRules, s
   if (amountProblem) return amountProblem;
 
   // Every hard rule it breaks, so raising one limit doesn't just reveal the next.
+  const neverBuy = findNeverBuy(rules.blockedCategories, purchase);
   const hardRuleProblems = [
     isListed(rules.blockedMerchants, purchase.merchant) &&
       blocked("blocked_merchant", `You blocked the merchant "${purchase.merchant}".`),
     rules.allowedMerchants.length > 0 &&
       !isListed(rules.allowedMerchants, purchase.merchant) &&
       blocked("merchant_not_allowed", `"${purchase.merchant}" is not on your list of allowed merchants.`),
-    isListed(rules.blockedCategories, purchase.category) &&
-      blocked("blocked_category", `You blocked the category "${purchase.category}".`),
+    neverBuy !== null && blocked("blocked_category", `You blocked the category "${neverBuy}".`),
     rules.allowedCategories.length > 0 &&
       !isListed(rules.allowedCategories, purchase.category) &&
       blocked("category_not_allowed", `"${purchase.category}" is not one of your allowed categories.`),
@@ -243,6 +243,19 @@ function blocked(ruleHit: RuleName, explanation: string): RuleCheck {
 
 function isListed(list: string[], value: string) {
   return list.some((item) => item.trim().toLowerCase() === value.trim().toLowerCase());
+}
+
+/**
+ * Which of your "never buy" categories this product is, if any: its category, or every word of it in the
+ * product's title. Stores file a gift card under "gift giving", but its title still says "Gift Card".
+ */
+function findNeverBuy(neverBuy: string[], purchase: { title: string; category: string }): string | null {
+  const productWords = new Set(meaningfulWords(`${purchase.title} ${purchase.category}`));
+  const isThisOne = (item: string) => {
+    const words = meaningfulWords(item);
+    return isListed([item], purchase.category) || (words.length > 0 && words.every((word) => productWords.has(word)));
+  };
+  return neverBuy.find(isThisOne) ?? null;
 }
 
 function moneyFormatter(currency: string) {
