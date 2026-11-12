@@ -48,7 +48,7 @@ describe("describeBalance", () => {
   it("gives your leash balance, what's reserved, and where to see your PayPal balance", () => {
     const answer = describeBalance(status);
     expect(answer).toContain("You have $301.00 left to spend today, of your $400.00 daily cap, and $901.00 this week");
-    expect(answer).toContain("$85.00 of that is reserved, waiting for your okay.");
+    expect(answer).toContain("$85.00 more is reserved for your okay: deny it and it's back in your budget.");
     expect(answer).toContain("check it in the PayPal app");
   });
 

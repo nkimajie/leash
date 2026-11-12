@@ -109,7 +109,8 @@ export function describeBalance(status: LeashStatus): string {
   const reserved = waitingForYou.reduce((total, item) => total + item.amount, 0);
   return [
     `You have ${money(leftToSpend.today)} left to spend today, of your ${money(rules.dailyCap)} daily cap, and ${money(leftToSpend.thisWeek)} this week, of ${money(rules.weeklyCap)}.`,
-    reserved > 0 ? `${money(reserved)} of that is reserved, waiting for your okay.` : "",
+    // Reserved money already counts against your caps, so denying it frees that much again.
+    reserved > 0 ? `${money(reserved)} more is reserved for your okay: deny it and it's back in your budget.` : "",
     "PayPal keeps your PayPal balance private, even from apps like me, so check it in the PayPal app.",
   ]
     .filter(Boolean)
